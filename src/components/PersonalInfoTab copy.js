@@ -1,5 +1,5 @@
 import React from "react";
-import { Box, Typography, TextField, MenuItem, Grid, FormControl, Select } from "@mui/material";
+import { Box, Typography, TextField, MenuItem } from "@mui/material";
 import { LocalizationProvider, DatePicker } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs from "dayjs";
@@ -8,33 +8,6 @@ import useApiData from "../hooks/useApiData";
 
 const PersonalInfoTab = ({ formData, handleChange, handleDOBChange, handleTimeBlur, tabIndex, setTabIndex }) => {
     const { isLoading, error, gotraOptions, rashiOptions, nakshatraOptions } = useApiData();
-
-    // Handle height changes separately for feet and inches
-    const handleHeightChange = (e) => {
-        const { name, value } = e.target;
-        const heightData = { ...formData };
-        
-        if (name === "heightFeet") {
-            heightData.heightFeet = value;
-        } else if (name === "heightInches") {
-            heightData.heightInches = value;
-        }
-        
-        // Combine feet and inches for the height field
-        if (heightData.heightFeet && heightData.heightInches) {
-            heightData.height = `${heightData.heightFeet}'${heightData.heightInches}"`;
-        } else {
-            heightData.height = "";
-        }
-        
-        // Use the existing handleChange function to update the form
-        handleChange({
-            target: {
-                name: "height",
-                value: heightData.height
-            }
-        });
-    };
 
     return (
         <Box sx={{
@@ -176,56 +149,16 @@ const PersonalInfoTab = ({ formData, handleChange, handleDOBChange, handleTimeBl
                 </TextField>
             )}
 
-            
-
-<Typography sx={{ fontWeight: "bold", color: "#444" }}>Height:</Typography>
-        <Grid container spacing={2} alignItems="center"> {/* Added alignItems="center" */}
-          <Grid item xs={6} >
-            <FormControl fullWidth required sx={{ backgroundColor: "#fff", borderRadius: 1 }}>
-              <Select
-                name="heightFeet"
-                value={formData.heightFeet ?? ""}
-                onChange={handleChange} // Use the single handleChange
-                displayEmpty // Add this prop
-              >
-                <MenuItem value="" disabled>
-                  Select Feet
-                </MenuItem>
-                {[4, 5, 6].map((feet) => (
-                  <MenuItem key={feet} value={`${feet} feet`}>
-                    {feet} feet
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item xs={6}>
-            <FormControl fullWidth required sx={{ backgroundColor: "#fff", borderRadius: 1 }}>
-              <Select
-                name="heightInches"
-                value={formData.heightInches ?? ""}
-                onChange={handleChange} // Use the single handleChange
-                displayEmpty // Add this prop
-              >
-                 <MenuItem value="" disabled>
-                  Select Inches
-                </MenuItem>
-                {[...Array(12)].map((_, i) => (
-                  <MenuItem key={i + 1} value={`${i + 1} inches`}>
-                    {i + 1} inches
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-        </Grid>
-
-
-
-
-
-
-
+            {/* Height */}
+            <Typography sx={{ fontWeight: "bold", color: "#444" }}>Height:</Typography>
+            <TextField 
+                name="height" 
+                value={formData.height ?? ""} 
+                onChange={handleChange} 
+                fullWidth 
+                required 
+                sx={{ backgroundColor: "#fff", borderRadius: 1 }} 
+            />
 
             {/* Nakshatra */}
             <Typography sx={{ fontWeight: "bold", color: "#444" }}>Nakshatra:</Typography>
@@ -256,7 +189,7 @@ const PersonalInfoTab = ({ formData, handleChange, handleDOBChange, handleTimeBl
                 </TextField>
             )}
 
-            {/* Charana Pada - Modified to be a dropdown */}
+            {/* Charana Pada */}
             <Typography sx={{ fontWeight: "bold", color: "#444" }}>Charana Pada:</Typography>
             <TextField 
                 name="charanaPada" 
@@ -264,14 +197,8 @@ const PersonalInfoTab = ({ formData, handleChange, handleDOBChange, handleTimeBl
                 onChange={handleChange} 
                 fullWidth 
                 required 
-                select
-                sx={{ backgroundColor: "#fff", borderRadius: 1 }}
-            >
-                <MenuItem value="1st Pada 1ನೇ ಪಾದ">1st Pada 1ನೇ ಪಾದ</MenuItem>
-                <MenuItem value="2nd Pada 2ನೇ ಪಾದ">2nd Pada 2ನೇ ಪಾದ</MenuItem>
-                <MenuItem value="3rd Pada 3ನೇ ಪಾದ">3rd Pada 3ನೇ ಪಾದ</MenuItem>
-                <MenuItem value="4th Pada 4ನೇ ಪಾದ">4th Pada 4ನೇ ಪಾದ</MenuItem>
-            </TextField>
+                sx={{ backgroundColor: "#fff", borderRadius: 1 }} 
+            />
             
             <FormNavigation tabIndex={tabIndex} setTabIndex={setTabIndex} />
         </Box>
