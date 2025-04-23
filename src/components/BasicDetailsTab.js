@@ -135,7 +135,7 @@ const BasicDetailsTab = ({ formData, handleChange, tabIndex, setTabIndex }) => {
             {/* Profile Status */}
             <Typography sx={{ fontWeight: "bold", color: "#444" }}>Profile Status:</Typography>
             <FormControl fullWidth required sx={{ backgroundColor: "#fff", borderRadius: 1 }}>
-                <Select name="profileStatus" value={formData.profileStatus || ""} onChange={handleChange}>
+                <Select name="profileStatus" value={formData.profileStatus || "Active"} onChange={handleChange}>
                     <MenuItem value="Active">Active</MenuItem>
                     <MenuItem value="Inactive">Inactive</MenuItem>
                 </Select>
