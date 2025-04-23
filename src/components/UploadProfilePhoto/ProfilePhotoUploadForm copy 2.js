@@ -1,0 +1,233 @@
+import React, { useState } from 'react';
+import { Paper, Typography, TextField, Button, Grid, CircularProgress, Checkbox, FormControlLabel } from '@mui/material';
+import SearchIcon from '@mui/icons-material/Search';
+import {
+    handleSearchCriteriaChange,
+    handleSearchProfile,
+    handlePhotoChange,
+    handleUploadPhotos,
+    getUploadedPhotos,
+    fetchDefaultPhoto,
+} from './photoUploadUtils';
+
+const ProfilePhotoUploadForm = () => {
+    // Assuming you have a way to access the user's email, e.g., from a context
+    const userEmailFromSession = 'sudha@1234.com'; // Replace with your actual logic
+
+    const [searchCriteria, setSearchCriteria] = useState({
+        profileId: '',
+        email: userEmailFromSession || '', // Set initial email value
+        phone: '',
+    });
+    const [profileData, setProfileData] = useState(null);
+    const [photos, setPhotos] = useState([]);
+    const [photoPreviews, setPhotoPreviews] = useState([]);
+    const [uploading, setUploading] = useState(false);
+    const [uploadError, setUploadError] = useState(null);
+    const [fetchError, setFetchError] = useState(null);
+    const [searching, setSearching] = useState(false);
+    const [uploadedPhotos, setUploadedPhotos] = useState([]);
+    const [gettingPhotos, setGettingPhotos] = useState(false);
+    const [isDefaultPhoto, setIsDefaultPhoto] = useState(false);
+    const [defaultPhoto, setDefaultPhoto] = useState(null);
+
+    const handleSearchCriteriaChangeLocal = (event) => {
+        const { name, value } = event.target;
+        console.log('Debug (Form): handleSearchCriteriaChangeLocal - Event Name:', name, 'Value:', value);
+        setSearchCriteria((prevState) => {
+            const updatedState = { ...prevState, [name]: value };
+            console.log('Debug (Form): handleSearchCriteriaChangeLocal - Previous searchCriteria:', prevState);
+            console.log('Debug (Form): handleSearchCriteriaChangeLocal - Updated searchCriteria:', updatedState);
+            // Only reset profileData if the value has changed for the current field
+            if (prevState[name] !== value) {
+                console.log('Debug (Form): handleSearchCriteriaChangeLocal - Input value changed, resetting profile data and photos.');
+                setProfileData(null);
+                setPhotos([]);
+                setPhotoPreviews([]);
+                setFetchError(null);
+                setUploadedPhotos([]);
+                setDefaultPhoto(null);
+            }
+            return updatedState;
+        });
+    };
+
+    const handleSearchProfileLocal = async () => {
+        console.log('Debug (Form): handleSearchProfileLocal - Search initiated with criteria:', searchCriteria);
+        setProfileData(null); // Reset profile data before search
+        await handleSearchProfile(
+            searchCriteria,
+            setProfileData,
+            setFetchError,
+            setSearching,
+            setUploadedPhotos,
+            setDefaultPhoto,
+            setUploadError,
+            (profileId, uploadedPhotosSetter, fetchErrorSetter) => getUploadedPhotos(profileId, uploadedPhotosSetter, fetchErrorSetter, setGettingPhotos), // Pass setGettingPhotos
+            fetchDefaultPhoto
+        );
+        console.log('Debug (Form): handleSearchProfileLocal - Search complete. profileData after search:', profileData);
+    };
+
+    const handlePhotoChangeLocal = (event) => {
+        console.log('Debug (Form): handlePhotoChangeLocal - Photo selection initiated.');
+        handlePhotoChange(event, setPhotos, setPhotoPreviews);
+    };
+
+    const handleUploadPhotosLocal = async () => {
+        console.log('Debug (Form): handleUploadPhotosLocal - Upload initiated. Current profileData:', profileData, 'Photos:', photos, 'isDefaultPhoto:', isDefaultPhoto);
+        await handleUploadPhotos(profileData, photos, isDefaultPhoto, setUploading, setUploadError, setPhotos, setPhotoPreviews, setIsDefaultPhoto, getUploadedPhotos, fetchDefaultPhoto, setUploadedPhotos, setDefaultPhoto);
+        console.log('Debug (Form): handleUploadPhotosLocal - Upload process finished.');
+    };
+
+    return (
+        <Paper elevation={3} sx={{ padding: 3, margin: 2 }}>
+            <Typography variant="h5" gutterBottom>
+                Upload Photos to Profile
+            </Typography>
+
+            <Grid container spacing={2} alignItems="center">
+                <Grid item xs={12} sm={6} md={4}>
+                    <TextField
+                        fullWidth
+                        label="Profile ID"
+                        name="profileId"
+                        value={searchCriteria.profileId}
+                        onChange={handleSearchCriteriaChangeLocal}
+                    />
+                </Grid>
+                <Grid item xs={12} sm={6} md={4}>
+                    <TextField
+                        fullWidth
+                        label="Email"
+                        name="email"
+                        value={searchCriteria.email}
+                        onChange={handleSearchCriteriaChangeLocal}
+                    />
+                </Grid>
+                <Grid item xs={12} sm={6} md={4}>
+                    <TextField
+                        fullWidth
+                        label="Phone Number"
+                        name="phone"
+                        value={searchCriteria.phone}
+                        onChange={handleSearchCriteriaChangeLocal}
+                    />
+                </Grid>
+                <Grid item xs={12}>
+                    <Button
+                        fullWidth
+                        variant="contained"
+                        color="primary"
+                        onClick={handleSearchProfileLocal}
+                        startIcon={<SearchIcon />}
+                        disabled={searching}
+                        sx={{ mt: 2 }}
+                    >
+                        {searching ? 'Searching...' : 'Search Profile'}
+                    </Button>
+                </Grid>
+            </Grid>
+
+            {fetchError && <Typography color="error" sx={{ mt: 2 }}>{fetchError}</Typography>}
+
+            {profileData && (
+                <div sx={{ mt: 2 }}>
+                    <Typography variant="h6">Profile Details</Typography>
+                    <Typography>Profile ID: {profileData.profileId}</Typography>
+                    <Typography>Name: {profileData.name}</Typography>
+                    {profileData.current_age && <Typography>Current Age: {profileData.current_age}</Typography>}
+                    {profileData.gotra && <Typography>Gotra: {profileData.gotra}</Typography>}
+                    {profileData.email && <Typography>Email: {profileData.email}</Typography>}
+                    {/* Add other profile details here as needed */}
+
+                    <input
+                        type="file"
+                        name="photos"
+                        multiple
+                        accept="image/*"
+                        onChange={handlePhotoChangeLocal}
+                        style={{ marginTop: 20 }}
+                    />
+                    {photoPreviews.length > 0 && (
+                        <div style={{ display: 'flex', marginTop: 10 }}>
+                            {photoPreviews.map((preview, index) => (
+                                <img
+                                    key={index}
+                                    src={preview}
+                                    alt={`preview-${index}`}
+                                    style={{ width: 80, height: 80, marginRight: 10, objectFit: 'cover' }}
+                                />
+                            ))}
+                        </div>
+                    )}
+                    <FormControlLabel
+                        control={
+                            <Checkbox
+                                checked={isDefaultPhoto}
+                                onChange={(e) => setIsDefaultPhoto(e.target.checked)}
+                                name="isDefaultPhoto"
+                                color="primary"
+                            />
+                        }
+                        label="Set as Default Photo"
+                        sx={{ mt: 2 }}
+                    />
+
+                    <Button
+                        variant="contained"
+                        color="secondary"
+                        onClick={handleUploadPhotosLocal}
+                        disabled={photos.length === 0 || uploading || !profileData}
+                        sx={{ mt: 2 }}
+                    >
+                        {uploading ? (
+                            <>
+                                <CircularProgress size={20} sx={{ mr: 1 }} />
+                                Uploading...
+                            </>
+                        ) : (
+                            'Upload Photos'
+                        )}
+                    </Button>
+                    {uploadError && <Typography color="error" sx={{ mt: 2 }}>{uploadError}</Typography>}
+
+                    <Typography variant="h6" sx={{ mt: 4 }}>Uploaded Photos</Typography>
+                    {gettingPhotos ? (
+                        <CircularProgress sx={{ mt: 2 }} />
+                    ) : (
+                        <div style={{ display: 'flex', flexWrap: 'wrap', marginTop: 10 }}>
+                            {uploadedPhotos.length > 0 ? (
+                                uploadedPhotos.map((photo, index) => (
+                                    <div key={index} style={{ marginRight: 10, marginBottom: 10 }}>
+                                        <img
+                                            src={`http://localhost:3001/${photo.path}`}
+                                            alt={`uploaded-${index}`}
+                                            style={{ width: 100, height: 100, objectFit: 'cover' }}
+                                        />
+                                        {photo.isDefault && <Typography variant="caption">Default</Typography>}
+                                    </div>
+                                ))
+                            ) : (
+                                <Typography>No photos uploaded yet.</Typography>
+                            )}
+                        </div>
+                    )}
+
+                    <Typography variant="h6" sx={{ mt: 4 }}>Default Photo</Typography>
+                    {defaultPhoto ? (
+                        <img
+                            src={`http://localhost:3001/${defaultPhoto}`}
+                            alt="Default Profile"
+                            style={{ width: 150, height: 150, objectFit: 'cover' }}
+                        />
+                    ) : (
+                        <Typography>No default photo set.</Typography>
+                    )}
+                </div>
+            )}
+        </Paper>
+    );
+};
+
+export default ProfilePhotoUploadForm;
