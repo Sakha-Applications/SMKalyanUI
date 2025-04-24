@@ -9,6 +9,8 @@ const useApiData = (endpoint) => {
     const [gotraOptions, setGotraOptions] = useState([]);
     const [rashiOptions, setRashiOptions] = useState([]);
     const [nakshatraOptions, setNakshatraOptions] = useState([]);
+    // Add professionOptions state
+    const [professionOptions, setProfessionOptions] = useState([]);
 
     useEffect(() => {
         if (endpoint) {
@@ -62,6 +64,15 @@ const useApiData = (endpoint) => {
                         setError("Invalid Nakshatra data format received.");
                     }
                     
+                    // Fetch professions
+                    const professionsResponse = await axios.get("http://localhost:3001/api/profession");
+                    if (Array.isArray(professionsResponse.data)) {
+                        setProfessionOptions(professionsResponse.data);
+                    } else {
+                        console.error("Unexpected Profession response format:", professionsResponse.data);
+                        setError("Invalid Profession data format received.");
+                    }
+                    
                 } catch (error) {
                     console.error("Error fetching data:", error);
                     setError("Failed to load data. Please try again later.");
@@ -80,7 +91,8 @@ const useApiData = (endpoint) => {
         data,
         gotraOptions,
         rashiOptions,
-        nakshatraOptions
+        nakshatraOptions,
+        professionOptions // Add professionOptions to the returned object
     };
 };
 

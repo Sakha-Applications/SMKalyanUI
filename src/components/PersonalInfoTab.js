@@ -1,13 +1,112 @@
-import React from "react";
-import { Box, Typography, TextField, MenuItem, Grid, FormControl, Select } from "@mui/material";
+import React, { useState, useEffect } from "react";
+import { Box, Typography, TextField, MenuItem, Grid, FormControl, Select, Autocomplete, CircularProgress } from "@mui/material";
 import { LocalizationProvider, DatePicker } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs from "dayjs";
 import FormNavigation from "./FormNavigation";
 import useApiData from "../hooks/useApiData";
+import axios from "axios";
 
 const PersonalInfoTab = ({ formData, handleChange, handleDOBChange, handleTimeBlur, tabIndex, setTabIndex }) => {
     const { isLoading, error, gotraOptions, rashiOptions, nakshatraOptions } = useApiData();
+    
+    // GuruMatha state
+    const [isGuruMathaLoading, setIsGuruMathaLoading] = useState(false);
+    const [guruMathaError, setGuruMathaError] = useState(null);
+    const [guruMathaOptions, setGuruMathaOptions] = useState([]);
+    const [guruMathaInputValue, setGuruMathaInputValue] = useState('');
+    const [guruMathaSelectedValue, setGuruMathaSelectedValue] = useState(null);
+
+    // Effect to initialize selected guru matha if formData has it
+    useEffect(() => {
+        if (formData.guruMatha && !guruMathaSelectedValue) {
+            // If guruMatha is already an object with value property, use it directly
+            if (typeof formData.guruMatha === 'object' && formData.guruMatha.value) {
+                setGuruMathaSelectedValue(formData.guruMatha);
+            } 
+            // If guruMatha is already a string (name), create an object
+            else if (typeof formData.guruMatha === 'string' && formData.guruMatha) {
+                setGuruMathaSelectedValue({
+                    label: formData.guruMatha,
+                    value: formData.guruMatha  // In this case, the value is the name itself
+                });
+            }
+            // If it's a numeric ID, fetch the name
+            else if (!isNaN(formData.guruMatha)) {
+                const fetchGuruMathaDetails = async () => {
+                    try {
+                        const response = await axios.get("http://localhost:3001/api/guru-matha");
+                        const options = response.data;
+                        const selectedOption = options.find(opt => opt.id === formData.guruMatha);
+                        if (selectedOption) {
+                            setGuruMathaSelectedValue({
+                                label: selectedOption.GuruMathaName,
+                                value: selectedOption.id
+                            });
+                        }
+                    } catch (error) {
+                        console.error("Error fetching guru matha details:", error);
+                    }
+                };
+                
+                fetchGuruMathaDetails();
+            }
+        }
+    }, [formData.guruMatha]);
+
+    // Search guru matha when input changes
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            if (guruMathaInputValue.length >= 2) {
+                searchGuruMatha(guruMathaInputValue);
+            }
+        }, 300);
+
+        return () => clearTimeout(timer);
+    }, [guruMathaInputValue]);
+
+    // Function to search guru matha options
+    const searchGuruMatha = async (searchText) => {
+        if (!searchText || searchText.length < 2) return;
+        
+        setIsGuruMathaLoading(true);
+        setGuruMathaError(null);
+        
+        try {
+            const response = await axios.get(`http://localhost:3001/api/guru-matha?search=${encodeURIComponent(searchText)}`);
+            console.log("GuruMatha search response:", response.data);
+            
+            if (Array.isArray(response.data)) {
+                const options = response.data.map((item) => ({
+                    label: item.GuruMathaName,
+                    value: item.id
+                }));
+                setGuruMathaOptions(options);
+            } else {
+                console.error("Unexpected guru matha response format:", response.data);
+                setGuruMathaError("Invalid data format received");
+            }
+        } catch (error) {
+            console.error("Error searching guru matha:", error);
+            setGuruMathaError(`Failed to search guru matha: ${error.message}`);
+        } finally {
+            setIsGuruMathaLoading(false);
+        }
+    };
+
+    // Handle selection of guru matha
+    const handleGuruMathaChange = (event, newValue) => {
+        setGuruMathaSelectedValue(newValue);
+        
+        // Update the parent form data with the ID
+        const syntheticEvent = {
+            target: {
+                name: 'guruMatha',
+                value: newValue ? newValue.value : ''
+            }
+        };
+        handleChange(syntheticEvent);
+    };
 
     // Handle height changes separately for feet and inches
     const handleHeightChange = (e) => {
@@ -79,15 +178,38 @@ const PersonalInfoTab = ({ formData, handleChange, handleDOBChange, handleTimeBl
                 </TextField>
             )}
 
-            {/* GuruMatha */}
+            {/* GuruMatha - AUTOCOMPLETE VERSION */}
             <Typography sx={{ fontWeight: "bold", color: "#444" }}>GuruMatha:</Typography>
-            <TextField 
-                name="guruMatha" 
-                value={formData.guruMatha ?? ""} 
-                onChange={handleChange} 
-                fullWidth 
-                required 
-                sx={{ backgroundColor: "#fff", borderRadius: 1 }} 
+            <Autocomplete
+                value={guruMathaSelectedValue}
+                onChange={handleGuruMathaChange}
+                inputValue={guruMathaInputValue}
+                onInputChange={(event, newInputValue) => {
+                    setGuruMathaInputValue(newInputValue);
+                }}
+                options={guruMathaOptions}
+                loading={isGuruMathaLoading}
+                loadingText="Searching..."
+                noOptionsText={guruMathaInputValue.length < 2 ? "Type at least 2 characters" : "No options found"}
+                fullWidth
+                sx={{ backgroundColor: "#fff", borderRadius: 1 }}
+                renderInput={(params) => (
+                    <TextField
+                        {...params}
+                        required
+                        helperText={guruMathaError || "Start typing to search guru matha"}
+                        error={!!guruMathaError}
+                        InputProps={{
+                            ...params.InputProps,
+                            endAdornment: (
+                                <>
+                                    {isGuruMathaLoading ? <CircularProgress color="inherit" size={20} /> : null}
+                                    {params.InputProps.endAdornment}
+                                </>
+                            ),
+                        }}
+                    />
+                )}
             />
 
             {/* Date of Birth */}
@@ -136,16 +258,31 @@ const PersonalInfoTab = ({ formData, handleChange, handleDOBChange, handleTimeBl
                 sx={{ backgroundColor: "#e0e0e0", borderRadius: 1 }} 
             />
 
-            {/* Sub Caste */}
-            <Typography sx={{ fontWeight: "bold", color: "#444" }}>Sub Caste:</Typography>
-            <TextField 
-                name="subCaste" 
-                value={formData.subCaste ?? ""} 
-                onChange={handleChange} 
-                fullWidth 
-                required 
-                sx={{ backgroundColor: "#fff", borderRadius: 1 }} 
-            />
+  {/* Sub Caste */}
+  <Typography sx={{ fontWeight: "bold", color: "#444" }}>Sub Caste:</Typography>
+  <FormControl fullWidth required sx={{ backgroundColor: "#fff", borderRadius: 1 }}>
+    <Select
+      name="subCaste"
+      value={formData.subCaste || "Madhva (ಮಾಧ್ವ)"} // Set default value
+      onChange={handleChange}
+    >
+      <MenuItem value="Madhva (ಮಾಧ್ವ)">Madhva (ಮಾಧ್ವ)</MenuItem>
+      <MenuItem value="Smarta (ಸ್ಮಾರ್ತ)">Smarta (ಸ್ಮಾರ್ತ)</MenuItem>
+      <MenuItem value="Srivaishnava (ಶ್ರೀವೈಷ್ಣವ)">Srivaishnava (ಶ್ರೀವೈಷ್ಣವ)</MenuItem>
+      <MenuItem value="Gaudiya Vaishnava (ಗೌಡೀಯ ವೈಷ್ಣವ)">Gaudiya Vaishnava (ಗೌಡೀಯ ವೈಷ್ಣವ)</MenuItem>
+      <MenuItem value="Deshastha (ದೇಶಸ್ಥ)">Deshastha (ದೇಶಸ್ಥ)</MenuItem>
+      <MenuItem value="Hoysala Karnataka Brahmin (ಹೊಯ್ಸಳ ಕರ್ನಾಟಕ ಬ್ರಾಹ್ಮಣ)">Hoysala Karnataka Brahmin (ಹೊಯ್ಸಳ ಕರ್ನಾಟಕ ಬ್ರಾಹ್ಮಣ)</MenuItem>
+      <MenuItem value="Hebbar (ಹೆಬ್ಬಾರ್)">Hebbar (ಹೆಬ್ಬಾರ್)</MenuItem>
+      <MenuItem value="Shivalli (ಶಿವಳ್ಳಿ)">Shivalli (ಶಿವಳ್ಳಿ)</MenuItem>
+      <MenuItem value="Iyer (ಅಯ್ಯರ್)">Iyer (ಅಯ್ಯರ್)</MenuItem>
+      <MenuItem value="Iyengar (ಅಯ್ಯಂಗಾರ್)">Iyengar (ಅಯ್ಯಂಗಾರ್)</MenuItem>
+      <MenuItem value="Tuluva Brahmins (ತುಳುಬ್ರಾಹ್ಮಣರು)">Tuluva Brahmins (ತುಳುಬ್ರಾಹ್ಮಣರು)</MenuItem>
+      <MenuItem value="Others (ಇತರರು)">Others (ಇತರರು)</MenuItem>
+    </Select>
+  </FormControl>
+
+
+
 
             {/* Rashi */}
             <Typography sx={{ fontWeight: "bold", color: "#444" }}>Rashi:</Typography>
@@ -176,56 +313,47 @@ const PersonalInfoTab = ({ formData, handleChange, handleDOBChange, handleTimeBl
                 </TextField>
             )}
 
-            
-
-<Typography sx={{ fontWeight: "bold", color: "#444" }}>Height:</Typography>
-        <Grid container spacing={2} alignItems="center"> {/* Added alignItems="center" */}
-          <Grid item xs={6} >
-            <FormControl fullWidth required sx={{ backgroundColor: "#fff", borderRadius: 1 }}>
-              <Select
-                name="heightFeet"
-                value={formData.heightFeet ?? ""}
-                onChange={handleChange} // Use the single handleChange
-                displayEmpty // Add this prop
-              >
-                <MenuItem value="" disabled>
-                  Select Feet
-                </MenuItem>
-                {[4, 5, 6].map((feet) => (
-                  <MenuItem key={feet} value={`${feet} feet`}>
-                    {feet} feet
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item xs={6}>
-            <FormControl fullWidth required sx={{ backgroundColor: "#fff", borderRadius: 1 }}>
-              <Select
-                name="heightInches"
-                value={formData.heightInches ?? ""}
-                onChange={handleChange} // Use the single handleChange
-                displayEmpty // Add this prop
-              >
-                 <MenuItem value="" disabled>
-                  Select Inches
-                </MenuItem>
-                {[...Array(12)].map((_, i) => (
-                  <MenuItem key={i + 1} value={`${i + 1} inches`}>
-                    {i + 1} inches
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-        </Grid>
-
-
-
-
-
-
-
+            <Typography sx={{ fontWeight: "bold", color: "#444" }}>Height:</Typography>
+            <Grid container spacing={2} alignItems="center">
+                <Grid item xs={6} >
+                    <FormControl fullWidth required sx={{ backgroundColor: "#fff", borderRadius: 1 }}>
+                        <Select
+                            name="heightFeet"
+                            value={formData.heightFeet ?? ""}
+                            onChange={handleChange} // Use the single handleChange
+                            displayEmpty // Add this prop
+                        >
+                            <MenuItem value="" disabled>
+                                Select Feet
+                            </MenuItem>
+                            {[4, 5, 6].map((feet) => (
+                                <MenuItem key={feet} value={`${feet} feet`}>
+                                    {feet} feet
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+                </Grid>
+                <Grid item xs={6}>
+                    <FormControl fullWidth required sx={{ backgroundColor: "#fff", borderRadius: 1 }}>
+                        <Select
+                            name="heightInches"
+                            value={formData.heightInches ?? ""}
+                            onChange={handleChange} // Use the single handleChange
+                            displayEmpty // Add this prop
+                        >
+                            <MenuItem value="" disabled>
+                                Select Inches
+                            </MenuItem>
+                            {[...Array(12)].map((_, i) => (
+                                <MenuItem key={i + 1} value={`${i + 1} inches`}>
+                                    {i + 1} inches
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+                </Grid>
+            </Grid>
 
             {/* Nakshatra */}
             <Typography sx={{ fontWeight: "bold", color: "#444" }}>Nakshatra:</Typography>

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link } from 'react-router-dom'; // Import Link if you need it here
+import { Link, useNavigate } from 'react-router-dom'; // Import useNavigate
 import {
     Tabs,
     Tab,
@@ -28,6 +28,8 @@ const ProfileDetails = () => {
 
     const { formData, setFormData, handleChange, handleDOBChange, handleTimeBlur } =
         useFormData();
+
+    const navigate = useNavigate(); // Initialize useNavigate
 
     const handleSubmit = async () => {
         // Validation (as before)
@@ -127,10 +129,11 @@ const ProfileDetails = () => {
                 designation: "",
                 currentCompany: "",
                 annualIncome: 0,
-                profileCategory:"",
-                profileCategoryneed:"",
+                profileCategory: "",
+                profileCategoryneed: "",
             });
             setTabIndex(0);
+            navigate('/'); // Redirect to the home page
         } catch (error) {
             alert("Failed to create profile.");
             console.error("Error submitting form:", error);
