@@ -37,58 +37,40 @@ const BasicDetailsTab = ({ formData, handleChange, tabIndex, setTabIndex }) => {
   // Effect to initialize selected native place if formData has it
   useEffect(() => {
     if (formData.nativePlace && !nativePlaceSelectedValue) {
-      // If nativePlace is already a string (place name), create an object
-      if (typeof formData.nativePlace === 'string' && formData.nativePlace) {
-        setNativePlaceSelectedValue({
-          label: formData.nativePlace,
-          value: formData.nativePlace
-        });
-        setNativePlaceInputValue(formData.nativePlace);
-      }
-      // If it's a numeric ID, fetch the name
-      else if (!isNaN(formData.nativePlace)) {
-        const fetchNativePlaceDetails = async () => {
-          try {
-            const response = await axios.get("http://localhost:3001/api/native-places");
-            const places = response.data;
-            const selectedPlace = places.find(place => place.id === formData.nativePlace);
-            if (selectedPlace) {
-              setNativePlaceSelectedValue({
-                label: selectedPlace.nativeplace,
-                value: selectedPlace.nativeplace,
-                id: selectedPlace.id // Store ID separately for reference
-              });
-              setNativePlaceInputValue(selectedPlace.nativeplace);
-              
-              // Update form data with the name instead of ID
-              const syntheticEvent = {
-                target: {
-                  name: 'nativePlace',
-                  value: selectedPlace.nativeplace
-                }
-              };
-              handleChange(syntheticEvent);
-            }
-          } catch (error) {
-            console.error("Error fetching native place details:", error);
+      // Fetch the name for the ID if we only have the ID
+      const fetchNativePlaceDetails = async () => {
+        try {
+          const response = await axios.get("http://localhost:3001/api/native-places");
+          const places = response.data;
+          const selectedPlace = places.find(place => place.id === formData.nativePlace);
+          if (selectedPlace) {
+            setNativePlaceSelectedValue({
+              label: selectedPlace.nativeplace,
+              value: selectedPlace.id
+            });
           }
-        };
-        
-        fetchNativePlaceDetails();
-      }
+        } catch (error) {
+          console.error("Error fetching native place details:", error);
+        }
+      };
+      
+      fetchNativePlaceDetails();
     }
   }, [formData.nativePlace]);
 
   // Effect to initialize selected residing city if formData has it
   useEffect(() => {
     if (formData.currentLocation && !residingCitySelectedValue) {
+      // If currentLocation is already an object with value property, use it directly
+      if (typeof formData.currentLocation === 'object' && formData.currentLocation.value) {
+        setResidingCitySelectedValue(formData.currentLocation);
+      } 
       // If currentLocation is already a string (city name), create an object
-      if (typeof formData.currentLocation === 'string' && formData.currentLocation) {
+      else if (typeof formData.currentLocation === 'string' && formData.currentLocation) {
         setResidingCitySelectedValue({
           label: formData.currentLocation,
-          value: formData.currentLocation
+          value: formData.currentLocation  // In this case, the value is the city name itself
         });
-        setResidingCityInputValue(formData.currentLocation);
       }
       // If it's a numeric ID, fetch the name
       else if (!isNaN(formData.currentLocation)) {
@@ -100,19 +82,8 @@ const BasicDetailsTab = ({ formData, handleChange, tabIndex, setTabIndex }) => {
             if (selectedPlace) {
               setResidingCitySelectedValue({
                 label: selectedPlace.nativeplace,
-                value: selectedPlace.nativeplace,
-                id: selectedPlace.id // Store ID separately for reference
+                value: selectedPlace.id
               });
-              setResidingCityInputValue(selectedPlace.nativeplace);
-              
-              // Update form data with the name instead of ID
-              const syntheticEvent = {
-                target: {
-                  name: 'currentLocation',
-                  value: selectedPlace.nativeplace
-                }
-              };
-              handleChange(syntheticEvent);
             }
           } catch (error) {
             console.error("Error fetching city details:", error);
@@ -127,13 +98,16 @@ const BasicDetailsTab = ({ formData, handleChange, tabIndex, setTabIndex }) => {
   // Effect to initialize selected mother tongue if formData has it
   useEffect(() => {
     if (formData.motherTongue && !motherTongueSelectedValue) {
+      // If motherTongue is already an object with value property, use it directly
+      if (typeof formData.motherTongue === 'object' && formData.motherTongue.value) {
+        setMotherTongueSelectedValue(formData.motherTongue);
+      } 
       // If motherTongue is already a string (language name), create an object
-      if (typeof formData.motherTongue === 'string' && formData.motherTongue) {
+      else if (typeof formData.motherTongue === 'string' && formData.motherTongue) {
         setMotherTongueSelectedValue({
           label: formData.motherTongue,
-          value: formData.motherTongue
+          value: formData.motherTongue  // In this case, the value is the language name itself
         });
-        setMotherTongueInputValue(formData.motherTongue);
       }
       // If it's a numeric ID, fetch the name
       else if (!isNaN(formData.motherTongue)) {
@@ -145,19 +119,8 @@ const BasicDetailsTab = ({ formData, handleChange, tabIndex, setTabIndex }) => {
             if (selectedLanguage) {
               setMotherTongueSelectedValue({
                 label: selectedLanguage.mother_tongue,
-                value: selectedLanguage.mother_tongue,
-                id: selectedLanguage.id // Store ID separately for reference
+                value: selectedLanguage.id
               });
-              setMotherTongueInputValue(selectedLanguage.mother_tongue);
-              
-              // Update form data with the name instead of ID
-              const syntheticEvent = {
-                target: {
-                  name: 'motherTongue',
-                  value: selectedLanguage.mother_tongue
-                }
-              };
-              handleChange(syntheticEvent);
             }
           } catch (error) {
             console.error("Error fetching mother tongue details:", error);
@@ -222,8 +185,7 @@ const BasicDetailsTab = ({ formData, handleChange, tabIndex, setTabIndex }) => {
       if (Array.isArray(response.data)) {
         const options = response.data.map((item) => ({
           label: item.nativeplace,
-          value: item.nativeplace,
-          id: item.id // Store ID separately for reference
+          value: item.id
         }));
         
         // Update state based on field type
@@ -275,8 +237,7 @@ const BasicDetailsTab = ({ formData, handleChange, tabIndex, setTabIndex }) => {
       if (Array.isArray(response.data)) {
         const options = response.data.map((item) => ({
           label: item.mother_tongue,
-          value: item.mother_tongue,
-          id: item.id // Store ID separately for reference
+          value: item.id
         }));
         setMotherTongueOptions(options);
       } else {
@@ -295,25 +256,13 @@ const BasicDetailsTab = ({ formData, handleChange, tabIndex, setTabIndex }) => {
   const handleNativePlaceChange = (event, newValue) => {
     setNativePlaceSelectedValue(newValue);
     
-    // Update the parent form data with the name (not the ID)
+    // Update the parent form data with the ID
     const syntheticEvent = {
       target: {
         name: 'nativePlace',
         value: newValue ? newValue.value : ''
       }
     };
-    
-    // Store ID separately if needed for API calls later
-    if (newValue && newValue.id) {
-      const idEvent = {
-        target: {
-          name: 'nativePlaceId',
-          value: newValue.id
-        }
-      };
-      handleChange(idEvent);
-    }
-    
     handleChange(syntheticEvent);
   };
 
@@ -321,25 +270,13 @@ const BasicDetailsTab = ({ formData, handleChange, tabIndex, setTabIndex }) => {
   const handleResidingCityChange = (event, newValue) => {
     setResidingCitySelectedValue(newValue);
     
-    // Update the parent form data with the name (not the ID)
+    // Update the parent form data with the ID
     const syntheticEvent = {
       target: {
         name: 'currentLocation',
         value: newValue ? newValue.value : ''
       }
     };
-    
-    // Store ID separately if needed for API calls later
-    if (newValue && newValue.id) {
-      const idEvent = {
-        target: {
-          name: 'currentLocationId',
-          value: newValue.id
-        }
-      };
-      handleChange(idEvent);
-    }
-    
     handleChange(syntheticEvent);
   };
 
@@ -347,25 +284,13 @@ const BasicDetailsTab = ({ formData, handleChange, tabIndex, setTabIndex }) => {
   const handleMotherTongueChange = (event, newValue) => {
     setMotherTongueSelectedValue(newValue);
     
-    // Update the parent form data with the name (not the ID)
+    // Update the parent form data with the ID
     const syntheticEvent = {
       target: {
         name: 'motherTongue',
         value: newValue ? newValue.value : ''
       }
     };
-    
-    // Store ID separately if needed for API calls later
-    if (newValue && newValue.id) {
-      const idEvent = {
-        target: {
-          name: 'motherTongueId',
-          value: newValue.id
-        }
-      };
-      handleChange(idEvent);
-    }
-    
     handleChange(syntheticEvent);
   };
 
@@ -484,7 +409,6 @@ const BasicDetailsTab = ({ formData, handleChange, tabIndex, setTabIndex }) => {
         loadingText="Searching..."
         noOptionsText={motherTongueInputValue.length < 2 ? "Type at least 2 characters" : "No options found"}
         fullWidth
-        freeSolo // Allow custom values
         sx={{ backgroundColor: "#fff", borderRadius: 1 }}
         renderInput={(params) => (
           <TextField
@@ -519,7 +443,6 @@ const BasicDetailsTab = ({ formData, handleChange, tabIndex, setTabIndex }) => {
         loadingText="Searching..."
         noOptionsText={nativePlaceInputValue.length < 2 ? "Type at least 2 characters" : "No options found"}
         fullWidth
-        freeSolo // Allow custom values
         sx={{ backgroundColor: "#fff", borderRadius: 1 }}
         renderInput={(params) => (
           <TextField
@@ -554,7 +477,6 @@ const BasicDetailsTab = ({ formData, handleChange, tabIndex, setTabIndex }) => {
         loadingText="Searching..."
         noOptionsText={residingCityInputValue.length < 2 ? "Type at least 2 characters" : "No options found"}
         fullWidth
-        freeSolo // Allow custom values
         sx={{ backgroundColor: "#fff", borderRadius: 1 }}
         renderInput={(params) => (
           <TextField

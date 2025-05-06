@@ -52,7 +52,7 @@ const CareerEducationTab = ({ formData, handleChange, handleSubmit, isActive, ta
                         if (selectedProfession) {
                             setProfessionSelectedValue({
                                 label: selectedProfession.ProfessionName,
-                                value: selectedProfession.ProfessionName // Store name instead of ID
+                                value: selectedProfession.id
                             });
 
                             // When profession is initialized, fetch designations for it
@@ -86,7 +86,7 @@ const CareerEducationTab = ({ formData, handleChange, handleSubmit, isActive, ta
                 const fetchDesignationDetails = async () => {
                     try {
                         // If we already have professionSelectedValue, use its ID to fetch relevant designations
-                        const professionId = professionSelectedValue?.id;
+                        const professionId = professionSelectedValue?.value;
                         let url = "http://localhost:3001/api/designation";
 
                         if (professionId) {
@@ -100,7 +100,7 @@ const CareerEducationTab = ({ formData, handleChange, handleSubmit, isActive, ta
                         if (selectedDesignation) {
                             setDesignationSelectedValue({
                                 label: selectedDesignation.DesignationName,
-                                value: selectedDesignation.DesignationName // Store name instead of ID
+                                value: selectedDesignation.id
                             });
                         }
                     } catch (error) {
@@ -134,7 +134,7 @@ const CareerEducationTab = ({ formData, handleChange, handleSubmit, isActive, ta
                         if (selectedEducation) {
                             setEducationSelectedValue({
                                 label: selectedEducation.EducationName,
-                                value: selectedEducation.EducationName // Store name instead of ID
+                                value: selectedEducation.id
                             });
                         }
                     } catch (error) {
@@ -193,8 +193,7 @@ const CareerEducationTab = ({ formData, handleChange, handleSubmit, isActive, ta
             if (Array.isArray(response.data)) {
                 const options = response.data.map((item) => ({
                     label: item.ProfessionName,
-                    value: item.ProfessionName, // Store name instead of ID
-                    id: item.id // Keep ID for internal use
+                    value: item.id
                 }));
 
                 // Update professions list
@@ -212,36 +211,22 @@ const CareerEducationTab = ({ formData, handleChange, handleSubmit, isActive, ta
     };
 
     // Function to search designations
-    const searchDesignations = async (searchText, professionName) => {
+    const searchDesignations = async (searchText, professionId) => {
         if (!searchText || searchText.length < 2) return;
 
         setIsDesignationLoading(true);
         setDesignationError(null);
 
         try {
-            // First, get the profession ID from the profession name
-            const professionResponse = await axios.get(`http://localhost:3001/api/profession?search=${encodeURIComponent(professionName)}`);
-            let professionId = null;
-            
-            if (Array.isArray(professionResponse.data) && professionResponse.data.length > 0) {
-                const matchingProfession = professionResponse.data.find(p => p.ProfessionName === professionName);
-                professionId = matchingProfession ? matchingProfession.id : null;
-            }
-
-            // Now search designations with the professionId
-            let url = `http://localhost:3001/api/designation?search=${encodeURIComponent(searchText)}`;
-            if (professionId) {
-                url += `&professionId=${professionId}`;
-            }
-
-            const response = await axios.get(url);
+            const response = await axios.get(
+                `http://localhost:3001/api/designation?search=${encodeURIComponent(searchText)}&professionId=${professionId}`
+            );
             console.log("Designation search response:", response.data);
 
             if (Array.isArray(response.data)) {
                 const options = response.data.map((item) => ({
                     label: item.DesignationName,
-                    value: item.DesignationName, // Store name instead of ID
-                    id: item.id // Keep ID for internal use
+                    value: item.id
                 }));
 
                 // Update designations list
@@ -272,8 +257,7 @@ const CareerEducationTab = ({ formData, handleChange, handleSubmit, isActive, ta
             if (Array.isArray(response.data)) {
                 const options = response.data.map((item) => ({
                     label: item.EducationName,
-                    value: item.EducationName, // Store name instead of ID
-                    id: item.id // Keep ID for internal use
+                    value: item.id
                 }));
                 setEducationOptions(options);
             } else {
@@ -302,8 +286,7 @@ const CareerEducationTab = ({ formData, handleChange, handleSubmit, isActive, ta
             if (Array.isArray(response.data)) {
                 const options = response.data.map((item) => ({
                     label: item.DesignationName,
-                    value: item.DesignationName, // Store name instead of ID
-                    id: item.id // Keep ID for internal use
+                    value: item.id
                 }));
 
                 // Update designations list
@@ -320,15 +303,14 @@ const CareerEducationTab = ({ formData, handleChange, handleSubmit, isActive, ta
         }
     };
 
-    // Function to fetch educations 
+     // Function to fetch educations 
     const fetchEducations = async () => {
         try {
             const response = await axios.get("http://localhost:3001/api/education");
             if (Array.isArray(response.data)) {
                 const options = response.data.map((item) => ({
                     label: item.EducationName,
-                    value: item.EducationName, // Store name instead of ID
-                    id: item.id // Keep ID for internal use
+                    value: item.id
                 }));
                 setEducationOptions(options);
             }
@@ -346,8 +328,7 @@ const CareerEducationTab = ({ formData, handleChange, handleSubmit, isActive, ta
                 if (Array.isArray(response.data)) {
                     const options = response.data.map((item) => ({
                         label: item.ProfessionName,
-                        value: item.ProfessionName, // Store name instead of ID
-                        id: item.id // Keep ID for internal use
+                        value: item.id
                     }));
                     setProfessionOptions(options);
                 }
@@ -362,14 +343,14 @@ const CareerEducationTab = ({ formData, handleChange, handleSubmit, isActive, ta
     }, []);
 
     // Handle selection of profession
-    const handleProfessionChange = async (event, newValue) => {
+    const handleProfessionChange = (event, newValue) => {
         setProfessionSelectedValue(newValue);
 
         // Reset designation when profession changes
         setDesignationSelectedValue(null);
         setDesignationOptions([]);
 
-        // Update the parent form data with the name (not ID)
+        // Update the parent form data with the value
         const syntheticEvent = {
             target: {
                 name: 'profession',
@@ -387,20 +368,9 @@ const CareerEducationTab = ({ formData, handleChange, handleSubmit, isActive, ta
         };
         handleChange(resetDesignationEvent);
 
-        // If a profession is selected, fetch relevant designations
+        // Fetch designations for the selected profession
         if (newValue && newValue.value) {
-            try {
-                // First, get the profession ID from the profession name
-                const professionResponse = await axios.get(`http://localhost:3001/api/profession?search=${encodeURIComponent(newValue.value)}`);
-                if (Array.isArray(professionResponse.data) && professionResponse.data.length > 0) {
-                    const matchingProfession = professionResponse.data.find(p => p.ProfessionName === newValue.value);
-                    if (matchingProfession) {
-                        fetchDesignationsForProfession(matchingProfession.id);
-                    }
-                }
-            } catch (error) {
-                console.error("Error finding profession ID:", error);
-            }
+            fetchDesignationsForProfession(newValue.value);
         }
     };
 
@@ -408,7 +378,7 @@ const CareerEducationTab = ({ formData, handleChange, handleSubmit, isActive, ta
     const handleDesignationChange = (event, newValue) => {
         setDesignationSelectedValue(newValue);
 
-        // Update the parent form data with the name (not ID)
+        // Update the parent form data with the value
         const syntheticEvent = {
             target: {
                 name: 'designation',
@@ -422,11 +392,10 @@ const CareerEducationTab = ({ formData, handleChange, handleSubmit, isActive, ta
     const handleEducationChange = (event, newValue) => {
         setEducationSelectedValue(newValue);
 
-        // Update the parent form data with the name (not ID)
         const syntheticEvent = {
             target: {
                 name: 'education',
-                value: newValue ? newValue.value : ''
+                value: newValue? newValue.value : ''
             }
         };
         handleChange(syntheticEvent);
@@ -613,7 +582,7 @@ const CareerEducationTab = ({ formData, handleChange, handleSubmit, isActive, ta
                 handleSubmit={handleSubmit}
             />
         </Box>
-    );
+);
 };
 
 export default CareerEducationTab;
