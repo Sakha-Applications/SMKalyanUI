@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Paper, Typography, TextField, Button, Grid, CircularProgress, Checkbox, FormControlLabel } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
-import config from '../../config'; // Import the config
 import {
     handleSearchCriteriaChange,
     handleSearchProfile,
@@ -260,7 +259,7 @@ const ProfilePhotoUploadForm = () => {
                                 uploadedPhotos.map((photo, index) => (
                                     <div key={index} style={{ marginRight: 10, marginBottom: 10 }}>
                                         <img
-                                            src={`${config.photoBaseUrl}/${photo.path}`}
+                                            src={`http://localhost:3001/${photo.path}`}
                                             alt={`uploaded-${index}`}
                                             style={{ width: 100, height: 100, objectFit: 'cover' }}
                                         />

@@ -1,10 +1,7 @@
 // src/components/UploadProfilePhoto/photoUploadUtils.js
 import axios from 'axios';
-import config from '../../config'; // Import the config
 
-// Use config variables instead of hardcoded URLs
-const API_BASE_URL = config.apiUrl;
-const PHOTO_BASE_URL = config.photoBaseUrl;
+const API_BASE_URL = 'http://localhost:3001'; // Define your API base URL
 
 export const handleSearchCriteriaChange = (event, setSearchCriteria, setProfileData, setPhotos, setPhotoPreviews, setFetchError, setUploadedPhotos, setDefaultPhoto) => {
     const { name, value } = event.target;
@@ -37,7 +34,7 @@ export const handleSearchProfile = async (searchCriteria, setProfileData, setFet
     setUploadError(null);
     try {
         console.log('Debug (Utils): handleSearchProfile - Calling search profile API with:', searchCriteria);
-        const response = await axios.post(`${API_BASE_URL}/search-by-upload`, searchCriteria);
+        const response = await axios.post(`${API_BASE_URL}/api/search-by-upload`, searchCriteria);
         console.log('Debug (Utils): handleSearchProfile - Search profile API raw response:', response);
         console.log('Debug (Utils): handleSearchProfile - Search profile API response data:', response.data);
         console.log('Debug (Utils): handleSearchProfile - Type of response.data:', typeof response.data);
@@ -86,6 +83,9 @@ export const handlePhotoChange = (event, setPhotos, setPhotoPreviews, setUploadE
     console.log('Debug (Utils): handlePhotoChange - Photo previews updated:', previews);
 };
 
+
+
+
 export const handleUploadPhotos = async (profileData, photos, isDefaultPhoto, setUploading, setUploadError, setPhotosState, setPhotoPreviews, setIsDefaultPhoto, getUploadedPhotosFn, fetchDefaultPhotoFn, setUploadedPhotos, setDefaultPhoto, setGettingPhotosFn, setFetchError) => {
     console.log('Debug (Utils): handleUploadPhotos - profileData received:', profileData);
     if (!profileData || !profileData.profileId) {
@@ -115,7 +115,7 @@ export const handleUploadPhotos = async (profileData, photos, isDefaultPhoto, se
 
     try {
         console.log('Debug (Utils): handleUploadPhotos - Calling upload photos API with FormData.');
-        const response = await axios.post(`${API_BASE_URL}/upload-photos`, formData, {
+        const response = await axios.post(`${API_BASE_URL}/api/upload-photos`, formData, {
             headers: {
                 'Content-Type': 'multipart/form-data',
             },
@@ -125,7 +125,7 @@ export const handleUploadPhotos = async (profileData, photos, isDefaultPhoto, se
         setPhotoPreviews([]);
         setIsDefaultPhoto(false);
         await getUploadedPhotosFn(profileData.profileId, setUploadedPhotos, setFetchError, setGettingPhotosFn);
-        await fetchDefaultPhotoFn(profileData.profileId, setDefaultPhoto, setFetchError);
+        await fetchDefaultPhotoFn(profileData.profileId, setDefaultPhoto, setFetchError); // Corrected line: passing setFetchError
         console.log('Debug (Utils): handleUploadPhotos - Upload successful, fetched updated photos and default photo.');
     } catch (error) {
         console.error('Debug (Utils): handleUploadPhotos - Error uploading photos:', error);
@@ -137,6 +137,8 @@ export const handleUploadPhotos = async (profileData, photos, isDefaultPhoto, se
     }
 };
 
+
+
 export const getUploadedPhotos = async (profileId, setUploadedPhotos, setFetchError, setGettingPhotos) => {
     if (!profileId) {
         console.log('Debug (Utils): getUploadedPhotos - No profile ID provided.');
@@ -146,7 +148,7 @@ export const getUploadedPhotos = async (profileId, setUploadedPhotos, setFetchEr
     setFetchError(null);
     console.log('Debug (Utils): getUploadedPhotos - Fetching uploaded photos for profile ID:', profileId);
     try {
-        const response = await axios.get(`${API_BASE_URL}/get-photos?profileId=${profileId}`);
+        const response = await axios.get(`${API_BASE_URL}/api/get-photos?profileId=${profileId}`);
         console.log('Debug (Utils): getUploadedPhotos - API response:', response.data);
         const formattedPhotos = response.data.map(photo => {
             // The photo_path from your database is the full local file path.
@@ -159,13 +161,8 @@ export const getUploadedPhotos = async (profileId, setUploadedPhotos, setFetchEr
             const parts = normalizedPath.split('/');
             // 3. Get the filename (last part)
             const filename = parts[parts.length - 1];
-            // 4. Construct the URL using the static serving route and configuration
-            // const imageUrl = `ProfilePhotos/${filename}`;
-            const imageUrl = `${PHOTO_BASE_URL}/ProfilePhotos/${filename}`;
-
-            console.log('PHOTO_BASE_URL:', PHOTO_BASE_URL);
-console.log('Filename:', filename);
-console.log('Constructed imageUrl:', `${PHOTO_BASE_URL}/ProfilePhotos/${filename}`);
+            // 4. Construct the URL using the static serving route
+            const imageUrl = `ProfilePhotos/${filename}`;
 
             return {
                 path: imageUrl, // Store the relative URL path
@@ -184,6 +181,7 @@ console.log('Constructed imageUrl:', `${PHOTO_BASE_URL}/ProfilePhotos/${filename
     }
 };
 
+
 export const fetchDefaultPhoto = async (profileId, setDefaultPhoto, setFetchError) => {
     if (!profileId) {
         setDefaultPhoto(null);
@@ -193,7 +191,7 @@ export const fetchDefaultPhoto = async (profileId, setDefaultPhoto, setFetchErro
     setFetchError(null);
     console.log('Debug (Utils): fetchDefaultPhoto - Fetching default photo for profile ID:', profileId);
     try {
-        const response = await axios.get(`${API_BASE_URL}/get-default-photo?profileId=${profileId}`);
+        const response = await axios.get(`${API_BASE_URL}/api/get-default-photo?profileId=${profileId}`);
         console.log('Debug (Utils): fetchDefaultPhoto - API response:', response.data);
         setDefaultPhoto(response.data ? response.data.filename : null);
         console.log('Debug (Utils): fetchDefaultPhoto - Default photo state updated:', response.data ? response.data.filename : null);
@@ -201,23 +199,5 @@ export const fetchDefaultPhoto = async (profileId, setDefaultPhoto, setFetchErro
         console.error('Debug (Utils): fetchDefaultPhoto - Error fetching default photo:', error);
         setFetchError('Error fetching default photo.');
         console.log('Debug (Utils): fetchDefaultPhoto - Fetch failed:', error);
-    }
-};
-export const deletePhoto = async (photoPath, setDeleteError, setDeletingPhoto) => {
-    setDeletingPhoto(true);
-    setDeleteError(null);
-    console.log('Debug (Utils): deletePhoto - Deleting photo:', photoPath);
-    try {
-        const response = await axios.delete(`${API_BASE_URL}/delete-photo?photoPath=${photoPath}`);
-        console.log('Debug (Utils): deletePhoto - API response:', response.data);
-        setDeleteError(null);
-        console.log('Debug (Utils): deletePhoto - Photo deleted successfully.');
-    } catch (error) {
-        console.error('Debug (Utils): deletePhoto - Error deleting photo:', error);
-        setDeleteError('Error deleting photo.');
-        console.log('Debug (Utils): deletePhoto - Delete failed:', error);
-    } finally {
-        setDeletingPhoto(false);
-        console.log('Debug (Utils): deletePhoto - Delete process complete.');
     }
 };
