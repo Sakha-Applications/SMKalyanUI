@@ -44,7 +44,7 @@ const SharingContactDetails = () => {
                 try {
                     const response = await axios.get(`${API_BASE_URL}/api/get-photos?profileId=${profile.profile_id}`);
                     photosByProfile[profile.profile_id] = response.data.map(photo => {
-                        const parts = photo.photo_path.split(/[\\\/]/);
+                        const parts = photo.photo_path.split("/");
                         const filename = parts[parts.length - 1];
                         return {
                             path: `/ProfilePhotos/${filename}`,
