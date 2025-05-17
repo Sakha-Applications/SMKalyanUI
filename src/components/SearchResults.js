@@ -27,7 +27,7 @@ const SearchResults = ({ results }) => {
         const response = await axios.get(`${API_BASE_URL}/api/get-photos?profileId=${profile.profile_id}`);
         photosByProfile[profile.profile_id] = response.data.map(photo => {
           // Extract just the filename from the full path
-          const parts = photo.photo_path.split(/[\\\/]/); // Split by both / and \
+          const parts = photo.photo_path.split("/"]/); // Split by both / and \
           const filename = parts[parts.length - 1];
           return {
             path: `/ProfilePhotos/${filename}`, // Create a relative path
