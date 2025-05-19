@@ -5,4 +5,4 @@ const config = {
   photoBaseUrl: process.env.REACT_APP_PHOTO_BASE_URL || 'http://localhost:3001'
 };
 
-export default config;
+module.exports = config;

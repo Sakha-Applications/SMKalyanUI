@@ -11,11 +11,15 @@ import {
     handleUploadPhotos,
     getUploadedPhotos,
     fetchDefaultPhoto,
+    deletePhoto
 } from './photoUploadUtils';
+
+const DEFAULT_PLACEHOLDER = '/assets/placeholder-image.png';
+const ERROR_PLACEHOLDER = '/assets/image-error.png';
 
 const ProfilePhotoUploadForm = () => {
     const navigate = useNavigate();
-    const [loggedInEmail, setLoggedInEmail] = useState(''); // State for logged-in email
+    const [loggedInEmail, setLoggedInEmail] = useState('');
     const [searchCriteria, setSearchCriteria] = useState({ profileId: '', email: loggedInEmail, phone: '' });
     const [profileData, setProfileData] = useState(null);
     const [photos, setPhotos] = useState([]);
@@ -28,7 +32,18 @@ const ProfilePhotoUploadForm = () => {
     const [gettingPhotos, setGettingPhotos] = useState(false);
     const [isDefaultPhoto, setIsDefaultPhoto] = useState(false);
     const [defaultPhoto, setDefaultPhoto] = useState(null);
-    const [isFileInputDisabled, setFileInputDisabled] = useState(true); // Initially disabled
+    const [isFileInputDisabled, setFileInputDisabled] = useState(true);
+    const [deletingPhoto, setDeletingPhoto] = useState(false);
+    const [deleteError, setDeleteError] = useState(null);
+    const [failedImages, setFailedImages] = useState(new Set());
+    const [isMounted, setIsMounted] = useState(true);
+
+    useEffect(() => {
+        setIsMounted(true);
+        return () => {
+            setIsMounted(false);
+        };
+    }, []);
 
     useEffect(() => {
         const emailFromStorage = localStorage.getItem('userEmail');
@@ -38,16 +53,12 @@ const ProfilePhotoUploadForm = () => {
         }
     }, []);
 
-    const handleBackToDashboard = () => {
-        navigate('/dashboard');
-    };
-
     const handleSearchCriteriaChangeLocal = (event) => {
         const { name, value } = event.target;
         if (name === 'email') {
             setLoggedInEmail(value);
         }
-        setSearchCriteria((prevState) => ({ ...prevState, [name]: value }));
+        setSearchCriteria(prevState => ({ ...prevState, [name]: value }));
         setProfileData(null);
         setPhotos([]);
         setPhotoPreviews([]);
@@ -55,7 +66,8 @@ const ProfilePhotoUploadForm = () => {
         setUploadedPhotos([]);
         setDefaultPhoto(null);
         setUploadError(null);
-        setFileInputDisabled(true); // Disable on new search criteria
+        setFileInputDisabled(true);
+        setFailedImages(new Set());
     };
 
     const handleSearchProfileLocal = async () => {
@@ -63,8 +75,10 @@ const ProfilePhotoUploadForm = () => {
         setFetchError(null);
         setUploadedPhotos([]);
         setDefaultPhoto(null);
-        setFileInputDisabled(true); // Disable during search
-        setUploadError(null); // Clear any previous upload error
+        setFileInputDisabled(true);
+        setUploadError(null);
+        setFailedImages(new Set());
+
         try {
             await handleSearchProfile(
                 searchCriteria,
@@ -77,32 +91,21 @@ const ProfilePhotoUploadForm = () => {
                 (profileId, uploadedPhotosSetter, fetchErrorSetter) => getUploadedPhotos(profileId, uploadedPhotosSetter, fetchErrorSetter, setGettingPhotos),
                 fetchDefaultPhoto
             );
-            console.log('Debug (Form): profileData after search:', profileData);
-            console.log('Debug (Form): uploadedPhotos after search:', uploadedPhotos);
-
-            // Check photo limit immediately after fetching
-            if (uploadedPhotos.length >= 5) {
-                setUploadError(`You have already uploaded the maximum of 5 photos.`);
-                setFileInputDisabled(true);
-            } else {
-                setFileInputDisabled(false); // Enable if below the limit
-            }
-
         } finally {
-            setSearching(false);
+            if (isMounted) {
+                setSearching(false);
+            }
         }
     };
 
     const handlePhotoChangeLocal = (event) => {
         handlePhotoChange(event, setPhotos, setPhotoPreviews, setUploadError, uploadedPhotos.length);
-        console.log('Debug (Form): uploadedPhotos.length in handlePhotoChangeLocal:', uploadedPhotos.length);
     };
 
     const handleUploadPhotosLocal = async () => {
         setUploading(true);
         setUploadError(null);
         try {
-            console.log('Debug (Form): profileData before upload:', profileData);
             await handleUploadPhotos(
                 profileData,
                 photos,
@@ -119,10 +122,104 @@ const ProfilePhotoUploadForm = () => {
                 setGettingPhotos,
                 setFetchError
             );
-            console.log('Debug (Form): handleUploadPhotosLocal - Upload process finished.');
-            console.log('Debug (Form): uploadedPhotos after upload:', uploadedPhotos);
+            if (isMounted) {
+                setFailedImages(new Set());
+            }
         } finally {
-            setUploading(false);
+            if (isMounted) {
+                setUploading(false);
+            }
+        }
+    };
+
+    const handleDeletePhoto = async (photoId) => {
+        setDeletingPhoto(true);
+        try {
+            await deletePhoto(
+                photoId,
+                setDeleteError,
+                setDeletingPhoto,
+                async () => {
+                    if (isMounted && profileData && profileData.profileId) {
+                        setFailedImages(new Set());
+                        await getUploadedPhotos(
+                            profileData.profileId,
+                            setUploadedPhotos,
+                            setFetchError,
+                            setGettingPhotos
+                        );
+                        await fetchDefaultPhoto(
+                            profileData.profileId,
+                            setDefaultPhoto,
+                            setFetchError
+                        );
+                    }
+                }
+            );
+        } finally {
+            if (isMounted) {
+                setDeletingPhoto(false);
+            }
+        }
+    };
+
+    const SafeImage = ({ src, alt, style, isDefault }) => {
+        const imgRef = React.useRef(null);
+        const [imgSrc, setImgSrc] = useState(src || DEFAULT_PLACEHOLDER);
+        const [hasErrored, setHasErrored] = useState(failedImages.has(src));
+
+        useEffect(() => {
+            if (src && src !== imgSrc && !failedImages.has(src)) {
+                setImgSrc(src);
+                setHasErrored(false);
+            }
+        }, [src]);
+
+        const handleError = () => {
+            if (!hasErrored && src) {
+                console.warn(`Image failed to load: ${src}`);
+                if (isMounted) {
+                    setFailedImages(prev => {
+                        const newSet = new Set(prev);
+                        newSet.add(src);
+                        return newSet;
+                    });
+                    setHasErrored(true);
+                    setImgSrc(ERROR_PLACEHOLDER);
+                }
+            }
+        };
+
+        return (
+            <img
+                ref={imgRef}
+                src={hasErrored ? ERROR_PLACEHOLDER : imgSrc}
+                alt={alt}
+                style={style}
+                onError={handleError}
+            />
+        );
+    };
+
+    const getValidImageUrl = (url) => {
+        if (!url) return DEFAULT_PLACEHOLDER;
+        if (failedImages.has(url)) return ERROR_PLACEHOLDER;
+
+        try {
+            if (url.startsWith('http')) {
+                const imageUrl = new URL(url);
+                if (!imageUrl.searchParams.has('_cb')) {
+                    const cacheBuster = Math.floor(Date.now() / 60000);
+                    imageUrl.searchParams.append('_cb', cacheBuster);
+                }
+                return imageUrl.toString();
+            } else {
+                const cacheBuster = Math.floor(Date.now() / 60000);
+                return url.includes('?') ? `${url}&_cb=${cacheBuster}` : `${url}?_cb=${cacheBuster}`;
+            }
+        } catch (e) {
+            console.error('Error parsing URL:', e);
+            return url;
         }
     };
 
@@ -130,13 +227,13 @@ const ProfilePhotoUploadForm = () => {
         if (profileData && !searching) {
             if (uploadedPhotos.length >= 5) {
                 setFileInputDisabled(true);
-                setUploadError(`You have already uploaded the maximum of 5 photos.`);
+                setUploadError('You have already uploaded the maximum of 5 photos.');
             } else {
                 setFileInputDisabled(false);
-                setUploadError(null); // Clear the error if below limit
+                setUploadError(null);
             }
         } else {
-            setFileInputDisabled(true); // Keep disabled if no profile data or searching
+            setFileInputDisabled(true);
         }
     }, [profileData, searching, uploadedPhotos.length]);
 
@@ -147,7 +244,7 @@ const ProfilePhotoUploadForm = () => {
             </Typography>
 
             <Grid container spacing={2} alignItems="center">
-                <Grid xs={12} sm={6} md={4}>
+                <Grid item xs={12} sm={6} md={4}>
                     <TextField
                         fullWidth
                         label="Profile ID"
@@ -156,7 +253,7 @@ const ProfilePhotoUploadForm = () => {
                         onChange={handleSearchCriteriaChangeLocal}
                     />
                 </Grid>
-                <Grid xs={12} sm={6} md={4}>
+                <Grid item xs={12} sm={6} md={4}>
                     <TextField
                         fullWidth
                         label="Email"
@@ -165,7 +262,7 @@ const ProfilePhotoUploadForm = () => {
                         onChange={handleSearchCriteriaChangeLocal}
                     />
                 </Grid>
-                <Grid xs={12} sm={6} md={4}>
+                <Grid item xs={12} sm={6} md={4}>
                     <TextField
                         fullWidth
                         label="Phone Number"
@@ -174,7 +271,7 @@ const ProfilePhotoUploadForm = () => {
                         onChange={handleSearchCriteriaChangeLocal}
                     />
                 </Grid>
-                <Grid xs={12}>
+                <Grid item xs={12}>
                     <Button
                         fullWidth
                         variant="contained"
@@ -192,8 +289,8 @@ const ProfilePhotoUploadForm = () => {
             {fetchError && <Typography color="error" sx={{ mt: 2 }}>{fetchError}</Typography>}
 
             {profileData && (
-                <div sx={{ mt: 2 }}>
-                    <Typography variant="h6">Profile Details</Typography>
+                <>
+                    <Typography variant="h6" sx={{ mt: 4 }}>Profile Details</Typography>
                     <Typography>Name: {profileData.name}</Typography>
                     {profileData.current_age && <Typography>Current Age: {profileData.current_age}</Typography>}
                     {profileData.gotra && <Typography>Gotra: {profileData.gotra}</Typography>}
@@ -205,21 +302,25 @@ const ProfilePhotoUploadForm = () => {
                         accept="image/*"
                         onChange={handlePhotoChangeLocal}
                         style={{ marginTop: 20 }}
-                        disabled={isFileInputDisabled} // Disable the input
+                        disabled={isFileInputDisabled}
                     />
+
                     {uploadError && <Typography color="error" sx={{ mt: 2 }}>{uploadError}</Typography>}
+
                     {photoPreviews.length > 0 && (
                         <div style={{ display: 'flex', marginTop: 10 }}>
                             {photoPreviews.map((preview, index) => (
-                                <img
-                                    key={index}
-                                    src={preview}
-                                    alt={`preview-${index}`}
-                                    style={{ width: 80, height: 80, marginRight: 10, objectFit: 'cover' }}
-                                />
+                                <div key={index} style={{ marginRight: 10 }}>
+                                    <SafeImage
+                                        src={preview}
+                                        alt={`preview-${index}`}
+                                        style={{ width: 80, height: 80, objectFit: 'cover' }}
+                                    />
+                                </div>
                             ))}
                         </div>
                     )}
+
                     <FormControlLabel
                         control={
                             <Checkbox
@@ -237,34 +338,52 @@ const ProfilePhotoUploadForm = () => {
                         variant="contained"
                         color="secondary"
                         onClick={handleUploadPhotosLocal}
-                        disabled={photos.length === 0 || uploading || !profileData || isFileInputDisabled} // Also disable if file input is disabled
+                        disabled={photos.length === 0 || uploading || !profileData || isFileInputDisabled}
                         sx={{ mt: 2 }}
                     >
-                        {uploading ? (
-                            <>
-                                <CircularProgress size={20} sx={{ mr: 1 }} />
-                                Uploading...
-                            </>
-                        ) : (
-                            'Upload Photos'
-                        )}
+                        {uploading ? <><CircularProgress size={20} sx={{ mr: 1 }} /> Uploading...</> : 'Upload Photos'}
                     </Button>
-                    {uploadError && <Typography color="error" sx={{ mt: 2 }}>{uploadError}</Typography>}
 
                     <Typography variant="h6" sx={{ mt: 4 }}>Uploaded Photos</Typography>
+
                     {gettingPhotos ? (
                         <CircularProgress sx={{ mt: 2 }} />
                     ) : (
                         <div style={{ display: 'flex', flexWrap: 'wrap', marginTop: 10 }}>
                             {uploadedPhotos.length > 0 ? (
                                 uploadedPhotos.map((photo, index) => (
-                                    <div key={index} style={{ marginRight: 10, marginBottom: 10 }}>
-                                        <img
-                                            src={`${config.photoBaseUrl}/${photo.path}`}
-                                            alt={`uploaded-${index}`}
-                                            style={{ width: 100, height: 100, objectFit: 'cover' }}
-                                        />
-                                        {photo.isDefault && <Typography variant="caption">Default</Typography>}
+                                    <div key={index} style={{ position: 'relative', marginRight: 10, marginBottom: 10 }}>
+                                        <div style={{ border: '1px solid #ccc', padding: 5 }}>
+                                            <SafeImage
+                                                src={getValidImageUrl(photo.fullUrl)}
+                                                alt={`uploaded-${index}`}
+                                                style={{ width: 100, height: 100, objectFit: 'cover' }}
+                                            />
+                                            {photo.isDefault && (
+                                                <div style={{
+                                                    position: 'absolute',
+                                                    bottom: 30,
+                                                    left: 0,
+                                                    right: 0,
+                                                    background: 'rgba(0,0,0,0.5)',
+                                                    color: 'white',
+                                                    textAlign: 'center',
+                                                    fontSize: '0.75rem'
+                                                }}>
+                                                    Default
+                                                </div>
+                                            )}
+                                            <Button
+                                                variant="contained"
+                                                color="error"
+                                                size="small"
+                                                onClick={() => handleDeletePhoto(photo.id)}
+                                                disabled={deletingPhoto}
+                                                sx={{ mt: 1, fontSize: '0.7rem', p: '2px 8px', width: '100%' }}
+                                            >
+                                                Delete
+                                            </Button>
+                                        </div>
                                     </div>
                                 ))
                             ) : (
@@ -272,16 +391,33 @@ const ProfilePhotoUploadForm = () => {
                             )}
                         </div>
                     )}
-                </div>
-            )}
-            {profileData && (
-                <Button
-                    variant="outlined"
-                    onClick={() => navigate('/dashboard')}
-                    sx={{ mt: 3 }}
-                >
-                    Back to Dashboard
-                </Button>
+
+                    <div style={{ marginTop: 20 }}>
+                        <Typography variant="h6">Default Photo</Typography>
+                        {defaultPhoto ? (
+                            <div style={{ marginTop: 10 }}>
+                                <SafeImage
+                                    src={getValidImageUrl(defaultPhoto.fullUrl)}
+                                    alt="Default profile photo"
+                                    style={{ width: 150, height: 150, objectFit: 'cover', border: '2px solid #4CAF50' }}
+                                    isDefault={true}
+                                />
+                            </div>
+                        ) : (
+                            <Typography>No default photo set.</Typography>
+                        )}
+                    </div>
+
+                    {deleteError && <Typography color="error" sx={{ mt: 2 }}>{deleteError}</Typography>}
+
+                    <Button
+                        variant="outlined"
+                        onClick={() => navigate('/dashboard')}
+                        sx={{ mt: 3 }}
+                    >
+                        Back to Dashboard
+                    </Button>
+                </>
             )}
         </Paper>
     );

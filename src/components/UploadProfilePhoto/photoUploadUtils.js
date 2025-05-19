@@ -1,10 +1,15 @@
 // src/components/UploadProfilePhoto/photoUploadUtils.js
 import axios from 'axios';
-import config from '../../config'; // Import the config
+import config from '../../config'; 
 
-// Use config variables instead of hardcoded URLs
-const API_BASE_URL = config.apiUrl;
-const PHOTO_BASE_URL = config.photoBaseUrl;
+function getApiBaseUrl() {
+  let url = config.apiUrl;
+  if (!url || url.includes('${') || url === '') {
+    console.warn('⚠️ Detected invalid API base URL, falling back to localhost.');
+    return 'http://localhost:3001/api';
+  }
+  return url;
+}
 
 export const handleSearchCriteriaChange = (event, setSearchCriteria, setProfileData, setPhotos, setPhotoPreviews, setFetchError, setUploadedPhotos, setDefaultPhoto) => {
     const { name, value } = event.target;
@@ -35,19 +40,21 @@ export const handleSearchProfile = async (searchCriteria, setProfileData, setFet
     setUploadedPhotos([]);
     setDefaultPhoto(null);
     setUploadError(null);
+    
+    const apiBaseUrl = getApiBaseUrl();
+    console.log('Debug (Utils): handleSearchProfile - Using API base URL:', apiBaseUrl);
+    
     try {
         console.log('Debug (Utils): handleSearchProfile - Calling search profile API with:', searchCriteria);
-        const response = await axios.post(`${API_BASE_URL}/search-by-upload`, searchCriteria);
+        const response = await axios.post(`${apiBaseUrl}/search-by-upload`, searchCriteria);
         console.log('Debug (Utils): handleSearchProfile - Search profile API raw response:', response);
         console.log('Debug (Utils): handleSearchProfile - Search profile API response data:', response.data);
-        console.log('Debug (Utils): handleSearchProfile - Type of response.data:', typeof response.data);
-        console.log('Debug (Utils): handleSearchProfile - Stringified response.data:', JSON.stringify(response.data));
 
         if (Array.isArray(response.data) && response.data.length > 0 && response.data[0].hasOwnProperty('profileId')) {
             const fetchedProfileData = response.data[0];
             setProfileData(fetchedProfileData); // Set profileData to the first object
             console.log('Debug (Utils): handleSearchProfile - profileData set to:', fetchedProfileData);
-            const profileId = fetchedProfileData.profileId; // <---- Extract the profileId
+            const profileId = fetchedProfileData.profileId; // Extract the profileId
             console.log('Debug (Utils): handleSearchProfile - Profile ID found:', profileId, 'Fetching uploaded photos and default photo.');
             await getUploadedPhotosFn(profileId, setUploadedPhotos, setFetchError, null); // Passing null for setGettingPhotos here as it's handled in the form
             await fetchDefaultPhotoFn(profileId, setDefaultPhoto, setFetchError);
@@ -112,10 +119,13 @@ export const handleUploadPhotos = async (profileData, photos, isDefaultPhoto, se
     formData.append('is_default', isDefaultPhoto);
 
     console.log('Debug (Utils): handleUploadPhotos - FormData contents (not directly loggable):', formData);
+    
+    const apiBaseUrl = getApiBaseUrl();
+    console.log('Debug (Utils): handleUploadPhotos - Using API base URL:', apiBaseUrl);
 
     try {
         console.log('Debug (Utils): handleUploadPhotos - Calling upload photos API with FormData.');
-        const response = await axios.post(`${API_BASE_URL}/upload-photos`, formData, {
+        const response = await axios.post(`${apiBaseUrl}/upload-photos`, formData, {
             headers: {
                 'Content-Type': 'multipart/form-data',
             },
@@ -137,41 +147,52 @@ export const handleUploadPhotos = async (profileData, photos, isDefaultPhoto, se
     }
 };
 
+// Proposed fix for photoUploadUtils.js - getUploadedPhotos function
 export const getUploadedPhotos = async (profileId, setUploadedPhotos, setFetchError, setGettingPhotos) => {
     if (!profileId) {
         console.log('Debug (Utils): getUploadedPhotos - No profile ID provided.');
         return;
     }
-    setGettingPhotos(true);
+    if (setGettingPhotos) setGettingPhotos(true);
     setFetchError(null);
     console.log('Debug (Utils): getUploadedPhotos - Fetching uploaded photos for profile ID:', profileId);
+    
+    const apiBaseUrl = getApiBaseUrl();
+    console.log('Debug (Utils): getUploadedPhotos - Using API base URL:', apiBaseUrl);
+    
     try {
-        const response = await axios.get(`${API_BASE_URL}/get-photos?profileId=${profileId}`);
+        const response = await axios.get(`${apiBaseUrl}/get-photos?profileId=${profileId}`);
         console.log('Debug (Utils): getUploadedPhotos - API response:', response.data);
+        
+        // Properly format the URLs to work both locally and in Azure
         const formattedPhotos = response.data.map(photo => {
-            // The photo_path from your database is the full local file path.
-            // We need to extract the filename and construct the URL
-            // based on the static serving route defined in the backend.
-
-            // 1. Normalize the path
-            const normalizedPath = photo.photo_path.replace(/\\/g, '/');
-            // 2. Split by forward slashes
-            const parts = normalizedPath.split('/');
-            // 3. Get the filename (last part)
-            const filename = parts[parts.length - 1];
-            // 4. Construct the URL using the static serving route and configuration
-            // const imageUrl = `ProfilePhotos/${filename}`;
-            const imageUrl = `${PHOTO_BASE_URL}/ProfilePhotos/${filename}`;
-
-            console.log('PHOTO_BASE_URL:', PHOTO_BASE_URL);
-console.log('Filename:', filename);
-console.log('Constructed imageUrl:', `${PHOTO_BASE_URL}/ProfilePhotos/${filename}`);
-
+            // Extract just the filename from the photo_path
+            const filename = photo.url ? photo.url.split('/').pop() : 
+                             photo.photo_path ? photo.photo_path.split(/[/\\]/).pop() : '';
+            
+            if (!filename) {
+                console.warn('Debug (Utils): getUploadedPhotos - Missing filename in photo:', photo);
+                return null; // Skip photos without valid filename
+            }
+            
+            // First extract the origin (protocol + host) from the API base URL
+            const apiUrlObj = new URL(apiBaseUrl);
+            const origin = `${apiUrlObj.protocol}//${apiUrlObj.host}`;
+            
+            // Construct the full URL - Use a consistent path pattern that matches the server's static file configuration
+            const fullUrl = `${origin}/profilePhotos/${filename}`;
+            
+            console.log('Debug (Utils): getUploadedPhotos - Constructed full URL:', fullUrl, 'from filename:', filename);
+            
             return {
-                path: imageUrl, // Store the relative URL path
-                isDefault: photo.is_default,
+                id: photo.id || photo.photo_id,
+                path: `/profilePhotos/${filename}`, // Store consistent relative URL path
+                fullUrl: fullUrl, // Full URL for displaying
+                filename: filename, // Store filename for reference
+                isDefault: photo.is_default === 1 || photo.is_default === true
             };
-        });
+        }).filter(Boolean); // Remove any null entries (photos without filenames)
+        
         setUploadedPhotos(formattedPhotos);
         console.log('Debug (Utils): getUploadedPhotos - Uploaded photos state updated:', formattedPhotos);
     } catch (error) {
@@ -179,11 +200,12 @@ console.log('Constructed imageUrl:', `${PHOTO_BASE_URL}/ProfilePhotos/${filename
         setFetchError('Error fetching uploaded photos.');
         console.log('Debug (Utils): getUploadedPhotos - Fetch failed:', error);
     } finally {
-        setGettingPhotos(false);
+        if (setGettingPhotos) setGettingPhotos(false);
         console.log('Debug (Utils): getUploadedPhotos - Fetch complete.');
     }
 };
 
+// Proposed fix for fetchDefaultPhoto function
 export const fetchDefaultPhoto = async (profileId, setDefaultPhoto, setFetchError) => {
     if (!profileId) {
         setDefaultPhoto(null);
@@ -192,26 +214,75 @@ export const fetchDefaultPhoto = async (profileId, setDefaultPhoto, setFetchErro
     }
     setFetchError(null);
     console.log('Debug (Utils): fetchDefaultPhoto - Fetching default photo for profile ID:', profileId);
+    
+    const apiBaseUrl = getApiBaseUrl();
+    console.log('Debug (Utils): fetchDefaultPhoto - Using API base URL:', apiBaseUrl);
+    
     try {
-        const response = await axios.get(`${API_BASE_URL}/get-default-photo?profileId=${profileId}`);
+        const response = await axios.get(`${apiBaseUrl}/get-default-photo?profileId=${profileId}`);
         console.log('Debug (Utils): fetchDefaultPhoto - API response:', response.data);
-        setDefaultPhoto(response.data ? response.data.filename : null);
-        console.log('Debug (Utils): fetchDefaultPhoto - Default photo state updated:', response.data ? response.data.filename : null);
+        
+        if (response.data && (response.data.url || response.data.photo_path)) {
+            // Extract the filename from either url or photo_path
+            const filename = response.data.url ? response.data.url.split('/').pop() : 
+                            response.data.photo_path ? response.data.photo_path.split(/[/\\]/).pop() : 
+                            response.data.filename || '';
+
+            if (!filename) {
+                console.warn('Debug (Utils): fetchDefaultPhoto - Missing filename in response:', response.data);
+                setDefaultPhoto(null);
+                return;
+            }
+            
+            // Extract the origin (protocol + host) from the API base URL
+            const apiUrlObj = new URL(apiBaseUrl);
+            const origin = `${apiUrlObj.protocol}//${apiUrlObj.host}`;
+            
+            // Construct the full URL with a consistent path
+            const fullUrl = `${origin}/profilePhotos/${filename}`;
+            
+            console.log('Debug (Utils): fetchDefaultPhoto - Constructed full URL:', fullUrl);
+            
+            setDefaultPhoto({
+                id: response.data.id || response.data.photo_id,
+                url: `/profilePhotos/${filename}`,
+                fullUrl: fullUrl,
+                filename: filename
+            });
+            console.log('Debug (Utils): fetchDefaultPhoto - Default photo state updated:', response.data);
+        } else {
+            setDefaultPhoto(null);
+        }
     } catch (error) {
         console.error('Debug (Utils): fetchDefaultPhoto - Error fetching default photo:', error);
         setFetchError('Error fetching default photo.');
         console.log('Debug (Utils): fetchDefaultPhoto - Fetch failed:', error);
     }
 };
-export const deletePhoto = async (photoPath, setDeleteError, setDeletingPhoto) => {
+
+export const deletePhoto = async (photoId, setDeleteError, setDeletingPhoto, onDeleteSuccess) => {
+    if (!photoId) {
+        console.log('Debug (Utils): deletePhoto - No photo ID provided.');
+        return;
+    }
+    
     setDeletingPhoto(true);
     setDeleteError(null);
-    console.log('Debug (Utils): deletePhoto - Deleting photo:', photoPath);
+    console.log('Debug (Utils): deletePhoto - Deleting photo ID:', photoId);
+    
+    const apiBaseUrl = getApiBaseUrl();
+    console.log('Debug (Utils): deletePhoto - Using API base URL:', apiBaseUrl);
+    
     try {
-        const response = await axios.delete(`${API_BASE_URL}/delete-photo?photoPath=${photoPath}`);
+        const response = await axios.delete(`${apiBaseUrl}/delete-photo?photoId=${photoId}`);
         console.log('Debug (Utils): deletePhoto - API response:', response.data);
         setDeleteError(null);
         console.log('Debug (Utils): deletePhoto - Photo deleted successfully.');
+        
+        // Call the success callback if provided
+        if (onDeleteSuccess && typeof onDeleteSuccess === 'function') {
+            onDeleteSuccess();
+        }
     } catch (error) {
         console.error('Debug (Utils): deletePhoto - Error deleting photo:', error);
         setDeleteError('Error deleting photo.');

@@ -1,25 +1,43 @@
-// src/utils/photoUploadUtils.js
+// src/components/UploadProfilePhoto/photoUploadUtils.js
 import axios from 'axios';
-import config from '../config'; // Import the config
+import config from '../../config'; // Import the config
 
 // Use config for API URL
 const API_URL = config.apiUrl;
-const PHOTO_BASE_URL = config.photoBaseUrl;
+const PHOTO_BASE_URL = config.photoBaseUrl || API_URL;
 
 // Search Profile Function
-export const handleSearchProfile = async (searchCriteria, setProfileData, setFetchError, setSearching, setUploadedPhotos, setDefaultPhoto) => {
+export const handleSearchProfile = async (
+    searchCriteria, 
+    setProfileData, 
+    setFetchError, 
+    setSearching, 
+    setUploadedPhotos, 
+    setDefaultPhoto,
+    setUploadError,
+    getUploadedPhotosFunc,
+    fetchDefaultPhotoFunc
+) => {
     setProfileData(null);
     setFetchError(null);
     setSearching(true);
     setUploadedPhotos([]);
     setDefaultPhoto(null);
+    if (setUploadError) {
+        setUploadError(null);
+    }
+    
     try {
         const response = await axios.post(`${API_URL}/search-by-upload`, searchCriteria);
         const data = response.data;
         if (data && data.length > 0) {
             setProfileData(data[0]);
-            await getUploadedPhotos(data[0].id, setUploadedPhotos, setUploadError);
-            await fetchDefaultPhoto(data[0].id, setDefaultPhoto);
+            if (getUploadedPhotosFunc) {
+                await getUploadedPhotosFunc(data[0].id, setUploadedPhotos, setFetchError);
+            }
+            if (fetchDefaultPhotoFunc) {
+                await fetchDefaultPhotoFunc(data[0].id, setDefaultPhoto, setFetchError);
+            }
         } else {
             setFetchError('No profile found matching the search criteria.');
         }
@@ -37,28 +55,20 @@ export const handleSearchProfile = async (searchCriteria, setProfileData, setFet
     }
 };
 
-// Handle Search Criteria
-export const handleSearchCriteriaChange = (event, setSearchCriteria, setProfileData, setPhotos, setPhotoPreviews, setFetchError, setUploadedPhotos, setDefaultPhoto) => {
-    const { name, value } = event.target;
-    setSearchCriteria(prevState => ({
-        ...prevState,
-        [name]: value,
-    }));
-    setProfileData(null);
-    setPhotos([]);
-    setPhotoPreviews([]);
-    setFetchError(null);
-    setUploadedPhotos([]);
-    setDefaultPhoto(null);
-};
-
 // Handle Photo Selection
-export const handlePhotoChange = (event, setPhotos, setPhotoPreviews) => {
-    const files = Array.from(event.target.files).slice(0, 5);
+export const handlePhotoChange = (event, setPhotos, setPhotoPreviews, setUploadError, currentPhotoCount) => {
+    const files = Array.from(event.target.files);
+    
+    // Check if adding these photos would exceed the 5 photo limit
+    if (files.length + currentPhotoCount > 5) {
+        setUploadError(`You can only upload a maximum of 5 photos (${currentPhotoCount} already uploaded).`);
+        return;
+    }
+    
     setPhotos(files);
-
     setPhotoPreviews([]);
     const newPreviews = [];
+    
     for (let i = 0; i < files.length; i++) {
         const reader = new FileReader();
         reader.onloadend = () => {
@@ -72,7 +82,22 @@ export const handlePhotoChange = (event, setPhotos, setPhotoPreviews) => {
 };
 
 // Handle Photo Upload
-export const handleUploadPhotos = async (profileData, photos, isDefaultPhoto, setUploading, setUploadError, setPhotosState, setPhotoPreviews, setIsDefaultPhoto, getUploadedPhotos, fetchDefaultPhoto) => {
+export const handleUploadPhotos = async (
+    profileData, 
+    photos, 
+    isDefaultPhoto, 
+    setUploading, 
+    setUploadError, 
+    setPhotosState, 
+    setPhotoPreviews, 
+    setIsDefaultPhoto,
+    getUploadedPhotosFunc,
+    fetchDefaultPhotoFunc,
+    setUploadedPhotos,
+    setDefaultPhoto,
+    setGettingPhotos,
+    setFetchError
+) => {
     if (!profileData) {
         alert('Please search and find a profile first.');
         return;
@@ -89,7 +114,7 @@ export const handleUploadPhotos = async (profileData, photos, isDefaultPhoto, se
     const formDataToSend = new FormData();
     formDataToSend.append('profile_id', profileData.id);
     formDataToSend.append('email', profileData.email);
-    formDataToSend.append('is_default', isDefaultPhoto);
+    formDataToSend.append('is_default', isDefaultPhoto ? 'true' : 'false');
     photos.forEach(photo => {
         formDataToSend.append('photos', photo);
     });
@@ -100,62 +125,128 @@ export const handleUploadPhotos = async (profileData, photos, isDefaultPhoto, se
                 'Content-Type': 'multipart/form-data',
             },
         });
+        
         if (response.status === 200) {
             alert('Photos uploaded successfully!');
             setPhotosState([]);
             setPhotoPreviews([]);
             setIsDefaultPhoto(false);
-            await getUploadedPhotos(profileData.id);
-            await fetchDefaultPhoto(profileData.id);
+            
+            // Refresh the photos list
+            if (getUploadedPhotosFunc) {
+                await getUploadedPhotosFunc(
+                    profileData.id, 
+                    setUploadedPhotos, 
+                    setFetchError,
+                    setGettingPhotos
+                );
+            }
+            
+            // Refresh the default photo
+            if (fetchDefaultPhotoFunc) {
+                await fetchDefaultPhotoFunc(
+                    profileData.id, 
+                    setDefaultPhoto,
+                    setFetchError
+                );
+            }
         } else {
             setUploadError(response.data.message || 'Failed to upload photos.');
         }
     } catch (error) {
-        setUploadError('Error uploading photos.');
+        console.error("Upload error:", error);
+        setUploadError(error.response?.data?.message || 'Error uploading photos.');
     } finally {
         setUploading(false);
     }
 };
 
 // Get Uploaded Photos
-export const getUploadedPhotos = async (profileId, setUploadedPhotos, setUploadError) => {
+export const getUploadedPhotos = async (profileId, setUploadedPhotos, setFetchError, setGettingPhotos) => {
+    if (setGettingPhotos) {
+        setGettingPhotos(true);
+    }
+    
     try {
         const response = await axios.get(`${API_URL}/get-photos?profileId=${profileId}`);
         
-        // Transform the response data to use the configured photo base URL
-        setUploadedPhotos(response.data.map(photo => {
-            // Extract filename from the photo path
-            const normalizedPath = photo.photo_path.replace(/\\/g, '/');
-            const parts = normalizedPath.split('/');
-            const filename = parts[parts.length - 1];
-            
-            return {
-                path: `ProfilePhotos/${filename}`,
-                isDefault: photo.is_default
-            };
-        }));
+        if (response.data && Array.isArray(response.data)) {
+            // Transform the response data to include full URLs
+            setUploadedPhotos(response.data.map(photo => {
+                // Extract filename from the photo path
+                const normalizedPath = photo.photo_path.replace(/\\/g, '/');
+                const parts = normalizedPath.split('/');
+                const filename = parts[parts.length - 1];
+                
+                return {
+                    id: photo.id,
+                    path: `ProfilePhotos/${filename}`,
+                    fullUrl: `${PHOTO_BASE_URL}/ProfilePhotos/${filename}`,
+                    isDefault: photo.is_default === 1 || photo.is_default === true
+                };
+            }));
+        } else {
+            setUploadedPhotos([]);
+        }
     } catch (error) {
         console.error("Error fetching photos:", error);
-        setUploadError("Failed to load uploaded photos.");
+        setFetchError("Failed to load uploaded photos.");
+        setUploadedPhotos([]);
+    } finally {
+        if (setGettingPhotos) {
+            setGettingPhotos(false);
+        }
     }
 };
 
 // Get Default Photo
-export const fetchDefaultPhoto = async (profileId, setDefaultPhoto) => {
+export const fetchDefaultPhoto = async (profileId, setDefaultPhoto, setFetchError) => {
     try {
         const response = await axios.get(`${API_URL}/get-default-photo?profileId=${profileId}`);
-        if (response.data) {
+        if (response.data && response.data.photo_path) {
             // Extract filename from the photo path
             const normalizedPath = response.data.photo_path.replace(/\\/g, '/');
             const parts = normalizedPath.split('/');
             const filename = parts[parts.length - 1];
             
-            setDefaultPhoto(`ProfilePhotos/${filename}`);
+            setDefaultPhoto(`${PHOTO_BASE_URL}/ProfilePhotos/${filename}`);
         } else {
             setDefaultPhoto(null);
         }
     } catch (error) {
         console.error("Error fetching default photo:", error);
+        if (setFetchError) {
+            setFetchError("Failed to load default photo.");
+        }
         setDefaultPhoto(null);
+    }
+};
+
+// Delete Photo
+export const deletePhoto = async (photoId, setDeleteError, setDeletingPhoto, onSuccess) => {
+    if (!photoId) {
+        setDeleteError("No photo ID provided for deletion");
+        return;
+    }
+    
+    setDeletingPhoto(true);
+    setDeleteError(null);
+    
+    try {
+        const response = await axios.delete(`${API_URL}/delete-photo/${photoId}`);
+        
+        if (response.status === 200) {
+            alert('Photo deleted successfully!');
+            if (onSuccess && typeof onSuccess === 'function') {
+                await onSuccess();
+            }
+        } else {
+            setDeleteError(response.data.message || 'Failed to delete photo.');
+        }
+    } catch (error) {
+        console.error("Delete error:", error);
+        setDeleteError(error.response?.data?.message || 'Error deleting photo.');
+    } finally {
+        setDeletingPhoto(false);
     }
 };
