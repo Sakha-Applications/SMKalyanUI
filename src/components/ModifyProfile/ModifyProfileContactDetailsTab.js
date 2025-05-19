@@ -8,7 +8,7 @@ const ModifyProfileContactDetailsTab = ({ formData, handleChange, isActive, tabI
         console.log("Contact Details formData:", formData);
     }, [formData]);
 
-    // Initialize all fields if they exist but aren't loaded yet
+    // Initialize all fields only ONCE when the component first mounts
     useEffect(() => {
         // Email
         if (formData.email && formData.email.trim() !== "") {
@@ -64,7 +64,7 @@ const ModifyProfileContactDetailsTab = ({ formData, handleChange, isActive, tabI
             };
             handleChange(syntheticEvent);
         }
-    }, [formData]);
+    }, []); // Empty dependency array means this runs ONLY ONCE when component mounts
 
     if (!isActive) return null;
 
