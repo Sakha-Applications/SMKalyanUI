@@ -1,21 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography'; 
-import TextField from '@mui/material/TextField';
-import Button from '@mui/material/Button';
-import FormControl from '@mui/material/FormControl';
-import Select from '@mui/material/Select';
-import MenuItem from '@mui/material/MenuItem';
-import Paper from '@mui/material/Paper';
-import Container from '@mui/material/Container';
-import Grid from '@mui/material/Grid';
-import Alert from '@mui/material/Alert';
-import Snackbar from '@mui/material/Snackbar';
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableRow from '@mui/material/TableRow';
+import { 
+  Box, 
+  Typography, 
+  TextField, 
+  Button, 
+  FormControl, 
+  Select, 
+  MenuItem,
+  Paper,
+  Container,
+  Grid,
+  Alert,
+  Snackbar
+} from "@mui/material";
 import { Link } from 'react-router-dom';
 
 function Donate() {
@@ -333,72 +330,7 @@ useEffect(() => {
             Donate to Support Us
           </Typography>
           
-          {/* Payment Details Section - Moved before offline donation details */}
-          <Grid container spacing={3} sx={{ mb: 4 }}>
-            {/* Bank Details - Left side */}
-            <Grid item xs={12} md={6}>
-              <Box sx={{ bgcolor: "#f9f9f9", p: 3, borderRadius: 2, height: "100%" }}>
-                <Typography variant="h6" sx={{ fontWeight: "bold", color: "#333", mb: 2 }}>
-                  Bank Account Details
-                </Typography>
-                <Box>
-                  <Table>
-                    <TableBody>
-                      <TableRow>
-                        <TableCell sx={{ fontWeight: "medium", color: "#555", borderBottom: "1px solid #eee" }}>Account Name:</TableCell>
-                        <TableCell sx={{ borderBottom: "1px solid #eee" }}>ProfileConnect</TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell sx={{ fontWeight: "medium", color: "#555", borderBottom: "1px solid #eee" }}>Account Number:</TableCell>
-                        <TableCell sx={{ borderBottom: "1px solid #eee" }}>1234567790</TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell sx={{ fontWeight: "medium", color: "#555", borderBottom: "1px solid #eee" }}>IFSC Code:</TableCell>
-                        <TableCell sx={{ borderBottom: "1px solid #eee" }}>ABCD0002234</TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell sx={{ fontWeight: "medium", color: "#555", borderBottom: "none" }}>Bank:</TableCell>
-                        <TableCell sx={{ borderBottom: "none" }}>Example Bank</TableCell>
-                      </TableRow>
-                    </TableBody>
-                  </Table>
-                </Box>
-              </Box>
-            </Grid>
-            
-            {/* UPI Details - Right side */}
-            <Grid item xs={12} md={6}>
-              <Box sx={{ bgcolor: "#f9f9f9", p: 3, borderRadius: 2, height: "100%" }}>
-                <Typography variant="h6" sx={{ fontWeight: "bold", color: "#333", mb: 2 }}>
-                  UPI Payment Details
-                </Typography>
-                <Box>
-                  <Table>
-                    <TableBody>
-                      <TableRow>
-                        <TableCell sx={{ fontWeight: "medium", color: "#555", borderBottom: "1px solid #eee" }}>UPI ID:</TableCell>
-                        <TableCell sx={{ borderBottom: "1px solid #eee" }}>profileconnect@upi</TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell sx={{ fontWeight: "medium", color: "#555", borderBottom: "1px solid #eee" }}>Account Name:</TableCell>
-                        <TableCell sx={{ borderBottom: "1px solid #eee" }}>ProfileConnect</TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell sx={{ fontWeight: "medium", color: "#555", borderBottom: "1px solid #eee" }}>UPI Phone Number:</TableCell>
-                        <TableCell sx={{ borderBottom: "1px solid #eee" }}>9845473728</TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell sx={{ fontWeight: "medium", color: "#555", borderBottom: "none" }}>Note:</TableCell>
-                        <TableCell sx={{ borderBottom: "none" }}>Provide Under Additional Details</TableCell>
-                      </TableRow>
-                    </TableBody>
-                  </Table>
-                </Box>
-              </Box>
-            </Grid>
-          </Grid>
-          
-          <Box component="form" onSubmit={handleSubmitDonation} sx={{ mt: 4 }}>
+          <Box component="form" onSubmit={handleSubmitDonation} sx={{ mt: 2 }}>
             <Typography variant="h6" sx={{ color: "#333", fontWeight: "bold", mb: 2 }}>
               Offline Donation Details
             </Typography>
@@ -409,6 +341,11 @@ useEffect(() => {
             <Box
               sx={{
                 mt: 2,
+                display: "grid",
+                gridTemplateColumns: "2fr 8fr",
+                gap: 3,
+                alignItems: "center",
+                justifyContent: "center",
                 p: 4,
                 backgroundColor: "#f9f9f9",
                 borderRadius: 2,
@@ -416,214 +353,184 @@ useEffect(() => {
                 margin: "auto",
               }}
             >
-              <Grid container spacing={3}>
-                {/* Row 1 */}
-                <Grid item xs={12} sm={6} md={3}>
-                  <Typography sx={{ fontWeight: "bold", color: "#444", mb: 1 }}>Profile ID:</Typography>
-                  <TextField
-                    name="profileId"
-                    value={donationInfo.profileId}
-                    onChange={handleInputChange}
-                    variant="outlined"
-                    size="small"
-                    fullWidth
-                    disabled
-                    sx={{ bgcolor: "white", borderRadius: 1 }}
-                  />
-                </Grid>
-                
-                <Grid item xs={12} sm={6} md={3}>
-                  <Typography sx={{ fontWeight: "bold", color: "#444", mb: 1 }}>Your Name:<span style={{ color: 'red' }}>*</span></Typography>
-                  <TextField
-                    name="donorName"
-                    value={donationInfo.donorName}
-                    onChange={handleInputChange}
-                    variant="outlined"
-                    size="small"
-                    fullWidth
-                    required
-                    sx={{ bgcolor: "white", borderRadius: 1 }}
-                  />
-                </Grid>
-                
-                <Grid item xs={12} sm={6} md={3}>
-                  <Typography sx={{ fontWeight: "bold", color: "#444", mb: 1 }}>Email:<span style={{ color: 'red' }}>*</span></Typography>
-                  <TextField
-                    name="email"
-                    value={donationInfo.email}
-                    onChange={handleInputChange}
-                    variant="outlined"
-                    size="small"
-                    fullWidth
-                    required
-                    sx={{ bgcolor: "white", borderRadius: 1 }}
-                  />
-                </Grid>
+              {/* Profile ID */}
+              <Typography sx={{ fontWeight: "bold", color: "#444" }}>Profile ID:</Typography>
+              <TextField
+                name="profileId"
+                value={donationInfo.profileId}
+                onChange={handleInputChange}
+                variant="outlined"
+                size="small"
+                fullWidth
+                disabled
+                sx={{ bgcolor: "white", borderRadius: 1 }}
+              />
+              
+              {/* Your Name */}
+              <Typography sx={{ fontWeight: "bold", color: "#444" }}>Your Name:<span style={{ color: 'red' }}>*</span></Typography>
+              <TextField
+                name="donorName"
+                value={donationInfo.donorName}
+                onChange={handleInputChange}
+                variant="outlined"
+                size="small"
+                fullWidth
+                required
+                sx={{ bgcolor: "white", borderRadius: 1 }}
+              />
+              
+              {/* Email */}
+              <Typography sx={{ fontWeight: "bold", color: "#444" }}>Email:<span style={{ color: 'red' }}>*</span></Typography>
+              <TextField
+                name="email"
+                value={donationInfo.email}
+                onChange={handleInputChange}
+                variant="outlined"
+                size="small"
+                fullWidth
+                required
+                sx={{ bgcolor: "white", borderRadius: 1 }}
+              />
 
-                <Grid item xs={12} sm={6} md={3}>
-                  <Typography sx={{ fontWeight: "bold", color: "#444", mb: 1 }}>Phone Number:<span style={{ color: 'red' }}>*</span></Typography>
+              {/* Phone */}
+              <Typography sx={{ fontWeight: "bold", color: "#444" }}>Phone Number:<span style={{ color: 'red' }}>*</span></Typography>
+              <TextField
+                name="phoneNumber"
+                value={donationInfo.phoneNumber}
+                onChange={handleInputChange}
+                variant="outlined"
+                size="small"
+                fullWidth
+                required
+                sx={{ bgcolor: "white", borderRadius: 1 }}
+              />
+              
+
+              {/* Amount */}
+              <Typography sx={{ fontWeight: "bold", color: "#444" }}>Amount:<span style={{ color: 'red' }}>*</span></Typography>
+              <FormControl fullWidth required sx={{ bgcolor: "white", borderRadius: 1 }}>
+                <Select
+                  name="amount"
+                  value={donationInfo.amount}
+                  onChange={handleInputChange}
+                  size="small"
+                >
+                  <MenuItem value="500">₹500</MenuItem>
+                  <MenuItem value="1000">₹1000</MenuItem>
+                  <MenuItem value="2000">₹2000</MenuItem>
+                  <MenuItem value="5000">₹5000</MenuItem>
+                  <MenuItem value="10000">₹10000</MenuItem>
+                  <MenuItem value="other">Other Amount</MenuItem>
+                </Select>
+              </FormControl>
+              
+              {/* Custom Amount (conditional) */}
+              {donationInfo.amount === 'other' && (
+                <>
+                  <Typography sx={{ fontWeight: "bold", color: "#444" }}>Custom Amount:<span style={{ color: 'red' }}>*</span></Typography>
                   <TextField
-                    name="phoneNumber"
-                    value={donationInfo.phoneNumber}
-                    onChange={handleInputChange}
+                    name="customAmount"
+                    type="number"
+                    value={customAmount}
+                    onChange={(e) => {
+                      console.debug(`[Donate] Custom amount changed: ${e.target.value}`);
+                      setCustomAmount(e.target.value);
+                    }}
+                    InputProps={{ inputProps: { min: 100 } }}
                     variant="outlined"
                     size="small"
                     fullWidth
                     required
+                    placeholder="₹"
                     sx={{ bgcolor: "white", borderRadius: 1 }}
                   />
+                </>
+              )}
+              
+              {/* Payment Method */}
+              <Typography sx={{ fontWeight: "bold", color: "#444" }}>Payment Method:<span style={{ color: 'red' }}>*</span></Typography>
+              <FormControl fullWidth required sx={{ bgcolor: "white", borderRadius: 1 }}>
+                <Select
+                  name="paymentMethod"
+                  value={donationInfo.paymentMethod}
+                  onChange={handleInputChange}
+                  size="small"
+                >
+                  <MenuItem value="UPI">UPI</MenuItem>
+                  <MenuItem value="bank_transfer">Bank Transfer</MenuItem>
+                  <MenuItem value="check">Check/DD</MenuItem>
+                </Select>
+              </FormControl>
+              
+              {/* Payment Reference - New Mandatory Field */}
+              <Typography sx={{ fontWeight: "bold", color: "#444" }}>Payment Reference:<span style={{ color: 'red' }}>*</span></Typography>
+              <TextField
+                name="paymentReference"
+                value={donationInfo.paymentReference}
+                onChange={handleInputChange}
+                variant="outlined"
+                size="small"
+                fullWidth
+                required
+                placeholder="Enter a unique reference number"
+                sx={{ bgcolor: "white", borderRadius: 1 }}
+              />
+              
+              {/* Payment Details */}
+              <Typography sx={{ fontWeight: "bold", color: "#444" }}>Additional Details:</Typography>
+              <TextField
+                name="transactionDetails"
+                value={donationInfo.transactionDetails}
+                onChange={handleInputChange}
+                variant="outlined"
+                size="small"
+                fullWidth
+                multiline
+                rows={3}
+                placeholder="Enter bank transaction ID, check number, or other payment details if applicable"
+                sx={{ bgcolor: "white", borderRadius: 1 }}
+              />
+            </Box>
+              
+            <Box sx={{ bgcolor: "#f9f9f9", p: 3, borderRadius: 2, mt: 4, mb: 4 }}>
+              <Typography variant="h6" sx={{ fontWeight: "bold", color: "#333", mb: 2 }}>
+                Bank Account Details
+              </Typography>
+              <Grid container spacing={1}>
+                <Grid item xs={4} sm={3}>
+                  <Typography sx={{ fontWeight: "medium", color: "#555" }}>Account Name:</Typography>
+                </Grid>
+                <Grid item xs={8} sm={9}>
+                  <Typography>ProfileConnect</Typography>
                 </Grid>
                 
-                {/* Row 2 */}
-                <Grid item xs={12} sm={6} md={3}>
-                  <Typography sx={{ fontWeight: "bold", color: "#444", mb: 1 }}>Amount:<span style={{ color: 'red' }}>*</span></Typography>
-                  <FormControl fullWidth required sx={{ bgcolor: "white", borderRadius: 1 }}>
-                    <Select
-                      name="amount"
-                      value={donationInfo.amount}
-                      onChange={handleInputChange}
-                      size="small"
-                    >
-                      <MenuItem value="500">₹500</MenuItem>
-                      <MenuItem value="1000">₹1000</MenuItem>
-                      <MenuItem value="2000">₹2000</MenuItem>
-                      <MenuItem value="5000">₹5000</MenuItem>
-                      <MenuItem value="10000">₹10000</MenuItem>
-                      <MenuItem value="other">Other Amount</MenuItem>
-                    </Select>
-                  </FormControl>
+                <Grid item xs={4} sm={3}>
+                  <Typography sx={{ fontWeight: "medium", color: "#555" }}>Account Number:</Typography>
+                </Grid>
+                <Grid item xs={8} sm={9}>
+                  <Typography>1234567890</Typography>
                 </Grid>
                 
-                <Grid item xs={12} sm={6} md={3}>
-                  {donationInfo.amount === 'other' ? (
-                    <>
-                      <Typography sx={{ fontWeight: "bold", color: "#444", mb: 1 }}>Custom Amount:<span style={{ color: 'red' }}>*</span></Typography>
-                      <TextField
-                        name="customAmount"
-                        type="number"
-                        value={customAmount}
-                        onChange={(e) => {
-                          console.debug(`[Donate] Custom amount changed: ${e.target.value}`);
-                          setCustomAmount(e.target.value);
-                        }}
-                        InputProps={{ inputProps: { min: 100 } }}
-                        variant="outlined"
-                        size="small"
-                        fullWidth
-                        required
-                        placeholder="₹"
-                        sx={{ bgcolor: "white", borderRadius: 1 }}
-                      />
-                    </>
-                  ) : (
-                    <>
-                      <Typography sx={{ fontWeight: "bold", color: "#444", mb: 1 }}>Payment Method:<span style={{ color: 'red' }}>*</span></Typography>
-                      <FormControl fullWidth required sx={{ bgcolor: "white", borderRadius: 1 }}>
-                        <Select
-                          name="paymentMethod"
-                          value={donationInfo.paymentMethod}
-                          onChange={handleInputChange}
-                          size="small"
-                        >
-                          <MenuItem value="UPI">UPI</MenuItem>
-                          <MenuItem value="bank_transfer">Bank Transfer</MenuItem>
-                          <MenuItem value="check">Check/DD</MenuItem>
-                        </Select>
-                      </FormControl>
-                    </>
-                  )}
+                <Grid item xs={4} sm={3}>
+                  <Typography sx={{ fontWeight: "medium", color: "#555" }}>IFSC Code:</Typography>
+                </Grid>
+                <Grid item xs={8} sm={9}>
+                  <Typography>ABCD0001234</Typography>
                 </Grid>
                 
-                <Grid item xs={12} sm={6} md={3}>
-                  {donationInfo.amount === 'other' ? (
-                    <>
-                      <Typography sx={{ fontWeight: "bold", color: "#444", mb: 1 }}>Payment Method:<span style={{ color: 'red' }}>*</span></Typography>
-                      <FormControl fullWidth required sx={{ bgcolor: "white", borderRadius: 1 }}>
-                        <Select
-                          name="paymentMethod"
-                          value={donationInfo.paymentMethod}
-                          onChange={handleInputChange}
-                          size="small"
-                        >
-                          <MenuItem value="UPI">UPI</MenuItem>
-                          <MenuItem value="bank_transfer">Bank Transfer</MenuItem>
-                          <MenuItem value="check">Check/DD</MenuItem>
-                        </Select>
-                      </FormControl>
-                    </>
-                  ) : (
-                    <>
-                      <Typography sx={{ fontWeight: "bold", color: "#444", mb: 1 }}>Payment Reference:<span style={{ color: 'red' }}>*</span></Typography>
-                      <TextField
-                        name="paymentReference"
-                        value={donationInfo.paymentReference}
-                        onChange={handleInputChange}
-                        variant="outlined"
-                        size="small"
-                        fullWidth
-                        required
-                        placeholder="Enter a unique reference number"
-                        sx={{ bgcolor: "white", borderRadius: 1 }}
-                      />
-                    </>
-                  )}
+                <Grid item xs={4} sm={3}>
+                  <Typography sx={{ fontWeight: "medium", color: "#555" }}>Bank:</Typography>
                 </Grid>
-                
-                <Grid item xs={12} sm={6} md={3}>
-                  {donationInfo.amount === 'other' ? (
-                    <>
-                      <Typography sx={{ fontWeight: "bold", color: "#444", mb: 1 }}>Payment Reference:<span style={{ color: 'red' }}>*</span></Typography>
-                      <TextField
-                        name="paymentReference"
-                        value={donationInfo.paymentReference}
-                        onChange={handleInputChange}
-                        variant="outlined"
-                        size="small"
-                        fullWidth
-                        required
-                        placeholder="Enter a unique reference number"
-                        sx={{ bgcolor: "white", borderRadius: 1 }}
-                      />
-                    </>
-                  ) : (
-                    <>
-                      <Typography sx={{ fontWeight: "bold", color: "#444", mb: 1 }}>Additional Details:</Typography>
-                      <TextField
-                        name="transactionDetails"
-                        value={donationInfo.transactionDetails}
-                        onChange={handleInputChange}
-                        variant="outlined"
-                        size="small"
-                        fullWidth
-                        placeholder="Enter the additional details."
-                        sx={{ bgcolor: "white", borderRadius: 1 }}
-                      />
-                    </>
-                  )}
+                <Grid item xs={8} sm={9}>
+                  <Typography>Example Bank</Typography>
                 </Grid>
-                
-                {/* Row 3 - Only show if custom amount is selected */}
-                {donationInfo.amount === 'other' && (
-                  <Grid item xs={12}>
-                    <Typography sx={{ fontWeight: "bold", color: "#444", mb: 1 }}>Additional Details:</Typography>
-                    <TextField
-                      name="transactionDetails"
-                      value={donationInfo.transactionDetails}
-                      onChange={handleInputChange}
-                      variant="outlined"
-                      size="small"
-                      fullWidth
-                      multiline
-                      rows={2}
-                      placeholder="Enter Additional Details if applicable"
-                      sx={{ bgcolor: "white", borderRadius: 1 }}
-                    />
-                  </Grid>
-                )}
               </Grid>
+              <Typography variant="body2" sx={{ color: "#555", mt: 2, fontSize: "0.875rem" }}>
+                Please use your name as reference when making a bank transfer.
+              </Typography>
             </Box>
             
-            <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
+            <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
               <Button
                 type="submit"
                 variant="contained"
