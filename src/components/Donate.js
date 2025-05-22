@@ -389,7 +389,7 @@ useEffect(() => {
                       </TableRow>
                       <TableRow>
                         <TableCell sx={{ fontWeight: "medium", color: "#555", borderBottom: "none" }}>Note:</TableCell>
-                        <TableCell sx={{ borderBottom: "none" }}>Provide unique reference no and adiitional details Under Additional Details</TableCell>
+                        <TableCell sx={{ borderBottom: "none" }}>Provide tran unique ref no</TableCell>
                       </TableRow>
                     </TableBody>
                   </Table>

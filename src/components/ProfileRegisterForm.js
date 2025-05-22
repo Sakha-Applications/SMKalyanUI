@@ -33,10 +33,10 @@ const ProfileDetails = () => {
 
     const handleSubmit = async () => {
         // Validation (as before)
-        if (!/^\d{10}$/.test(formData.phone)) {
-            alert("Phone number must be exactly 10 digits.");
-            return;
-        }
+      //  if (!/^\d{10}$/.test(formData.phone)) {
+        //    alert("Phone number must be exactly 10 digits.");
+          //  return;
+       // }
 
         if (!formData.dob) {
             alert("Date of Birth is mandatory.");
