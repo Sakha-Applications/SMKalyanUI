@@ -22,14 +22,14 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
 const API_BASE_URL = 'http://localhost:3001';
-const BACKEND_DEFAULT_IMAGE_URL = '/ProfilePhotos/defaultImage.jpg'; // URL to your backend's default image
+const BACKEND_DEFAULT_IMAGE_URL = '/ProfilePhotos/defaultImage.jpg';
 
 const SharingContactDetails = () => {
     const location = useLocation();
     const navigate = useNavigate();
     const { state } = location;
     const profile = state ? state.profile : null;
-    const userEmail = sessionStorage.getItem('userEmail') || ''; // Assuming user email is stored in session
+    const userEmail = sessionStorage.getItem('userEmail') || '';
     const [emailDialogOpen, setEmailDialogOpen] = useState(false);
     const [emailAddress, setEmailAddress] = useState(userEmail);
     const [snackbarOpen, setSnackbarOpen] = useState(false);
@@ -76,54 +76,6 @@ const SharingContactDetails = () => {
         navigate(-1);
     };
 
-    const handlePrintReport = () => {
-        const printableContent = document.getElementById('printable-contact-details');
-        if (printableContent) {
-            const originalContents = document.body.innerHTML;
-            document.body.innerHTML = `
-                <div style="padding: 20px;">
-                    <h2 style="text-align: center; margin-bottom: 20px;">Contact Details Report</h2>
-                    ${printableContent.innerHTML}
-                    <p style="text-align: center; margin-top: 30px; font-size: 12px;">
-                        Generated on ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}
-                    </p>
-                </div>
-            `;
-            window.print();
-            document.body.innerHTML = originalContents;
-        } else {
-            console.error("Error: 'printable-contact-details' element not found in the DOM.");
-            setSnackbarMessage("Error: Could not prepare report for printing.");
-            setSnackbarSeverity('error');
-            setSnackbarOpen(true);
-        }
-    };
-
-    const handleEmailDialogOpen = () => {
-        setEmailDialogOpen(true);
-    };
-
-    const handleEmailDialogClose = () => {
-        setEmailDialogOpen(false);
-    };
-
-    const handleEmailSend = async () => {
-        try {
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            console.log('Emailing report data to:', emailAddress);
-            setSnackbarMessage(`Report successfully sent to ${emailAddress}`);
-            setSnackbarSeverity('success');
-            setSnackbarOpen(true);
-            setEmailDialogOpen(false);
-            // In a real implementation, you would call your API here
-        } catch (error) {
-            console.error('Error sending email:', error);
-            setSnackbarMessage('Failed to send email. Please try again.');
-            setSnackbarSeverity('error');
-            setSnackbarOpen(true);
-        }
-    };
-
     const handleSnackbarClose = () => {
         setSnackbarOpen(false);
     };
@@ -138,9 +90,11 @@ const SharingContactDetails = () => {
 
     return (
         <Box sx={{ p: 3 }}>
+            {/* Top back arrow */}
             <IconButton onClick={handleGoBack} sx={{ mb: 2 }}>
                 <ArrowBackIcon />
             </IconButton>
+
             <Typography variant="h6" gutterBottom>
                 Contact Details for {profile.name}
             </Typography>
@@ -148,7 +102,6 @@ const SharingContactDetails = () => {
             <Box id="printable-contact-details">
                 <Paper elevation={3} sx={{ p: 2, mb: 2 }}>
                     <Grid container spacing={2} alignItems="center">
-                        {/* Profile Photo (Left Side) */}
                         <Grid item xs={12} sm={4} md={3} lg={2}>
                             <Box
                                 sx={{
@@ -172,70 +125,46 @@ const SharingContactDetails = () => {
                             </Box>
                         </Grid>
 
-                        {/* Profile Details (Middle Column) */}
                         <Grid item xs={12} sm={8} md={5} lg={5}>
-                            <Typography variant="subtitle1">
-                                <strong>Profile ID:</strong> {profile.profile_id}
-                            </Typography>
-                            <Typography variant="subtitle1">
-                                <strong>Married Status:</strong> {profile.married_status}
-                            </Typography>
-                            <Typography variant="subtitle1">
-                                <strong>Name:</strong> {profile.name}
-                            </Typography>
-                            <Typography variant="subtitle1">
-                                <strong>Current Location:</strong> {profile.current_location}
-                            </Typography>
-                            <Typography variant="subtitle1">
-                                <strong>Mother Tongue:</strong> {profile.mother_tongue}
-                            </Typography>
-                            <Typography variant="subtitle1">
-                                <strong>Gotra:</strong> {profile.gotra}
-                            </Typography>
-                            <Typography variant="subtitle1">
-                                <strong>Age:</strong> {profile.current_age}
-                            </Typography>
-                            <Typography variant="subtitle1">
-                                <strong>Father Name:</strong> {profile.father_name}
-                            </Typography>
-                            <Typography variant="subtitle1">
-                                <strong>Siblings:</strong> {profile.siblings}
-                            </Typography>
+                            <Typography variant="subtitle1"><strong>Profile ID:</strong> {profile.profile_id}</Typography>
+                            <Typography variant="subtitle1"><strong>Married Status:</strong> {profile.married_status}</Typography>
+                            <Typography variant="subtitle1"><strong>Name:</strong> {profile.name}</Typography>
+                            <Typography variant="subtitle1"><strong>Current Location:</strong> {profile.current_location}</Typography>
+                            <Typography variant="subtitle1"><strong>Mother Tongue:</strong> {profile.mother_tongue}</Typography>
+                            <Typography variant="subtitle1"><strong>Gotra:</strong> {profile.gotra}</Typography>
+                            <Typography variant="subtitle1"><strong>Age:</strong> {profile.current_age}</Typography>
+                            <Typography variant="subtitle1"><strong>Father Name:</strong> {profile.father_name}</Typography>
+                            <Typography variant="subtitle1"><strong>Siblings:</strong> {profile.siblings}</Typography>
                         </Grid>
 
-                        {/* Additional Profile Details (Right Column) */}
                         <Grid item xs={12} md={4} lg={5}>
-                            <Typography variant="subtitle1">
-                                <strong>Expectations:</strong> {profile.expectations}
-                            </Typography>
-                            <Typography variant="subtitle1">
-                                <strong>Phone Number:</strong> {profile.phone}
-                            </Typography>
-                            <Typography variant="subtitle1">
-                                <strong>Communication Address:</strong> {profile.communication_address}
-                            </Typography>
-                            <Typography variant="subtitle1">
-                                <strong>Education:</strong> {profile.education}
-                            </Typography>
-                            <Typography variant="subtitle1">
-                                <strong>Profession:</strong> {profile.profession}
-                            </Typography>
-                            <Typography variant="subtitle1">
-                                <strong>Designation:</strong> {profile.designation}
-                            </Typography>
-                            <Typography variant="subtitle1">
-                                <strong>Current Company:</strong> {profile.current_company}
-                            </Typography>
-                            <Typography variant="subtitle1">
-                                <strong>Annual Income:</strong> {profile.annual_income}
-                            </Typography>
-                            {/* Add other relevant details here */}
+                            <Typography variant="subtitle1"><strong>Expectations:</strong> {profile.expectations}</Typography>
+                            <Typography variant="subtitle1"><strong>Phone Number:</strong> {profile.phone}</Typography>
+                            <Typography variant="subtitle1"><strong>Communication Address:</strong> {profile.communication_address}</Typography>
+                            <Typography variant="subtitle1"><strong>Education:</strong> {profile.education}</Typography>
+                            <Typography variant="subtitle1"><strong>Profession:</strong> {profile.profession}</Typography>
+                            <Typography variant="subtitle1"><strong>Designation:</strong> {profile.designation}</Typography>
+                            <Typography variant="subtitle1"><strong>Current Company:</strong> {profile.current_company}</Typography>
+                            <Typography variant="subtitle1"><strong>Annual Income:</strong> {profile.annual_income}</Typography>
                         </Grid>
                     </Grid>
                 </Paper>
             </Box>
 
-            {/* Action buttons */}
+            {/* Back to Results Button */}
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+                <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={handleGoBack}
+                >
+                    Back to Search Results
+                </Button>
+            </Box>
+
+            {/* 
+            // Email and Print functionality is commented for now
+
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2, gap: 2 }}>
                 <Button
                     variant="outlined"
@@ -253,19 +182,13 @@ const SharingContactDetails = () => {
                 </Button>
             </Box>
 
-            {/* Email Dialog */}
             <Dialog open={emailDialogOpen} onClose={handleEmailDialogClose}>
                 <DialogTitle>
                     Send Contact Details Report
                     <IconButton
                         aria-label="close"
                         onClick={handleEmailDialogClose}
-                        sx={{
-                            position: 'absolute',
-                            right: 8,
-                            top: 8,
-                            color: (theme) => theme.palette.grey[500],
-                        }}
+                        sx={{ position: 'absolute', right: 8, top: 8, color: (theme) => theme.palette.grey[500] }}
                     >
                         <CloseIcon />
                     </IconButton>
@@ -298,7 +221,6 @@ const SharingContactDetails = () => {
                 </DialogActions>
             </Dialog>
 
-            {/* Success/Error Notification */}
             <Snackbar
                 open={snackbarOpen}
                 autoHideDuration={6000}
@@ -309,6 +231,7 @@ const SharingContactDetails = () => {
                     {snackbarMessage}
                 </Alert>
             </Snackbar>
+            */}
         </Box>
     );
 };
