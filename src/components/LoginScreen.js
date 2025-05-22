@@ -15,7 +15,7 @@ function LoginScreen() {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost:3001/api/login', { // Corrected API endpoint
+      const response = await fetch('https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api/login', { // Corrected API endpoint
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
