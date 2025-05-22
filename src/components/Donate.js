@@ -156,8 +156,8 @@ useEffect(() => {
         body: JSON.stringify({
           profile_id: donationInfo.profileId,
           amount: finalAmount,
-          payment_type: 'offline',
-          payment_method: donationInfo.paymentMethod, // Changed to payment_method
+          payment_type: 'Donation',
+          payment_method: 'Offline', // Changed to payment_method
           payment_mode: donationInfo.paymentMethod, // Also send as payment_mode for backward compatibility
           payment_reference: donationInfo.paymentReference,
           payment_date: new Date().toISOString().split('T')[0],
@@ -389,7 +389,7 @@ useEffect(() => {
                       </TableRow>
                       <TableRow>
                         <TableCell sx={{ fontWeight: "medium", color: "#555", borderBottom: "none" }}>Note:</TableCell>
-                        <TableCell sx={{ borderBottom: "none" }}>Provide Under Additional Details</TableCell>
+                        <TableCell sx={{ borderBottom: "none" }}>Provide unique reference no and adiitional details Under Additional Details</TableCell>
                       </TableRow>
                     </TableBody>
                   </Table>

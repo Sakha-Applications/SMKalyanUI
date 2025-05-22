@@ -1,340 +1,576 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Typography, TextField, MenuItem, Select, FormControl, InputLabel } from "@mui/material";
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography'; 
+import TextField from '@mui/material/TextField';
+import Button from '@mui/material/Button';
+import FormControl from '@mui/material/FormControl';
+import Select from '@mui/material/Select';
+import MenuItem from '@mui/material/MenuItem';
+import Paper from '@mui/material/Paper';
+import Container from '@mui/material/Container';
+import Grid from '@mui/material/Grid';
+import Alert from '@mui/material/Alert';
+import Snackbar from '@mui/material/Snackbar';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableRow from '@mui/material/TableRow';
 import { Link } from 'react-router-dom';
 
 function RenewProfile() {
-    const [renewalSuccess, setRenewalSuccess] = useState(false);
-    const [showOfflineForm, setShowOfflineForm] = useState(false);
-    const [submittingOffline, setSubmittingOffline] = useState(false);
-    const [offlineSubmitSuccess, setOfflineSubmitSuccess] = useState(false);
-    const [orderId, setOrderId] = useState(null);
-    const [paymentError, setPaymentError] = useState(null);
-    const subscriptionAmount = 100000; // Amount in paise (₹1000)
-    const razorpayKeyId = process.env.REACT_APP_RAZORPAY_KEY_ID;
+  console.log("[RenewProfile] Component initialized");
+  
+  // Get user info from localStorage or context
+  const getUserInfo = async () => {
+    const token = sessionStorage.getItem("token");
+    const email = localStorage.getItem("userEmail");
 
-    // Offline payment form state
-    const [offlineFormData, setOfflineFormData] = useState({
-        payment_mode: 'upi',
-        payment_reference: '',
-        payment_date: new Date().toISOString().split('T')[0],
-        payment_time: new Date().toTimeString().slice(0, 5),
-        phone_number: ''
-    });
-
-    const fetchRazorpayOrder = async () => {
-        try {
-            const response = await fetch('/api/razorpay/create-order', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ amount: subscriptionAmount }),
-            });
-            const data = await response.json();
-            setOrderId(data.id);
-        } catch (error) {
-            console.error('Error fetching Razorpay order:', error);
-            setPaymentError('Failed to initiate payment');
-        }
-    };
-
-    const handlePayment = async () => {
-        if (!orderId || !razorpayKeyId) {
-            setPaymentError('Order ID or Razorpay Key ID not available');
-            return;
-        }
-
-        const options = {
-            key: razorpayKeyId,
-            order_id: orderId,
-            name: 'Kalyana Sakha',
-            description: 'Renew Profile Activation - Annual Subscription',
-            amount: subscriptionAmount,
-            currency: 'INR',
-            handler: async function (response) {
-                const paymentId = response.razorpay_payment_id;
-                const orderId = response.razorpay_order_id;
-                const signature = response.razorpay_signature;
-
-                try {
-                    const verificationResponse = await fetch('/api/razorpay/verify-payment', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ paymentId, orderId, signature }),
-                    });
-                    const verificationData = await verificationResponse.json();
-                    if (verificationData.success) {
-                        setRenewalSuccess(true);
-                        console.log('Renewal successful and payment verified!');
-                    } else {
-                        setPaymentError('Payment verification failed');
-                        console.error('Payment verification failed:', verificationData.error);
-                    }
-                } catch (error) {
-                    console.error('Error verifying payment:', error);
-                    setPaymentError('Failed to verify payment');
-                }
-            },
-            prefill: {
-                name: '',
-                email: '',
-                contact: '',
-            },
-            theme: {
-                color: '#3399cc',
-            },
-        };
-
-        const rzp1 = new window.Razorpay(options);
-        rzp1.open();
-
-        rzp1.on('payment.failed', function (response) {
-            setPaymentError(`Payment failed: ${response.error.description}`);
-            console.error('Payment failed:', response);
-        });
-    };
-
-    const handleOfflineInputChange = (e) => {
-        const { name, value } = e.target;
-        setOfflineFormData(prev => ({
-            ...prev,
-            [name]: value
-        }));
-    };
-
-    const handleOfflineSubmit = async (e) => {
-        e.preventDefault();
-        setSubmittingOffline(true);
-        
-        try {
-            const response = await fetch('/api/offline-payment/submit', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    ...offlineFormData,
-                    amount: subscriptionAmount / 100, // Convert to rupees
-                    payment_type: 'profile_renewal'
-                }),
-            });
-            
-            const data = await response.json();
-            
-            if (data.success) {
-                setOfflineSubmitSuccess(true);
-                setShowOfflineForm(false);
-            } else {
-                setPaymentError(data.message || 'Failed to submit offline payment');
-            }
-        } catch (error) {
-            console.error('Error submitting offline payment:', error);
-            setPaymentError('Failed to submit offline payment details');
-        } finally {
-            setSubmittingOffline(false);
-        }
-    };
-
-    const toggleOfflineForm = () => {
-        setShowOfflineForm(prev => !prev);
-    };
-
-    useEffect(() => {
-        fetchRazorpayOrder();
-    }, []);
-
-    if (renewalSuccess || offlineSubmitSuccess) {
-        return (
-            <div className="bg-gray-50 font-sans antialiased min-h-screen">
-                <nav className="bg-white shadow-md py-4">
-                    <div className="container mx-auto flex justify-between items-center px-6">
-                        <Link to="/dashboard" className="text-xl font-bold text-indigo-700">
-                            Renew Profile
-                        </Link>
-                        <div className="space-x-4">
-                            <Link to="/dashboard" className="text-gray-700 hover:text-indigo-500">Dashboard</Link>
-                        </div>
-                    </div>
-                </nav>
-
-                <section className="py-8">
-                    <div className="container mx-auto px-6">
-                        <div className="bg-white rounded-lg shadow-md p-8">
-                            <h2 className="text-2xl font-bold text-green-600 mb-4">
-                                {renewalSuccess ? 'Profile Renewal Successful!' : 'Offline Payment Submitted Successfully!'}
-                            </h2>
-                            <p className="text-gray-700">
-                                {renewalSuccess 
-                                    ? 'Your profile activation has been renewed for another year.' 
-                                    : 'Your offline payment details have been submitted. Your profile will be renewed once the payment is verified.'}
-                            </p>
-                            {!renewalSuccess && (
-                                <p className="text-gray-600 mt-4">
-                                    You will receive confirmation once your payment is verified by our team.
-                                </p>
-                            )}
-                        </div>
-                    </div>
-                </section>
-
-                <footer className="bg-white shadow-inner py-6 text-center text-gray-700 text-sm mt-8">
-                    <div className="container mx-auto px-6">
-                        <p className="mt-2">&copy; {new Date().getFullYear()} ProfileConnect. All rights reserved.</p>
-                    </div>
-                </footer>
-            </div>
-        );
+    if (!token || !email) {
+      console.warn("[RenewProfile] Missing token or email in storage");
+      return { profileId: "", email: "", token: "" };
     }
 
+    try {
+      const response = await fetch("http://localhost:3001/api/modifyProfile", {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      const data = await response.json();
+      if (response.ok && data?.profile_id) {
+        return { profileId: data.profile_id, email, token };
+      } else {
+        console.error("[RenewProfile] Failed to fetch profile ID", data);
+        return { profileId: "", email, token };
+      }
+    } catch (err) {
+      console.error("[RenewProfile] Error fetching profile info:", err);
+      return { profileId: "", email, token };
+    }
+  };
+
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      try {
+        console.log("[RenewProfile] Fetching user profile");
+
+        const email = localStorage.getItem("userEmail");
+        const token = sessionStorage.getItem("token");
+
+        if (!email || !token) {
+          console.warn("RenewProfile: Missing email or token in storage");
+          return;
+        }
+
+        const response = await fetch("http://localhost:3001/api/modifyProfile", {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (!response.ok) throw new Error("Failed to fetch profile");
+
+        const data = await response.json();
+        console.log("[RenewProfile] User profile data:", data);
+
+        setRenewalInfo(prev => ({
+          ...prev,
+          contactInfo: email,
+          email: email,
+          profileId: data.profile_id,
+          memberName: data.name || '',
+          phoneNumber: data.phone || ''
+        }));
+
+        setUserToken(token);
+      } catch (err) {
+        console.error("[RenewProfile] Error fetching profile:", err);
+      }
+    };
+
+    fetchUserProfile();
+  }, []);
+
+  const [renewalSuccess, setRenewalSuccess] = useState(false);
+  const [renewalInfo, setRenewalInfo] = useState({
+    amount: '1000', // Fixed renewal amount
+    paymentMethod: 'UPI',
+    transactionDetails: '',
+    memberName: '',
+    contactInfo: '',
+    email: '',
+    profileId: '',
+    paymentReference: '',
+    phoneNumber: ''
+  });
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [userToken, setUserToken] = useState('');
+
+  useEffect(() => {
+    const userInfo = getUserInfo();
+    setRenewalInfo(prev => ({
+      ...prev,
+      contactInfo: userInfo.email || '',
+      email: userInfo.email || '',
+      profileId: userInfo.profileId || ''
+    }));
+    setUserToken(userInfo.token || '');
+  }, []);
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    console.log(`[RenewProfile] Input changed: ${name} = ${value}`);
+    setRenewalInfo(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSubmitRenewal = async (e) => {
+    e.preventDefault();
+    console.log("[RenewProfile] Submitting renewal with:", renewalInfo);
+
+    if (!renewalInfo.memberName || !renewalInfo.contactInfo || !renewalInfo.paymentReference) {
+      setSnackbarMessage('Please fill in all required fields');
+      setSnackbarOpen(true);
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+
+      const response = await fetch('http://localhost:3001/api/offline-payment/submit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(userToken && { 'Authorization': `Bearer ${userToken}` })
+        },
+        body: JSON.stringify({
+          profile_id: renewalInfo.profileId,
+          amount: renewalInfo.amount,
+          payment_type: 'ProfileRenewal',
+          payment_method: 'Offline',
+          payment_mode: renewalInfo.paymentMethod,
+          payment_reference: renewalInfo.paymentReference,
+          payment_date: new Date().toISOString().split('T')[0],
+          payment_time: new Date().toTimeString().split(' ')[0],
+          phone_number: renewalInfo.phoneNumber || renewalInfo.contactInfo,
+          email: renewalInfo.email,
+          transactionDetails: renewalInfo.transactionDetails
+        })
+      });
+
+      const result = await response.json();
+      console.log("[RenewProfile] API response:", result);
+
+      if (response.ok && result.success) {
+        setRenewalSuccess(true);
+      } else {
+        throw new Error(result.message || "Unknown error");
+      }
+    } catch (error) {
+      console.error("[RenewProfile] Error submitting renewal:", error);
+      setSnackbarMessage('Error submitting renewal. Please try again.');
+      setSnackbarOpen(true);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleSnackbarClose = () => setSnackbarOpen(false);
+
+  console.log("[RenewProfile] Rendering with renewalSuccess =", renewalSuccess);
+  console.log("[RenewProfile] Current renewal info state:", renewalInfo);
+
+  if (renewalSuccess) {
     return (
-        <div className="bg-gray-50 font-sans antialiased min-h-screen">
-            <nav className="bg-white shadow-md py-4">
-                <div className="container mx-auto flex justify-between items-center px-6">
-                    <Link to="/dashboard" className="text-xl font-bold text-indigo-700">
-                        Renew Profile
-                    </Link>
-                    <div className="space-x-4">
-                        <Link to="/dashboard" className="text-gray-700 hover:text-indigo-500">Dashboard</Link>
-                    </div>
-                </div>
-            </nav>
+      <Box sx={{ bgcolor: "#f5f5f5", minHeight: "100vh", pb: 4 }}>
+        <Box 
+          component="nav" 
+          sx={{ 
+            bgcolor: "white", 
+            boxShadow: 2, 
+            py: 2, 
+            mb: 4 
+          }}
+        >
+          <Container>
+            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <Typography variant="h5" component={Link} to="/dashboard" sx={{ fontWeight: "bold", color: "#3f51b5", textDecoration: "none" }}>
+                Renew Profile
+              </Typography>
+              <Box>
+                <Button component={Link} to="/dashboard" sx={{ color: "#555", '&:hover': { color: "#3f51b5" } }}>
+                  Dashboard
+                </Button>
+              </Box>
+            </Box>
+          </Container>
+        </Box>
 
-            <section className="py-8">
-                <div className="container mx-auto px-6">
-                    <div className="bg-white rounded-lg shadow-md p-8">
-                        <h2 className="text-2xl font-bold text-indigo-800 mb-6">Renew Profile Activation</h2>
-                        <p className="text-gray-700 mb-4">To continue accessing contact details and enjoy the benefits of a subscribed member, please renew your profile activation for ₹1000 per annum.</p>
-                        
-                        <div className="mb-8">
-                            <h3 className="text-xl font-semibold text-indigo-700 mb-4">Online Payment</h3>
-                            <Button
-                                onClick={handlePayment}
-                                className="bg-green-500 hover:bg-green-600 text-white py-2 px-6 rounded-md text-lg font-semibold shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-400 disabled:bg-gray-300 disabled:cursor-not-allowed"
-                                disabled={!orderId || !razorpayKeyId}
-                            >
-                                Pay Now to Renew
-                            </Button>
-                            {paymentError && (
-                                <Typography color="error" sx={{ mt: 4, textAlign: 'center' }}>{paymentError}</Typography>
-                            )}
-                            {!orderId && !paymentError && <p className="text-gray-500 mt-4">Initiating payment...</p>}
-                            {!razorpayKeyId && <p className="text-red-500 mt-4">Razorpay Key ID not configured in the frontend.</p>}
-                        </div>
-                        
-                        <div className="border-t pt-6">
-                            <h3 className="text-xl font-semibold text-indigo-700 mb-4">Offline Payment</h3>
-                            <p className="text-gray-700 mb-4">
-                                You can also make payment through UPI/Bank Transfer to the following account and submit the details:
-                            </p>
-                            <div className="bg-gray-50 p-4 rounded-md mb-6">
-                                <p className="font-medium">UPI ID: profile.connect@okicici</p>
-                                <p className="font-medium">Phone Number: +91 9876543210</p>
-                            </div>
-                            
-                            <Button
-                                onClick={toggleOfflineForm}
-                                className="bg-indigo-500 hover:bg-indigo-600 text-white py-2 px-6 rounded-md text-lg font-semibold shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                            >
-                                {showOfflineForm ? 'Hide Offline Payment Form' : 'Submit Offline Payment Details'}
-                            </Button>
-                            
-                            {showOfflineForm && (
-                                <form onSubmit={handleOfflineSubmit} className="mt-6 space-y-4">
-                                    <div>
-                                        <FormControl fullWidth margin="normal">
-                                            <InputLabel id="payment-mode-label">Payment Mode</InputLabel>
-                                            <Select
-                                                labelId="payment-mode-label"
-                                                id="payment_mode"
-                                                name="payment_mode"
-                                                value={offlineFormData.payment_mode}
-                                                onChange={handleOfflineInputChange}
-                                                required
-                                            >
-                                                <MenuItem value="upi">UPI</MenuItem>
-                                                <MenuItem value="bank_transfer">Bank Transfer</MenuItem>
-                                                <MenuItem value="cash">Cash</MenuItem>
-                                            </Select>
-                                        </FormControl>
-                                    </div>
-                                    
-                                    <div>
-                                        <TextField
-                                            fullWidth
-                                            label="Payment Reference/Transaction ID"
-                                            name="payment_reference"
-                                            value={offlineFormData.payment_reference}
-                                            onChange={handleOfflineInputChange}
-                                            required
-                                            margin="normal"
-                                        />
-                                    </div>
-                                    
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <TextField
-                                            label="Payment Date"
-                                            type="date"
-                                            name="payment_date"
-                                            value={offlineFormData.payment_date}
-                                            onChange={handleOfflineInputChange}
-                                            required
-                                            InputLabelProps={{
-                                                shrink: true,
-                                            }}
-                                            margin="normal"
-                                        />
-                                        
-                                        <TextField
-                                            label="Payment Time"
-                                            type="time"
-                                            name="payment_time"
-                                            value={offlineFormData.payment_time}
-                                            onChange={handleOfflineInputChange}
-                                            required
-                                            InputLabelProps={{
-                                                shrink: true,
-                                            }}
-                                            margin="normal"
-                                        />
-                                    </div>
-                                    
-                                    <div>
-                                        <TextField
-                                            fullWidth
-                                            label="Your Phone Number"
-                                            name="phone_number"
-                                            value={offlineFormData.phone_number}
-                                            onChange={handleOfflineInputChange}
-                                            required
-                                            margin="normal"
-                                        />
-                                    </div>
-                                    
-                                    <div className="pt-4">
-                                        <Button
-                                            type="submit"
-                                            className="bg-green-500 hover:bg-green-600 text-white py-2 px-6 rounded-md text-lg font-semibold shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                                            disabled={submittingOffline}
-                                        >
-                                            {submittingOffline ? 'Submitting...' : 'Submit Payment Details'}
-                                        </Button>
-                                    </div>
-                                </form>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            </section>
+        <Container maxWidth="md">
+          <Paper elevation={3} sx={{ p: 4, borderRadius: 2 }}>
+            <Typography variant="h4" sx={{ color: "#4caf50", fontWeight: "bold", mb: 2 }}>
+              Thank you for Renewing Your Profile!
+            </Typography>
+            <Typography sx={{ color: "#555", mb: 3 }}>
+              Your profile renewal information has been submitted and recorded in our database. Our team will process your renewal shortly. Please note you will be able view additional 10 prfiles contact details
+            </Typography>
+            
+            <Box sx={{ bgcolor: "#f9f9f9", p: 3, borderRadius: 2, mt: 2 }}>
+              <Typography variant="h6" sx={{ fontWeight: "bold", color: "#333", mb: 2 }}>
+                Renewal Details
+              </Typography>
+              <Grid container spacing={2}>
+                <Grid item xs={4} sm={3}>
+                  <Typography sx={{ fontWeight: "medium", color: "#555" }}>Profile ID:</Typography>
+                </Grid>
+                <Grid item xs={8} sm={9}>
+                  <Typography>{renewalInfo.profileId}</Typography>
+                </Grid>
+                
+                <Grid item xs={4} sm={3}>
+                  <Typography sx={{ fontWeight: "medium", color: "#555" }}>Member Name:</Typography>
+                </Grid>
+                <Grid item xs={8} sm={9}>
+                  <Typography>{renewalInfo.memberName}</Typography>
+                </Grid>
+                
+                <Grid item xs={4} sm={3}>
+                  <Typography sx={{ fontWeight: "medium", color: "#555" }}>Email:</Typography>
+                </Grid>
+                <Grid item xs={8} sm={9}>
+                  <Typography>{renewalInfo.email}</Typography>
+                </Grid>
+                
+                <Grid item xs={4} sm={3}>
+                  <Typography sx={{ fontWeight: "medium", color: "#555" }}>Renewal Amount:</Typography>
+                </Grid>
+                <Grid item xs={8} sm={9}>
+                  <Typography>₹{renewalInfo.amount}</Typography>
+                </Grid>
+                
+                <Grid item xs={4} sm={3}>
+                  <Typography sx={{ fontWeight: "medium", color: "#555" }}>Payment Method:</Typography>
+                </Grid>
+                <Grid item xs={8} sm={9}>
+                  <Typography>{renewalInfo.paymentMethod === 'UPI' ? 'UPI' : 
+                              renewalInfo.paymentMethod === 'bank_transfer' ? 'Bank Transfer' : 
+                              'Check/DD'}</Typography>
+                </Grid>
+                
+                <Grid item xs={4} sm={3}>
+                  <Typography sx={{ fontWeight: "medium", color: "#555" }}>Payment Reference:</Typography>
+                </Grid>
+                <Grid item xs={8} sm={9}>
+                  <Typography>{renewalInfo.paymentReference}</Typography>
+                </Grid>
+                
+                {renewalInfo.transactionDetails && (
+                  <>
+                    <Grid item xs={4} sm={3}>
+                      <Typography sx={{ fontWeight: "medium", color: "#555" }}>Payment Details:</Typography>
+                    </Grid>
+                    <Grid item xs={8} sm={9}>
+                      <Typography>{renewalInfo.transactionDetails}</Typography>
+                    </Grid>
+                  </>
+                )}
+              </Grid>
+            </Box>
+          </Paper>
+        </Container>
 
-            <footer className="bg-white shadow-inner py-6 text-center text-gray-700 text-sm mt-8">
-                <div className="container mx-auto px-6">
-                    <p className="mt-2">&copy; {new Date().getFullYear()} ProfileConnect. All rights reserved.</p>
-                </div>
-            </footer>
-        </div>
+        <Box component="footer" sx={{ bgcolor: "white", boxShadow: "0px -2px 4px rgba(0,0,0,0.05)", py: 3, mt: 4, textAlign: "center" }}>
+          <Container>
+            <Typography variant="body2" color="text.secondary">
+              &copy; {new Date().getFullYear()} ProfileConnect. All rights reserved.
+            </Typography>
+          </Container>
+        </Box>
+      </Box>
     );
+  }
+
+  return (
+    <Box sx={{ bgcolor: "#f5f5f5", minHeight: "100vh", pb: 4 }}>
+      <Box 
+        component="nav" 
+        sx={{ 
+          bgcolor: "white", 
+          boxShadow: 2, 
+          py: 2, 
+          mb: 4 
+        }}
+      >
+        <Container>
+          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <Typography variant="h5" component={Link} to="/dashboard" sx={{ fontWeight: "bold", color: "#3f51b5", textDecoration: "none" }}>
+              Renew Profile
+            </Typography>
+            <Box>
+              <Button component={Link} to="/dashboard" sx={{ color: "#555", '&:hover': { color: "#3f51b5" } }}>
+                Dashboard
+              </Button>
+            </Box>
+          </Box>
+        </Container>
+      </Box>
+
+      <Container maxWidth="md">
+        <Paper elevation={3} sx={{ p: 4, borderRadius: 2 }}>
+          <Typography variant="h4" sx={{ color: "#3f51b5", fontWeight: "bold", mb: 3 }}>
+            Renew Profile Activation
+          </Typography>
+          
+          {/* Payment Details Section */}
+          <Grid container spacing={3} sx={{ mb: 4 }}>
+            {/* Bank Details - Left side */}
+            <Grid item xs={12} md={6}>
+              <Box sx={{ bgcolor: "#f9f9f9", p: 3, borderRadius: 2, height: "100%" }}>
+                <Typography variant="h6" sx={{ fontWeight: "bold", color: "#333", mb: 2 }}>
+                  Bank Account Details
+                </Typography>
+                <Box>
+                  <Table>
+                    <TableBody>
+                      <TableRow>
+                        <TableCell sx={{ fontWeight: "medium", color: "#555", borderBottom: "1px solid #eee" }}>Account Name:</TableCell>
+                        <TableCell sx={{ borderBottom: "1px solid #eee" }}>ProfileConnect</TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell sx={{ fontWeight: "medium", color: "#555", borderBottom: "1px solid #eee" }}>Account Number:</TableCell>
+                        <TableCell sx={{ borderBottom: "1px solid #eee" }}>1234567790</TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell sx={{ fontWeight: "medium", color: "#555", borderBottom: "1px solid #eee" }}>IFSC Code:</TableCell>
+                        <TableCell sx={{ borderBottom: "1px solid #eee" }}>ABCD0002234</TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell sx={{ fontWeight: "medium", color: "#555", borderBottom: "none" }}>Bank:</TableCell>
+                        <TableCell sx={{ borderBottom: "none" }}>Example Bank</TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </Box>
+              </Box>
+            </Grid>
+            
+            {/* UPI Details - Right side */}
+            <Grid item xs={12} md={6}>
+              <Box sx={{ bgcolor: "#f9f9f9", p: 3, borderRadius: 2, height: "100%" }}>
+                <Typography variant="h6" sx={{ fontWeight: "bold", color: "#333", mb: 2 }}>
+                  UPI Payment Details
+                </Typography>
+                <Box>
+                  <Table>
+                    <TableBody>
+                      <TableRow>
+                        <TableCell sx={{ fontWeight: "medium", color: "#555", borderBottom: "1px solid #eee" }}>UPI ID:</TableCell>
+                        <TableCell sx={{ borderBottom: "1px solid #eee" }}>profileconnect@upi</TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell sx={{ fontWeight: "medium", color: "#555", borderBottom: "1px solid #eee" }}>Account Name:</TableCell>
+                        <TableCell sx={{ borderBottom: "1px solid #eee" }}>ProfileConnect</TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell sx={{ fontWeight: "medium", color: "#555", borderBottom: "1px solid #eee" }}>UPI Phone Number:</TableCell>
+                        <TableCell sx={{ borderBottom: "1px solid #eee" }}>9845473728</TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell sx={{ fontWeight: "medium", color: "#555", borderBottom: "none" }}>Note:</TableCell>
+                        <TableCell sx={{ borderBottom: "none" }}>Provide unique ref no</TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </Box>
+              </Box>
+            </Grid>
+          </Grid>
+          
+          <Box component="form" onSubmit={handleSubmitRenewal} sx={{ mt: 4 }}>
+            <Typography variant="h6" sx={{ color: "#333", fontWeight: "bold", mb: 2 }}>
+              Profile Renewal Details
+            </Typography>
+            <Typography variant="body2" sx={{ color: "#555", mb: 3 }}>
+              Please provide your renewal payment details below. Annual renewal fee is ₹1000. Our team will process your renewal and send you a confirmation.
+            </Typography>
+            
+            <Box
+              sx={{
+                mt: 2,
+                p: 4,
+                backgroundColor: "#f9f9f9",
+                borderRadius: 2,
+                maxWidth: "100%",
+                margin: "auto",
+              }}
+            >
+              <Grid container spacing={3}>
+                {/* Row 1 */}
+                <Grid item xs={12} sm={6} md={3}>
+                  <Typography sx={{ fontWeight: "bold", color: "#444", mb: 1 }}>Profile ID:</Typography>
+                  <TextField
+                    name="profileId"
+                    value={renewalInfo.profileId}
+                    onChange={handleInputChange}
+                    variant="outlined"
+                    size="small"
+                    fullWidth
+                    disabled
+                    sx={{ bgcolor: "white", borderRadius: 1 }}
+                  />
+                </Grid>
+                
+                <Grid item xs={12} sm={6} md={3}>
+                  <Typography sx={{ fontWeight: "bold", color: "#444", mb: 1 }}>Your Name:<span style={{ color: 'red' }}>*</span></Typography>
+                  <TextField
+                    name="memberName"
+                    value={renewalInfo.memberName}
+                    onChange={handleInputChange}
+                    variant="outlined"
+                    size="small"
+                    fullWidth
+                    required
+                    sx={{ bgcolor: "white", borderRadius: 1 }}
+                  />
+                </Grid>
+                
+                <Grid item xs={12} sm={6} md={3}>
+                  <Typography sx={{ fontWeight: "bold", color: "#444", mb: 1 }}>Email:<span style={{ color: 'red' }}>*</span></Typography>
+                  <TextField
+                    name="email"
+                    value={renewalInfo.email}
+                    onChange={handleInputChange}
+                    variant="outlined"
+                    size="small"
+                    fullWidth
+                    required
+                    sx={{ bgcolor: "white", borderRadius: 1 }}
+                  />
+                </Grid>
+
+                <Grid item xs={12} sm={6} md={3}>
+                  <Typography sx={{ fontWeight: "bold", color: "#444", mb: 1 }}>Phone Number:<span style={{ color: 'red' }}>*</span></Typography>
+                  <TextField
+                    name="phoneNumber"
+                    value={renewalInfo.phoneNumber}
+                    onChange={handleInputChange}
+                    variant="outlined"
+                    size="small"
+                    fullWidth
+                    required
+                    sx={{ bgcolor: "white", borderRadius: 1 }}
+                  />
+                </Grid>
+                
+                {/* Row 2 */}
+                <Grid item xs={12} sm={6} md={3}>
+                  <Typography sx={{ fontWeight: "bold", color: "#444", mb: 1 }}>Renewal Amount:</Typography>
+                  <TextField
+                    name="amount"
+                    value="₹1000"
+                    variant="outlined"
+                    size="small"
+                    fullWidth
+                    disabled
+                    sx={{ bgcolor: "white", borderRadius: 1 }}
+                  />
+                </Grid>
+                
+                <Grid item xs={12} sm={6} md={3}>
+                  <Typography sx={{ fontWeight: "bold", color: "#444", mb: 1 }}>Payment Method:<span style={{ color: 'red' }}>*</span></Typography>
+                  <FormControl fullWidth required sx={{ bgcolor: "white", borderRadius: 1 }}>
+                    <Select
+                      name="paymentMethod"
+                      value={renewalInfo.paymentMethod}
+                      onChange={handleInputChange}
+                      size="small"
+                    >
+                      <MenuItem value="UPI">UPI</MenuItem>
+                      <MenuItem value="bank_transfer">Bank Transfer</MenuItem>
+                      <MenuItem value="check">Check/DD</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
+                
+                <Grid item xs={12} sm={6} md={3}>
+                  <Typography sx={{ fontWeight: "bold", color: "#444", mb: 1 }}>Payment Reference:<span style={{ color: 'red' }}>*</span></Typography>
+                  <TextField
+                    name="paymentReference"
+                    value={renewalInfo.paymentReference}
+                    onChange={handleInputChange}
+                    variant="outlined"
+                    size="small"
+                    fullWidth
+                    required
+                    placeholder="Enter transaction ID/reference"
+                    sx={{ bgcolor: "white", borderRadius: 1 }}
+                  />
+                </Grid>
+                
+                <Grid item xs={12} sm={6} md={3}>
+                  <Typography sx={{ fontWeight: "bold", color: "#444", mb: 1 }}>Additional Details:</Typography>
+                  <TextField
+                    name="transactionDetails"
+                    value={renewalInfo.transactionDetails}
+                    onChange={handleInputChange}
+                    variant="outlined"
+                    size="small"
+                    fullWidth
+                    placeholder="Enter any additional details"
+                    sx={{ bgcolor: "white", borderRadius: 1 }}
+                  />
+                </Grid>
+              </Grid>
+            </Box>
+            
+            <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
+              <Button
+                type="submit"
+                variant="contained"
+                disabled={isSubmitting}
+                sx={{
+                  bgcolor: "#3f51b5",
+                  color: "white",
+                  py: 1.5,
+                  px: 4,
+                  fontSize: "1.1rem",
+                  fontWeight: "medium",
+                  '&:hover': {
+                    bgcolor: "#303f9f"
+                  }
+                }}
+              >
+                {isSubmitting ? 'Submitting...' : 'Submit Renewal Information'}
+              </Button>
+            </Box>
+          </Box>
+        </Paper>
+      </Container>
+
+      <Box component="footer" sx={{ bgcolor: "white", boxShadow: "0px -2px 4px rgba(0,0,0,0.05)", py: 3, mt: 4, textAlign: "center" }}>
+        <Container>
+          <Typography variant="body2" color="text.secondary">
+            &copy; {new Date().getFullYear()} ProfileConnect. All rights reserved.
+          </Typography>
+        </Container>
+      </Box>
+      
+      <Snackbar 
+        open={snackbarOpen} 
+        autoHideDuration={6000} 
+        onClose={handleSnackbarClose}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert onClose={handleSnackbarClose} severity="error" sx={{ width: '100%' }}>
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
+    </Box>
+  );
 }
 
 export default RenewProfile;

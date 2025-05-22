@@ -123,38 +123,41 @@ const ContactDetailsResults = ({ results, userEmail }) => {
     };
 
     const handleGetDetails = async (profile) => {
-        try {
-            const token = sessionStorage.getItem('token'); // Assuming you store the token here
-            const response = await axios.post(
-                `${API_BASE_URL}/api/share-contact-details`,
-                {
-                    sharedProfileId: profile.profile_id,
-                    sharedProfileName: profile.name,
+    try {
+        const token = sessionStorage.getItem('token');
+        const response = await axios.post(
+            `${API_BASE_URL}/api/share-contact-details`,
+            {
+                sharedProfileId: profile.profile_id,
+                sharedProfileName: profile.name,
+            },
+            {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
                 },
-                {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                    },
-                }
-            );
-
-            if (response.ok || response.status === 200) {
-                // Navigate to the new page and pass the profile details
-                navigate('/sharingcontactdetails', { state: { profile } });
-            } else {
-                const errorData = await response.data;
-                console.error('Error sharing contact details:', errorData);
-                setSnackbarMessage(errorData.message || 'Failed to get contact details.');
-                setSnackbarSeverity('error');
-                setSnackbarOpen(true);
             }
-        } catch (error) {
-            console.error('Error sharing contact details:', error);
-            setSnackbarMessage('Failed to get contact details. Please try again.');
+        );
+
+        if (response.ok || response.status === 200) {
+            navigate('/sharingcontactdetails', { state: { profile } });
+        } else {
+            const errorData = await response.data;
+            console.error('Error sharing contact details:', errorData);
+            setSnackbarMessage(errorData.message || 'Failed to get contact details.');
             setSnackbarSeverity('error');
             setSnackbarOpen(true);
         }
-    };
+    } catch (error) {
+        console.error('Error sharing contact details:', error);
+        if (error.response && error.response.status === 403) {
+            setSnackbarMessage(error.response.data.message || 'You have reached your contact sharing limit. Please renew the profile');
+        } else {
+            setSnackbarMessage('Failed to get contact details. Please try again.');
+        }
+        setSnackbarSeverity('error');
+        setSnackbarOpen(true);
+    }
+};
 
     // Print and Email buttons component
     const actionButtons = (
