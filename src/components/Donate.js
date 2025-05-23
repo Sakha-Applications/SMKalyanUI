@@ -32,7 +32,7 @@ const getUserInfo = async () => {
   }
 
   try {
-    const response = await fetch("http://localhost:3001/api/modifyProfile", {
+    const response = await fetch(`${config.apiUrl}/modifyProfile`, {
       headers: { Authorization: `Bearer ${token}` }
     });
 
@@ -63,7 +63,7 @@ useEffect(() => {
         return;
       }
 
-      const response = await fetch("http://localhost:3001/api/modifyProfile", {
+      const response = await fetch(`${config.apiUrl}/modifyProfile`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -147,7 +147,7 @@ useEffect(() => {
     try {
       setIsSubmitting(true);
 
-      const response = await fetch('http://localhost:3001/api/offline-payment/submit', {
+      const response = await fetch(`${config.apiUrl}/offline-payment/submit`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
