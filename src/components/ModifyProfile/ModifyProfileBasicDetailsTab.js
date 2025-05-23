@@ -85,7 +85,7 @@ const ModifyProfileBasicDetailsTab = ({ formData, handleChange, tabIndex, setTab
         fetchMotherTongues();
     }, []);
     
-    // Search native places when input changes
+    // Search native places when input changes fo
     useEffect(() => {
         const timer = setTimeout(() => {
             if (nativePlaceInputValue.length >= 2) {
