@@ -116,7 +116,7 @@ const ModifyProfileBasicDetailsTab = ({ formData, handleChange, tabIndex, setTab
         
         try {
             const token = sessionStorage.getItem('token');
-            const response = await axios.get(`http://localhost:3001/api/native-places?search=${encodeURIComponent(searchText)}`, {
+            const response = await axios.get(`${config.apiUrl}/native-places?search=${encodeURIComponent(searchText)}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             console.log("Native place search response:", response.data);
@@ -151,7 +151,7 @@ const ModifyProfileBasicDetailsTab = ({ formData, handleChange, tabIndex, setTab
             const token = sessionStorage.getItem('token');
             // This assumes you have a similar API endpoint for current locations
             // If not, you might need to use the same endpoint as native places
-            const response = await axios.get(`http://localhost:3001/api/native-places?search=${encodeURIComponent(searchText)}`, {
+            const response = await axios.get(`${config.apiUrl}/native-places?search=${encodeURIComponent(searchText)}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             console.log("Current location search response:", response.data);
