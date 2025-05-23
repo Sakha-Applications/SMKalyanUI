@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Box, Typography, TextField, FormControl, Select, MenuItem, Autocomplete, CircularProgress } from "@mui/material";
 import FormNavigation from "../FormNavigation";
 import axios from "axios";
+import config from '../../config';
 
 const ModifyProfileBasicDetailsTab = ({ formData, handleChange, tabIndex, setTabIndex }) => {
     // Mother Tongue state
@@ -61,7 +62,7 @@ const ModifyProfileBasicDetailsTab = ({ formData, handleChange, tabIndex, setTab
             try {
                 setIsMotherTongueLoading(true);
                 const token = sessionStorage.getItem('token');
-                const response = await axios.get('http://localhost:3001/api/mother-tongues', {
+                const response = await axios.get(`${config.apiUrl}/mother-tongues`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 console.log("Fetched mother tongues:", response.data);
