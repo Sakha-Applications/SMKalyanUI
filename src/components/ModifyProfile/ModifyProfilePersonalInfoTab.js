@@ -6,6 +6,7 @@ import dayjs from "dayjs";
 import FormNavigation from "../FormNavigation";
 import useApiData from "../../hooks/useApiData";
 import axios from "axios";
+import config from '../../config';
 
 const ModifyProfilePersonalInfoTab = ({ formData, handleChange, handleDOBChange, handleTimeBlur, tabIndex, setTabIndex }) => {
     const { isLoading, error, gotraOptions, rashiOptions, nakshatraOptions } = useApiData();
@@ -59,7 +60,7 @@ const ModifyProfilePersonalInfoTab = ({ formData, handleChange, handleDOBChange,
             else if (!isNaN(formData.guruMatha)) {
                 const fetchGuruMathaDetails = async () => {
                     try {
-                        const response = await axios.get("http://localhost:3001/api/guru-matha");
+                        const response = await axios.get(`${config.apiUrl}/guru-matha`);
                         const options = response.data;
                         const selectedOption = options.find(opt => opt.id === formData.guruMatha);
                         if (selectedOption) {
