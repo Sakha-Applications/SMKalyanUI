@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
+import config from '../../config';
 
 const useApiData = (endpoint) => {
     const [isLoading, setIsLoading] = useState(true);
@@ -17,7 +18,7 @@ const useApiData = (endpoint) => {
             // If an endpoint is provided, fetch just that specific data
             const fetchEndpointData = async () => {
                 try {
-                    const response = await axios.get(`http://localhost:3001${endpoint}`);
+                    const response = await axios.get(`${config.apiUrl}${endpoint}`);
                     if (Array.isArray(response.data)) {
                         setData(response.data);
                     } else {
@@ -38,7 +39,7 @@ const useApiData = (endpoint) => {
             const fetchAllData = async () => {
                 try {
                     // Fetch gotras
-                    const gotrasResponse = await axios.get("http://localhost:3001/api/gotras");
+                    const gotrasResponse = await axios.get(`${config.apiUrl}/gotras`);
                     if (Array.isArray(gotrasResponse.data)) {
                         setGotraOptions(gotrasResponse.data);
                     } else {
@@ -47,7 +48,7 @@ const useApiData = (endpoint) => {
                     }
                     
                     // Fetch rashis
-                    const rashisResponse = await axios.get("http://localhost:3001/api/rashis");
+                    const rashisResponse = await axios.get(`${config.apiUrl}/rashis`);
                     if (Array.isArray(rashisResponse.data)) {
                         setRashiOptions(rashisResponse.data);
                     } else {
@@ -56,7 +57,7 @@ const useApiData = (endpoint) => {
                     }
                     
                     // Fetch nakshatras
-                    const nakshatrasResponse = await axios.get("http://localhost:3001/api/nakshatras");
+                    const nakshatrasResponse = await axios.get(`${config.apiUrl}/nakshatras`);
                     if (Array.isArray(nakshatrasResponse.data)) {
                         setNakshatraOptions(nakshatrasResponse.data);
                     } else {
@@ -65,7 +66,7 @@ const useApiData = (endpoint) => {
                     }
                     
                     // Fetch professions
-                    const professionsResponse = await axios.get("http://localhost:3001/api/profession");
+                    const professionsResponse = await axios.get(`${config.apiUrl}/profession`);
                     if (Array.isArray(professionsResponse.data)) {
                         setProfessionOptions(professionsResponse.data);
                     } else {

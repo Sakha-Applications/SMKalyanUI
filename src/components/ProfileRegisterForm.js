@@ -15,6 +15,7 @@ import FamilyDetailsTab from "./FamilyDetailsTab";
 import CareerEducationTab from "./CareerEducationTab";
 import useFormData from "../hooks/useFormData";
 import axios from "axios";
+import config from '../config'; // Relative path to src/config.js
 
 const ProfileDetails = () => {
     const [tabIndex, setTabIndex] = useState(0);
@@ -52,7 +53,7 @@ const ProfileDetails = () => {
             };
 
             const response = await axios.post(
-                "http://localhost:3001/api/addProfile",
+                `${config.apiUrl}/addProfile`,
                 {
                     profileData: formData,
                     userLoginData: userLoginData,
