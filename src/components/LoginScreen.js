@@ -16,7 +16,7 @@ function LoginScreen() {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost:3001/api/login', { // Corrected API endpoint
+      const response = await fetch(`${config.apiUrl}/login`, { // Corrected API endpoint
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
