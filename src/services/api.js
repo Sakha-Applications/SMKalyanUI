@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:3001/api";
+const API_URL = "https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api/";
 
 export const addUser = async (user) => {
     return axios.post(`${API_URL}/addUser`, user);

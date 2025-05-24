@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Paper, Typography, TextField, Button, Grid, CircularProgress, Checkbox, FormControlLabel } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
-import config from '../../config'; // Import the config
+// import config from '../../config'; // Import the config
 import {
     handleSearchCriteriaChange,
     handleSearchProfile,

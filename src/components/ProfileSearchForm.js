@@ -31,7 +31,7 @@
             try {
                 console.log("Sending search request with:", searchQuery);
                 const response = await fetch(
-                    `http://localhost:3001/api/searchProfiles?profileFor=${searchQuery.profileFor}&minAge=${searchQuery.minAge}&maxAge=${searchQuery.maxAge}&gotra=${searchQuery.gotra}`,
+                    `https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api//searchProfiles?profileFor=${searchQuery.profileFor}&minAge=${searchQuery.minAge}&maxAge=${searchQuery.maxAge}&gotra=${searchQuery.gotra}`,
                     {
                         method: "GET",
                         headers: { "Content-Type": "application/json" }

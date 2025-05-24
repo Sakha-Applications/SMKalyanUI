@@ -75,7 +75,7 @@ const ModifyProfileFamilyDetailsTab = ({ formData, handleChange, tabIndex, setTa
         
         try {
             const token = sessionStorage.getItem('token');
-            const response = await axios.get(`http://localhost:3001/api/profession?search=${encodeURIComponent(searchText)}`, {
+            const response = await axios.get(`https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api//profession?search=${encodeURIComponent(searchText)}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             
@@ -122,7 +122,7 @@ const ModifyProfileFamilyDetailsTab = ({ formData, handleChange, tabIndex, setTa
         const fetchProfessions = async () => {
             try {
                 const token = sessionStorage.getItem('token');
-                const response = await axios.get("http://localhost:3001/api/profession", {
+                const response = await axios.get("https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api//profession", {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 

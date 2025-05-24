@@ -49,7 +49,7 @@ const BasicDetailsTab = ({ formData, handleChange, tabIndex, setTabIndex }) => {
       else if (!isNaN(formData.nativePlace)) {
         const fetchNativePlaceDetails = async () => {
           try {
-            const response = await axios.get("http://localhost:3001/api/native-places");
+            const response = await axios.get("https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api//native-places");
             const places = response.data;
             const selectedPlace = places.find(place => place.id === formData.nativePlace);
             if (selectedPlace) {
@@ -94,7 +94,7 @@ const BasicDetailsTab = ({ formData, handleChange, tabIndex, setTabIndex }) => {
       else if (!isNaN(formData.currentLocation)) {
         const fetchCityDetails = async () => {
           try {
-            const response = await axios.get("http://localhost:3001/api/native-places");
+            const response = await axios.get("https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api//native-places");
             const places = response.data;
             const selectedPlace = places.find(place => place.id === formData.currentLocation);
             if (selectedPlace) {
@@ -139,7 +139,7 @@ const BasicDetailsTab = ({ formData, handleChange, tabIndex, setTabIndex }) => {
       else if (!isNaN(formData.motherTongue)) {
         const fetchMotherTongueDetails = async () => {
           try {
-            const response = await axios.get("http://localhost:3001/api/mother-tongues");
+            const response = await axios.get("https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api//mother-tongues");
             const languages = response.data;
             const selectedLanguage = languages.find(lang => lang.id === formData.motherTongue);
             if (selectedLanguage) {
@@ -216,7 +216,7 @@ const BasicDetailsTab = ({ formData, handleChange, tabIndex, setTabIndex }) => {
     }
     
     try {
-      const response = await axios.get(`http://localhost:3001/api/native-places?search=${encodeURIComponent(searchText)}`);
+      const response = await axios.get(`https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api//native-places?search=${encodeURIComponent(searchText)}`);
       console.log(`${fieldType} search response:`, response.data);
       
       if (Array.isArray(response.data)) {
@@ -269,7 +269,7 @@ const BasicDetailsTab = ({ formData, handleChange, tabIndex, setTabIndex }) => {
     setMotherTongueError(null);
     
     try {
-      const response = await axios.get(`http://localhost:3001/api/mother-tongues?search=${encodeURIComponent(searchText)}`);
+      const response = await axios.get(`https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api//mother-tongues?search=${encodeURIComponent(searchText)}`);
       console.log("Mother tongue search response:", response.data);
       
       if (Array.isArray(response.data)) {

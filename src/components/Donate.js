@@ -32,7 +32,7 @@ const getUserInfo = async () => {
   }
 
   try {
-    const response = await fetch(`${config.apiUrl}/modifyProfile`, {
+    const response = await fetch(`https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api/modifyProfile`, {
       headers: { Authorization: `Bearer ${token}` }
     });
 
@@ -63,7 +63,7 @@ useEffect(() => {
         return;
       }
 
-      const response = await fetch(`${config.apiUrl}/modifyProfile`, {
+      const response = await fetch(`https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api/modifyProfile`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -147,7 +147,7 @@ useEffect(() => {
     try {
       setIsSubmitting(true);
 
-      const response = await fetch(`${config.apiUrl}/offline-payment/submit`, {
+      const response = await fetch(`https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api/offline-payment/submit`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

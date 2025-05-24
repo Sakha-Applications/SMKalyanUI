@@ -2,7 +2,7 @@
 
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:3001'; // Define your API base URL
+const API_BASE_URL = 'https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net'; // Define your API base URL
 
 export const handleSearchCriteriaChange = (event, setSearchCriteria, setProfileData, setPhotos, setPhotoPreviews, setFetchError, setUploadedPhotos, setDefaultPhoto) => {
     const { name, value } = event.target;

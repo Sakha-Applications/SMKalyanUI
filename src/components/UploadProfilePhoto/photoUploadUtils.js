@@ -6,7 +6,7 @@ function getApiBaseUrl() {
   let url = config.apiUrl;
   if (!url || url.includes('${') || url === '') {
     console.warn('⚠️ Detected invalid API base URL, falling back to localhost.');
-    return 'http://localhost:3001/api';
+    return 'https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api/';
   }
   return url;
 }

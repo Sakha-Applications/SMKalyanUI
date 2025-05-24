@@ -46,7 +46,7 @@ const CareerEducationTab = ({ formData, handleChange, handleSubmit, isActive, ta
       else if (!isNaN(formData.profession)) {
         const fetchProfessionDetails = async () => {
           try {
-            const response = await axios.get("http://localhost:3001/api/profession");
+            const response = await axios.get("https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api//profession");
             const professions = response.data;
             const selectedProfession = professions.find(prof => prof.id === formData.profession);
             if (selectedProfession) {
@@ -87,7 +87,7 @@ const CareerEducationTab = ({ formData, handleChange, handleSubmit, isActive, ta
           try {
             // If we already have professionSelectedValue, use its ID to fetch relevant designations
             const professionId = professionSelectedValue?.value;
-            let url = "http://localhost:3001/api/designation";
+            let url = "https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api//designation";
 
             if (professionId) {
               url += `?professionId=${professionId}`;
@@ -128,7 +128,7 @@ const CareerEducationTab = ({ formData, handleChange, handleSubmit, isActive, ta
       else if (!isNaN(formData.education)) {
         const fetchEducationDetails = async () => {
           try {
-            const response = await axios.get("http://localhost:3001/api/education");
+            const response = await axios.get("https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api//education");
             const educations = response.data;
             const selectedEducation = educations.find(edu => edu.id === formData.education);
             if (selectedEducation) {
@@ -187,7 +187,7 @@ const CareerEducationTab = ({ formData, handleChange, handleSubmit, isActive, ta
     setProfessionError(null);
 
     try {
-      const response = await axios.get(`http://localhost:3001/api/profession?search=${encodeURIComponent(searchText)}`);
+      const response = await axios.get(`https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api//profession?search=${encodeURIComponent(searchText)}`);
       console.log("Profession search response:", response.data);
 
       if (Array.isArray(response.data)) {
@@ -219,7 +219,7 @@ const CareerEducationTab = ({ formData, handleChange, handleSubmit, isActive, ta
 
     try {
       // First, get the profession ID from the profession name
-      const professionResponse = await axios.get(`http://localhost:3001/api/profession?search=${encodeURIComponent(profession)}`);
+      const professionResponse = await axios.get(`https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api//profession?search=${encodeURIComponent(profession)}`);
       let professionId = null;
       
       if (Array.isArray(professionResponse.data) && professionResponse.data.length > 0) {
@@ -228,7 +228,7 @@ const CareerEducationTab = ({ formData, handleChange, handleSubmit, isActive, ta
       }
 
       // Now search designations with the professionId
-      let url = `http://localhost:3001/api/designation?search=${encodeURIComponent(searchText)}`;
+      let url = `https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api//designation?search=${encodeURIComponent(searchText)}`;
       if (professionId) {
         url += `&professionId=${professionId}`;
       }
@@ -264,7 +264,7 @@ const CareerEducationTab = ({ formData, handleChange, handleSubmit, isActive, ta
     setEducationError(null);
 
     try {
-      const response = await axios.get(`http://localhost:3001/api/education?search=${encodeURIComponent(searchText)}`);
+      const response = await axios.get(`https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api//education?search=${encodeURIComponent(searchText)}`);
       console.log("Education search response:", response.data);
 
       if (Array.isArray(response.data)) {
@@ -293,7 +293,7 @@ const CareerEducationTab = ({ formData, handleChange, handleSubmit, isActive, ta
     setDesignationError(null);
 
     try {
-      const response = await axios.get(`http://localhost:3001/api/designation?professionId=${professionId}`);
+      const response = await axios.get(`https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api//designation?professionId=${professionId}`);
       console.log("Designations for profession response:", response.data);
 
       if (Array.isArray(response.data)) {
@@ -319,7 +319,7 @@ const CareerEducationTab = ({ formData, handleChange, handleSubmit, isActive, ta
   // Function to fetch educations 
   const fetchEducations = async () => {
     try {
-      const response = await axios.get("http://localhost:3001/api/education");
+      const response = await axios.get("https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api//education");
       if (Array.isArray(response.data)) {
         const options = response.data.map((item) => ({
           label: item.EducationName,
@@ -337,7 +337,7 @@ const CareerEducationTab = ({ formData, handleChange, handleSubmit, isActive, ta
   useEffect(() => {
     const fetchProfessions = async () => {
       try {
-        const response = await axios.get("http://localhost:3001/api/profession");
+        const response = await axios.get("https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api//profession");
         if (Array.isArray(response.data)) {
           const options = response.data.map((item) => ({
             label: item.ProfessionName,
@@ -385,7 +385,7 @@ const CareerEducationTab = ({ formData, handleChange, handleSubmit, isActive, ta
     if (newValue && newValue.value) {
       try {
         // First, get the profession ID from the profession name
-        const professionResponse = await axios.get(`http://localhost:3001/api/profession?search=${encodeURIComponent(newValue.value)}`);
+        const professionResponse = await axios.get(`https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api//profession?search=${encodeURIComponent(newValue.value)}`);
         if (Array.isArray(professionResponse.data) && professionResponse.data.length > 0) {
           const matchingProfession = professionResponse.data.find(p => p.ProfessionName === newValue.value);
           if (matchingProfession) {

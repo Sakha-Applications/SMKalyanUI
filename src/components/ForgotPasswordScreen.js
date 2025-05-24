@@ -16,7 +16,7 @@ const ForgotPasswordScreen = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost:3001/api/forgot-password', { // Adjust this URL
+      const response = await fetch('https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api//forgot-password', { // Adjust this URL
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

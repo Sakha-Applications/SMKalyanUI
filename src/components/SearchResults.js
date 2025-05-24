@@ -3,7 +3,7 @@ import { Paper, Typography, Box, Grid } from "@mui/material";
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:3001';
+const API_BASE_URL = 'https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net';
 const BACKEND_DEFAULT_IMAGE_URL = '/ProfilePhotos/defaultImage.jpg';
 
 const SearchResults = ({ results }) => {

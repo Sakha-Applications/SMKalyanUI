@@ -1,6 +1,6 @@
 // src/components/UploadProfilePhoto/photoUploadUtils.js
 import axios from 'axios';
-import config from '../../config'; // Import the config
+// import config from '../../config'; // Import the config
 
 // Use config for API URL
 const API_URL = config.apiUrl;

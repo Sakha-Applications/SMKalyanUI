@@ -50,7 +50,7 @@ const ModifyProfile = () => {
             }
 
             console.log("ModifyProfile: Token found, proceeding with API call...");
-            const response = await axios.get(`http://localhost:3001/api/modifyProfile`, {
+            const response = await axios.get(`https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api//modifyProfile`, {
                 headers: {
                     'Authorization': `Bearer ${token}` // Send the token
                 },
@@ -112,7 +112,7 @@ const ModifyProfile = () => {
                 }
             }
 
-            const response = await axios.put(`http://localhost:3001/api/modifyProfile`, updatedFormData, {
+            const response = await axios.put(`https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api//modifyProfile`, updatedFormData, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 },

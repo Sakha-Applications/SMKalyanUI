@@ -155,7 +155,7 @@ import React, { useState } from 'react';
                                    uploadedPhotos.map((photo, index) => (
                                        <div key={index} style={{ marginRight: 10, marginBottom: 10 }}>
                                            <img
-                                               src={`http://localhost:3001/${photo.path}`}
+                                               src={`https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/${photo.path}`}
                                                alt={`uploaded-${index}`}
                                                style={{ width: 100, height: 100, objectFit: 'cover' }}
                                            />
@@ -171,7 +171,7 @@ import React, { useState } from 'react';
                        <Typography variant="h6" sx={{ mt: 4 }}>Default Photo</Typography>
                        {defaultPhoto ? (
                            <img
-                               src={`http://localhost:3001/${defaultPhoto}`}
+                               src={`https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/${defaultPhoto}`}
                                alt="Default Profile"
                                style={{ width: 150, height: 150, objectFit: 'cover' }}
                            />

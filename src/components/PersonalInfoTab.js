@@ -35,7 +35,7 @@ const PersonalInfoTab = ({ formData, handleChange, handleDOBChange, handleTimeBl
             else if (!isNaN(formData.guruMatha)) {
                 const fetchGuruMathaDetails = async () => {
                     try {
-                        const response = await axios.get("http://localhost:3001/api/guru-matha");
+                        const response = await axios.get("https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api//guru-matha");
                         const options = response.data;
                         const selectedOption = options.find(opt => opt.id === formData.guruMatha);
                         if (selectedOption) {
@@ -73,7 +73,7 @@ const PersonalInfoTab = ({ formData, handleChange, handleDOBChange, handleTimeBl
         setGuruMathaError(null);
         
         try {
-            const response = await axios.get(`http://localhost:3001/api/guru-matha?search=${encodeURIComponent(searchText)}`);
+            const response = await axios.get(`https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api//guru-matha?search=${encodeURIComponent(searchText)}`);
             console.log("GuruMatha search response:", response.data);
             
             if (Array.isArray(response.data)) {

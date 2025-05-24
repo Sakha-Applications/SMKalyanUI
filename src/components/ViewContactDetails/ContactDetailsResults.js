@@ -21,7 +21,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom'; // Import useNavigate
 
-const API_BASE_URL = 'http://localhost:3001';
+const API_BASE_URL = 'https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net';
 const BACKEND_DEFAULT_IMAGE_URL = '/ProfilePhotos/defaultImage.jpg'; // URL to your backend's default image
 
 const ContactDetailsResults = ({ results, userEmail }) => {

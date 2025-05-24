@@ -15,7 +15,7 @@ import FamilyDetailsTab from "./FamilyDetailsTab";
 import CareerEducationTab from "./CareerEducationTab";
 import useFormData from "../hooks/useFormData";
 import axios from "axios";
-import config from '../config'; // Relative path to src/config.js
+// import config from '../config'; // Relative path to src/config.js
 
 const ProfileDetails = () => {
     const [tabIndex, setTabIndex] = useState(0);
@@ -53,7 +53,7 @@ const ProfileDetails = () => {
             };
 
             const response = await axios.post(
-                `${config.apiUrl}/addProfile`,
+                `https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api/addProfile`,
                 {
                     profileData: formData,
                     userLoginData: userLoginData,
@@ -70,7 +70,7 @@ const ProfileDetails = () => {
             // --- Trigger email sending after the alert is closed ---
             try {
                 const emailResponse = await axios.post(
-                    "http://localhost:3001/api/send-email", // Replace with your actual email sending API endpoint
+                    "https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api//send-email", // Replace with your actual email sending API endpoint
                     {
                         email: formData.email, // Ensure formData.email is correct
                         profileId: profileId, // Send the profile ID in the email body if needed

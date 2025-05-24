@@ -40,7 +40,7 @@ const ViewContactDetailsForm = () => {
 
         try {
             const token = sessionStorage.getItem('token');
-            const response = await fetch('http://localhost:3001/api/contact-details', {
+            const response = await fetch('https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api//contact-details', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

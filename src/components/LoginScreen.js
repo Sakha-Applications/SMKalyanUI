@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import BackHomeButton from '../hooks/BackHomeButton'; // Ensure this import is correct
-import config from '../config'; // Relative path to src/config.js
+// import config from '../config'; // Relative path to src/config.js
 
 function LoginScreen() {
   const [username, setUsername] = useState('');
@@ -16,7 +16,7 @@ function LoginScreen() {
     setIsLoading(true);
 
     try {
-      const response = await fetch(`${config.apiUrl}/login`, { // Corrected API endpoint
+      const response = await fetch(`https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api/login`, { // Corrected API endpoint
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

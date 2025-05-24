@@ -32,7 +32,7 @@ function RenewProfile() {
     }
 
     try {
-      const response = await fetch("http://localhost:3001/api/modifyProfile", {
+      const response = await fetch("https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api//modifyProfile", {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -62,7 +62,7 @@ function RenewProfile() {
           return;
         }
 
-        const response = await fetch("http://localhost:3001/api/modifyProfile", {
+        const response = await fetch("https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api//modifyProfile", {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -141,7 +141,7 @@ function RenewProfile() {
     try {
       setIsSubmitting(true);
 
-      const response = await fetch('http://localhost:3001/api/offline-payment/submit', {
+      const response = await fetch('https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api//offline-payment/submit', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
