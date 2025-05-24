@@ -13,7 +13,8 @@ import RenewProfile from './components/RenewProfile';
 import Donate from './components/Donate';
 import About from './components/About';
 import ContactDetails from './components/ViewContactDetails/ViewContactDetailsForm';
-import SharingContactDetails from './components/ViewContactDetails/SharingContactDetails'; // Import the new component
+import SharingContactDetails from './components/ViewContactDetails/SharingContactDetails';
+import PublicHome from './components/PublicHome'; // Import the new component
 
 // Protected route component
 const ProtectedRoute = ({ children }) => {
@@ -33,7 +34,8 @@ function App() {
         <Router>
             <Routes>
                 {/* Public routes */}
-                <Route path="/" element={<Home />} />
+                <Route path="/" element={<PublicHome />} />
+              <Route path="/home" element={<Home />} />
                 <Route path="/login" element={<LoginScreen />} />
                 <Route path="/profile-register" element={<ProfileRegisterForm />} />
                 <Route path="/forgot-password" element={<ForgotPasswordScreen />} />
