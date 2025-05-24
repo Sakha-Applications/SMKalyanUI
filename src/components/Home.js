@@ -11,7 +11,7 @@ export default function Home() {
       {/* Navigation Bar */}
       <nav className="bg-white shadow-md py-4">
         <div className="container mx-auto flex justify-between items-center px-6"> {/* Added container and mx-auto */}
-          <Link to="/" className="text-xl font-bold text-indigo-700">
+          <Link to="/home" className="text-xl font-bold text-indigo-700">
           Sarvamool - Kalyan Sakha Home Page
           </Link>
           <div className="space-x-4">
