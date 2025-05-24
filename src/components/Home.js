@@ -15,7 +15,7 @@ export default function Home() {
           Sarvamool - Kalyan Sakha Home Page
           </Link>
           <div className="space-x-4">
-            <Link to="/" className="text-gray-700 hover:text-indigo-500">Home</Link>
+            <Link to="/home" className="text-gray-700 hover:text-indigo-500">Home</Link>
             <Link to="/about" className="text-gray-700 hover:text-indigo-500">About</Link>
             <Link
               to="/login"

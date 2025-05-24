@@ -54,7 +54,7 @@ function LoginScreen() {
       {/* Navigation Bar */}
       <nav className="bg-white shadow-md py-4">
         <div className="container mx-auto flex justify-between items-center px-6">
-          <Link to="/" className="text-xl font-bold text-indigo-700">
+          <Link to="/home" className="text-xl font-bold text-indigo-700">
             ProfileConnect {/* Or your app name */}
           </Link>
           <div>
