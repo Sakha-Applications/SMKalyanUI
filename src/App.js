@@ -15,6 +15,8 @@ import About from './components/About';
 import ContactDetails from './components/ViewContactDetails/ViewContactDetailsForm';
 import SharingContactDetails from './components/ViewContactDetails/SharingContactDetails';
 import PublicHome from './components/PublicHome'; // Import the new component
+import MakePreferred from './components/prefferedProfile/MakePreferred';
+import PreferredPayment from './components/prefferedProfile/PreferredPayment';
 
 // Protected route component
 const ProtectedRoute = ({ children }) => {
@@ -107,6 +109,8 @@ function App() {
                         </ProtectedRoute>
                     }
                 />
+                <Route path="/make-preferred" element={<MakePreferred />} />
+<Route path="/preferred-payment" element={<PreferredPayment />} />
             </Routes>
         </Router>
     );

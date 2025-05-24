@@ -59,6 +59,12 @@ const Dashboard = () => {
                     </Link>
                   </div>
                   <div className="dashboard-nav-item">
+  <Link to="/make-preferred" className="block py-3 px-4 hover:bg-indigo-700 rounded transition">
+    <span className="material-icons align-middle mr-2">stars</span>
+    Make Profile Preferred
+  </Link>
+</div>
+                  <div className="dashboard-nav-item">
                     <Link to="/donate" className="block py-3 px-4 hover:bg-indigo-700 rounded transition">
                       <span className="material-icons align-middle mr-2">favorite</span>
                       Donate for the Cause
