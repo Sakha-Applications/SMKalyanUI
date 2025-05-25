@@ -10,6 +10,7 @@ const MakePreferred = () => {
     profile_id: ''
   });
   const [profileData, setProfileData] = useState(null);
+  const [preferredStatus, setPreferredStatus] = useState(null);
   const [error, setError] = useState(null);
   const [searching, setSearching] = useState(false);
   const navigate = useNavigate();
@@ -121,6 +122,56 @@ const MakePreferred = () => {
     }));
   };
 
+  // Check if profile is already preferred
+  const checkPreferredStatus = async (profileId) => {
+    try {
+      const token = sessionStorage.getItem("token") || localStorage.getItem("token");
+      
+      const response = await fetch(`https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api/preferred-profiles/check/${profileId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      const data = await response.json();
+      console.log("MakePreferred: Preferred status check response:", data);
+      
+      if (response.ok && data.success) {
+        if (data.data.is_preferred) {
+          // Get detailed preferred profile information
+          const detailResponse = await fetch(`https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api/preferred-profiles/profile/${profileId}`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          
+          if (detailResponse.ok) {
+            const detailData = await detailResponse.json();
+            console.log("MakePreferred: Preferred profile details:", detailData);
+            
+            if (detailData.success && detailData.data) {
+              return {
+                isPreferred: true,
+                details: detailData.data
+              };
+            }
+          }
+          
+          return { isPreferred: true, details: null };
+        }
+      }
+      
+      return { isPreferred: false, details: null };
+    } catch (error) {
+      console.error("MakePreferred: Error checking preferred status:", error);
+      return { isPreferred: false, details: null };
+    }
+  };
+
   const handleSearch = async () => {
     console.log("MakePreferred: Search initiated with criteria:", searchCriteria);
     
@@ -137,6 +188,7 @@ const MakePreferred = () => {
     // Reset states
     setError(null);
     setProfileData(null);
+    setPreferredStatus(null);
     setSearching(true);
     
     // Prepare search data (only include non-empty fields)
@@ -170,7 +222,16 @@ const MakePreferred = () => {
       
       if (response.ok && data && data.length > 0) {
         console.log("MakePreferred: Profile found successfully:", data[0]);
-        setProfileData(data[0]);
+        const foundProfile = data[0];
+        setProfileData(foundProfile);
+        
+        // Check if this profile is already preferred
+        if (foundProfile.id) {
+          console.log("MakePreferred: Checking preferred status for profile:", foundProfile.id);
+          const preferredCheck = await checkPreferredStatus(foundProfile.id);
+          setPreferredStatus(preferredCheck);
+          console.log("MakePreferred: Preferred status result:", preferredCheck);
+        }
       } else {
         const errorMsg = 'No profile found matching the search criteria';
         console.log("MakePreferred: No profile found");
@@ -201,9 +262,21 @@ const MakePreferred = () => {
     navigate('/preferred-payment', { state: { profileData } });
   };
 
+  // Format date for display
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-IN', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
   console.log("MakePreferred: Current render state:", {
     searchCriteria,
     profileData: profileData ? "Profile loaded" : "No profile",
+    preferredStatus: preferredStatus ? "Status checked" : "No status",
     error,
     searching
   });
@@ -278,62 +351,124 @@ const MakePreferred = () => {
       )}
       
       {profileData && (
-        <Box sx={{ 
-          mt: 4, 
-          p: 3, 
-          border: '1px solid #ddd', 
-          borderRadius: 2,
-          backgroundColor: '#f9f9f9'
-        }}>
-          <Typography variant="h6" gutterBottom color="primary">
-            Profile Details
-          </Typography>
-          
-          <Typography sx={{ mb: 1 }}>
-            <strong>Name:</strong> {profileData.name || 'N/A'}
-          </Typography>
-          
-          <Typography sx={{ mb: 1 }}>
-            <strong>Email:</strong> {profileData.email || 'N/A'}
-          </Typography>
-          
-          {profileData.current_age && (
+        <Box sx={{ mt: 4 }}>
+          {/* Profile Details Box */}
+          <Box sx={{ 
+            p: 3, 
+            border: '1px solid #ddd', 
+            borderRadius: 2,
+            backgroundColor: '#f9f9f9',
+            mb: 2
+          }}>
+            <Typography variant="h6" gutterBottom color="primary">
+              Profile Details
+            </Typography>
+            
             <Typography sx={{ mb: 1 }}>
-              <strong>Current Age:</strong> {profileData.current_age}
+              <strong>Name:</strong> {profileData.name || 'N/A'}
             </Typography>
-          )}
-          
-          {profileData.gotra && (
+            
             <Typography sx={{ mb: 1 }}>
-              <strong>Gotra:</strong> {profileData.gotra}
+              <strong>Email:</strong> {profileData.email || 'N/A'}
             </Typography>
+            
+            {profileData.current_age && (
+              <Typography sx={{ mb: 1 }}>
+                <strong>Current Age:</strong> {profileData.current_age}
+              </Typography>
+            )}
+            
+            {profileData.gotra && (
+              <Typography sx={{ mb: 1 }}>
+                <strong>Gotra:</strong> {profileData.gotra}
+              </Typography>
+            )}
+            
+            {profileData.phone && (
+              <Typography sx={{ mb: 1 }}>
+                <strong>Phone:</strong> {profileData.phone}
+              </Typography>
+            )}
+            
+            {profileData.id && (
+              <Typography sx={{ mb: 2 }}>
+                <strong>Profile ID:</strong> {profileData.id}
+              </Typography>
+            )}
+          </Box>
+
+          {/* Preferred Status Check */}
+          {preferredStatus?.isPreferred ? (
+            // Profile is already preferred
+            <Alert 
+              severity="info" 
+              sx={{ 
+                mb: 2,
+                '& .MuiAlert-message': {
+                  width: '100%'
+                }
+              }}
+            >
+              <Typography variant="h6" sx={{ mb: 1, color: 'info.main' }}>
+                Profile Already Preferred
+              </Typography>
+              <Typography sx={{ mb: 1 }}>
+                This profile is already marked as preferred and is currently active.
+              </Typography>
+              
+              {preferredStatus.details && (
+                <>
+                  <Typography sx={{ mb: 1 }}>
+                    <strong>Valid Until:</strong> {formatDate(preferredStatus.details.validity_date)}
+                  </Typography>
+                  
+                  {preferredStatus.details.days_remaining !== undefined && (
+                    <Typography sx={{ mb: 1 }}>
+                      <strong>Days Remaining:</strong> {preferredStatus.details.days_remaining} days
+                    </Typography>
+                  )}
+                  
+                  <Typography sx={{ mb: 1 }}>
+                    <strong>Payment Amount:</strong> ₹{preferredStatus.details.payment_amount}
+                  </Typography>
+                  
+                  <Typography sx={{ mb: 1 }}>
+                    <strong>Payment Date:</strong> {formatDate(preferredStatus.details.payment_date)}
+                  </Typography>
+                </>
+              )}
+              
+              <Typography sx={{ mt: 2, fontStyle: 'italic' }}>
+                You cannot make this profile preferred again until the current preferred status expires.
+              </Typography>
+            </Alert>
+          ) : (
+            // Profile is not preferred - show payment option
+            <Box sx={{ 
+              p: 3, 
+              border: '1px solid #e8f5e8', 
+              borderRadius: 2,
+              backgroundColor: '#f8fff8'
+            }}>
+              <Typography sx={{ mb: 2, fontWeight: 'medium', color: 'success.main' }}>
+                This profile is available for preferred status.
+              </Typography>
+              
+              <Typography sx={{ mb: 2, color: 'text.secondary' }}>
+                Make this profile preferred for ₹250 and get premium visibility for 90 days.
+              </Typography>
+              
+              <Button 
+                variant="contained" 
+                color="secondary" 
+                onClick={handleConfirm}
+                size="large"
+                sx={{ mt: 1 }}
+              >
+                Proceed to Payment (₹250)
+              </Button>
+            </Box>
           )}
-          
-          {profileData.phone && (
-            <Typography sx={{ mb: 1 }}>
-              <strong>Phone:</strong> {profileData.phone}
-            </Typography>
-          )}
-          
-          {profileData.id && (
-            <Typography sx={{ mb: 2 }}>
-              <strong>Profile ID:</strong> {profileData.id}
-            </Typography>
-          )}
-          
-          <Typography sx={{ mt: 3, mb: 2, fontWeight: 'medium', color: 'primary.main' }}>
-            Do you want to make this profile preferred for ₹250?
-          </Typography>
-          
-          <Button 
-            variant="contained" 
-            color="secondary" 
-            onClick={handleConfirm}
-            size="large"
-            sx={{ mt: 1 }}
-          >
-            Proceed to Payment
-          </Button>
         </Box>
       )}
     </Box>
