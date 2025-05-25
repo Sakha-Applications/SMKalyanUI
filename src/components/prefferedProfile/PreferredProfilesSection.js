@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Star, Clock, CheckCircle, User, Calendar, DollarSign } from 'lucide-react';
 
 // API service functions
-const API_BASE = `https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net//api/preferred-profiles`;
+const API_BASE = `https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api/preferred-profiles`;
 
 const api = {
   getForDisplay: async (limit = 10, format = 'ticker') => {
