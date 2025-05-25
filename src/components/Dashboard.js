@@ -1,5 +1,6 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
+import PreferredProfilesSection from "./components/PreferredProfiles/PreferredProfilesSection";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -11,6 +12,9 @@ const Dashboard = () => {
     sessionStorage.removeItem('isLoggedIn');
     navigate('/login');
   };
+
+  // Get user profile ID from session storage or context
+  const userProfileId = sessionStorage.getItem('profileId'); // Adjust based on your auth system
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-indigo-50">
@@ -29,6 +33,15 @@ const Dashboard = () => {
             </button>
           </div>
         </div>
+
+        {/* Preferred Profiles Section - Add this before the main dashboard */}
+        <PreferredProfilesSection 
+          showTicker={true}
+          showCards={true}
+          tickerLimit={12}
+          cardsLimit={8}
+          userProfileId={userProfileId}
+        />
 
         <div className="bg-white rounded-lg shadow-lg overflow-hidden">
           <div className="flex flex-col md:flex-row">
@@ -59,11 +72,11 @@ const Dashboard = () => {
                     </Link>
                   </div>
                   <div className="dashboard-nav-item">
-  <Link to="/make-preferred" className="block py-3 px-4 hover:bg-indigo-700 rounded transition">
-    <span className="material-icons align-middle mr-2">stars</span>
-    Make Profile Preferred
-  </Link>
-</div>
+                    <Link to="/make-preferred" className="block py-3 px-4 hover:bg-indigo-700 rounded transition">
+                      <span className="material-icons align-middle mr-2">stars</span>
+                      Make Profile Preferred
+                    </Link>
+                  </div>
                   <div className="dashboard-nav-item">
                     <Link to="/donate" className="block py-3 px-4 hover:bg-indigo-700 rounded transition">
                       <span className="material-icons align-middle mr-2">favorite</span>
