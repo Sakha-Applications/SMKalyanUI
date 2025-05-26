@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import config from './config';
+import getBaseUrl from '../utils/GetUrl';
 
 const useApiData = (endpoint) => {
     const [isLoading, setIsLoading] = useState(true);
@@ -39,7 +40,7 @@ const useApiData = (endpoint) => {
             const fetchAllData = async () => {
                 try {
                     // Fetch gotras
-                    const gotrasResponse = await axios.get(`https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api/gotras`);
+                    const gotrasResponse = await axios.get(`${getBaseUrl()}/api/gotras`);
                     if (Array.isArray(gotrasResponse.data)) {
                         setGotraOptions(gotrasResponse.data);
                     } else {
@@ -48,7 +49,7 @@ const useApiData = (endpoint) => {
                     }
                     
                     // Fetch rashis
-                    const rashisResponse = await axios.get(`https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api/rashis`);
+                    const rashisResponse = await axios.get(`${getBaseUrl()}/api/rashis`);
                     if (Array.isArray(rashisResponse.data)) {
                         setRashiOptions(rashisResponse.data);
                     } else {
@@ -57,7 +58,7 @@ const useApiData = (endpoint) => {
                     }
                     
                     // Fetch nakshatras
-                    const nakshatrasResponse = await axios.get(`https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api/nakshatras`);
+                    const nakshatrasResponse = await axios.get(`${getBaseUrl()}/api/nakshatras`);
                     if (Array.isArray(nakshatrasResponse.data)) {
                         setNakshatraOptions(nakshatrasResponse.data);
                     } else {
@@ -66,7 +67,7 @@ const useApiData = (endpoint) => {
                     }
                     
                     // Fetch professions
-                    const professionsResponse = await axios.get(`https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api/profession`);
+                    const professionsResponse = await axios.get(`${getBaseUrl()}/api/profession`);
                     if (Array.isArray(professionsResponse.data)) {
                         setProfessionOptions(professionsResponse.data);
                     } else {

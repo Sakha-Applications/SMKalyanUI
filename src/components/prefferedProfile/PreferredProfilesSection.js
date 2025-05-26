@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Star, MapPin, Briefcase, Calendar, Heart, User, Clock } from 'lucide-react';
-
+import getBaseUrl from '../../utils/GetUrl';
 // API service
-const API_BASE = `https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api/preferred-profiles`;
+const API_BASE = `${getBaseUrl()}/api/preferred-profiles`;
+
+console.log('Preferred Profiles API URL:', API_BASE);
 
 const api = {
   getForDisplay: async (limit = 12) => {

@@ -9,6 +9,7 @@ import ContactDetailsResults from "./ViewContactDetails/ContactDetailsResults";
 import useApiData from "../hooks/useApiData";
 import { useNavigate } from "react-router-dom";
 import backgroundImage from '../assets/Image/kalayan_bg_img.png';
+import getBaseUrl from '../utils/GetUrl';
 
 const PublicHome = () => {
   const [searchCriteria, setSearchCriteria] = useState({ profileId: '', profileFor: '', minAge: '', maxAge: '', gotra: '' });
@@ -26,7 +27,7 @@ const PublicHome = () => {
   const handleSearch = async () => {
     setSearching(true);
     try {
-      const response = await fetch('https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api//contact-details', {
+      const response = await fetch(`${getBaseUrl()}/api//contact-details`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(searchCriteria),
