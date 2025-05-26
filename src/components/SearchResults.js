@@ -2,8 +2,9 @@ import React, { useState, useEffect } from "react";
 import { Paper, Typography, Box, Grid } from "@mui/material";
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import getBaseUrl from '../utils/GetUrl';
 
-const API_BASE_URL = 'https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net';
+const API_BASE_URL = `${getBaseUrl()}`;
 const BACKEND_DEFAULT_IMAGE_URL = '/ProfilePhotos/defaultImage.jpg';
 
 const SearchResults = ({ results }) => {

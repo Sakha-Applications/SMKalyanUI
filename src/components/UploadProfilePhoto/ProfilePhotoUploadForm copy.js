@@ -12,6 +12,8 @@ import {
     fetchDefaultPhoto,
 } from './photoUploadUtils';
 
+import getBaseUrl from '../../utils/GetUrl';
+
 const ProfilePhotoUploadForm = () => {
     const navigate = useNavigate();
     const [loggedInEmail, setLoggedInEmail] = useState(''); // State for logged-in email
@@ -259,7 +261,7 @@ const ProfilePhotoUploadForm = () => {
                                 uploadedPhotos.map((photo, index) => (
                                     <div key={index} style={{ marginRight: 10, marginBottom: 10 }}>
                                         <img
-                                            src={`https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/${photo.path}`}
+                                            src={`${getBaseUrl()}/${photo.path}`}
                                             alt={`uploaded-${index}`}
                                             style={{ width: 100, height: 100, objectFit: 'cover' }}
                                         />

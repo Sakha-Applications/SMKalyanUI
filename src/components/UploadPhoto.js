@@ -1,6 +1,7 @@
 // **2. `src/utils/photoUploadUtils.js`**
 // 
 import axios from 'axios';
+import getBaseUrl from '../utils/GetUrl';
 
 // Search Profile Function
 export const handleSearchProfile = async (searchCriteria, setProfileData, setFetchError, setSearching, setUploadedPhotos, setDefaultPhoto) => {
@@ -10,7 +11,7 @@ export const handleSearchProfile = async (searchCriteria, setProfileData, setFet
     setUploadedPhotos([]);
     setDefaultPhoto(null);
     try {
-        const response = await axios.post('https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api//search-by-upload', searchCriteria);
+        const response = await axios.post(`${getBaseUrl()}/api//search-by-upload`, searchCriteria);
         const data = response.data;
         if (data && data.length > 0) {
             setProfileData(data[0]);
@@ -91,7 +92,7 @@ export const handleUploadPhotos = async (profileData, photos, isDefaultPhoto, se
     });
 
     try {
-        const response = await axios.post('https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api//upload-photos', formDataToSend, {
+        const response = await axios.post(`${getBaseUrl()}/api//upload-photos`, formDataToSend, {
             headers: {
                 'Content-Type': 'multipart/form-data',
             },
@@ -116,7 +117,7 @@ export const handleUploadPhotos = async (profileData, photos, isDefaultPhoto, se
 // Get Uploaded Photos
 export const getUploadedPhotos = async (profileId, setUploadedPhotos, setUploadError) => {
     try {
-        const response = await axios.get(`https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api//get-photos?profileId=${profileId}`);
+        const response = await axios.get(`${getBaseUrl()}/api//get-photos?profileId=${profileId}`);
         setUploadedPhotos(response.data.map(photo => ({
             path: photo.photo_path,
             isDefault: photo.is_default
@@ -130,7 +131,7 @@ export const getUploadedPhotos = async (profileId, setUploadedPhotos, setUploadE
 // Get Default Photo
 export const fetchDefaultPhoto = async (profileId, setDefaultPhoto) => {
     try {
-        const response = await axios.get(`https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api//get-default-photo?profileId=${profileId}`);
+        const response = await axios.get(`${getBaseUrl()}/api//get-default-photo?profileId=${profileId}`);
         if (response.data) {
             setDefaultPhoto(response.data.photo_path);
         } else {

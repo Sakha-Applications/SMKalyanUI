@@ -9,6 +9,7 @@ import ModifyProfileContactDetailsTab from "./ModifyProfile/ModifyProfileContact
 import ModifyProfileFamilyDetailsTab from "./ModifyProfile/ModifyProfileFamilyDetailsTab";
 import ModifyProfileCareerEducationTab from "./ModifyProfile/ModifyProfileCareerEducationTab";
 import axios from "axios";
+import getBaseUrl from '../utils/GetUrl';
 
 const ModifyProfile = () => {
     const navigate = useNavigate();
@@ -50,7 +51,7 @@ const ModifyProfile = () => {
             }
 
             console.log("ModifyProfile: Token found, proceeding with API call...");
-            const response = await axios.get(`https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api//modifyProfile`, {
+            const response = await axios.get(`${getBaseUrl()}/api//modifyProfile`, {
                 headers: {
                     'Authorization': `Bearer ${token}` // Send the token
                 },
@@ -112,7 +113,7 @@ const ModifyProfile = () => {
                 }
             }
 
-            const response = await axios.put(`https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api//modifyProfile`, updatedFormData, {
+            const response = await axios.put(`${getBaseUrl()}/api//modifyProfile`, updatedFormData, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 },

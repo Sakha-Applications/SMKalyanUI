@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Box, Typography, TextField, Autocomplete, CircularProgress } from "@mui/material";
 import FormNavigation from "../FormNavigation";
 import axios from "axios";
+import getBaseUrl from '../../utils/GetUrl';
 
 const ModifyProfileFamilyDetailsTab = ({ formData, handleChange, tabIndex, setTabIndex, isActive }) => {
     // Father's Profession state
@@ -75,7 +76,7 @@ const ModifyProfileFamilyDetailsTab = ({ formData, handleChange, tabIndex, setTa
         
         try {
             const token = sessionStorage.getItem('token');
-            const response = await axios.get(`https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api//profession?search=${encodeURIComponent(searchText)}`, {
+            const response = await axios.get(`${getBaseUrl()}/api//profession?search=${encodeURIComponent(searchText)}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             
@@ -122,7 +123,7 @@ const ModifyProfileFamilyDetailsTab = ({ formData, handleChange, tabIndex, setTa
         const fetchProfessions = async () => {
             try {
                 const token = sessionStorage.getItem('token');
-                const response = await axios.get("https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api//profession", {
+                const response = await axios.get(`${getBaseUrl()}/api//profession`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 

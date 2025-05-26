@@ -171,7 +171,7 @@ import React, { useState } from 'react';
                        <Typography variant="h6" sx={{ mt: 4 }}>Default Photo</Typography>
                        {defaultPhoto ? (
                            <img
-                               src={`https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/${defaultPhoto}`}
+                               src={`${getBaseUrl()}/${defaultPhoto}`}
                                alt="Default Profile"
                                style={{ width: 150, height: 150, objectFit: 'cover' }}
                            />

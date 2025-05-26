@@ -1,9 +1,10 @@
 // src/components/UploadProfilePhoto/photoUploadUtils.js
 import axios from 'axios';
 // import config from '../../config'; // Import the config
+import getBaseUrl from '../../utils/GetUrl';
 
 // Use config for API URL
-const API_URL = config.apiUrl;
+const API_URL = `${getBaseUrl()}`;
 const PHOTO_BASE_URL = config.photoBaseUrl || API_URL;
 
 // Search Profile Function
@@ -28,7 +29,7 @@ export const handleSearchProfile = async (
     }
     
     try {
-        const response = await axios.post(`${API_URL}/search-by-upload`, searchCriteria);
+        const response = await axios.post(`${API_URL}/api/search-by-upload`, searchCriteria);
         const data = response.data;
         if (data && data.length > 0) {
             setProfileData(data[0]);
@@ -120,7 +121,7 @@ export const handleUploadPhotos = async (
     });
 
     try {
-        const response = await axios.post(`${API_URL}/upload-photos`, formDataToSend, {
+        const response = await axios.post(`${API_URL}/api/upload-photos`, formDataToSend, {
             headers: {
                 'Content-Type': 'multipart/form-data',
             },
@@ -168,7 +169,7 @@ export const getUploadedPhotos = async (profileId, setUploadedPhotos, setFetchEr
     }
     
     try {
-        const response = await axios.get(`${API_URL}/get-photos?profileId=${profileId}`);
+        const response = await axios.get(`${API_URL}/api/get-photos?profileId=${profileId}`);
         
         if (response.data && Array.isArray(response.data)) {
             // Transform the response data to include full URLs
@@ -202,7 +203,7 @@ export const getUploadedPhotos = async (profileId, setUploadedPhotos, setFetchEr
 // Get Default Photo
 export const fetchDefaultPhoto = async (profileId, setDefaultPhoto, setFetchError) => {
     try {
-        const response = await axios.get(`${API_URL}/get-default-photo?profileId=${profileId}`);
+        const response = await axios.get(`${API_URL}/api/get-default-photo?profileId=${profileId}`);
         if (response.data && response.data.photo_path) {
             // Extract filename from the photo path
             const normalizedPath = response.data.photo_path.replace(/\\/g, '/');
@@ -233,7 +234,7 @@ export const deletePhoto = async (photoId, setDeleteError, setDeletingPhoto, onS
     setDeleteError(null);
     
     try {
-        const response = await axios.delete(`${API_URL}/delete-photo/${photoId}`);
+        const response = await axios.delete(`${API_URL}/api/delete-photo/${photoId}`);
         
         if (response.status === 200) {
             alert('Photo deleted successfully!');

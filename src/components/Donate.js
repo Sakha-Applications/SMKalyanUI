@@ -17,6 +17,7 @@ import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
 import TableRow from '@mui/material/TableRow';
 import { Link } from 'react-router-dom';
+import getBaseUrl from '../utils/GetUrl';
 
 function Donate() {
   console.log("[Donate] Component initialized");
@@ -32,7 +33,7 @@ const getUserInfo = async () => {
   }
 
   try {
-    const response = await fetch(`https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api/modifyProfile`, {
+    const response = await fetch(`${getBaseUrl()}/api/modifyProfile`, {
       headers: { Authorization: `Bearer ${token}` }
     });
 
@@ -63,7 +64,7 @@ useEffect(() => {
         return;
       }
 
-      const response = await fetch(`https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api/modifyProfile`, {
+      const response = await fetch(`${getBaseUrl()}/api/modifyProfile`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -147,7 +148,7 @@ useEffect(() => {
     try {
       setIsSubmitting(true);
 
-      const response = await fetch(`https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api/offline-payment/submit`, {
+      const response = await fetch(`${getBaseUrl()}/api/offline-payment/submit`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

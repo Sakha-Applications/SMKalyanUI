@@ -17,6 +17,8 @@ import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
 import TableRow from '@mui/material/TableRow';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import getBaseUrl from '../../utils/GetUrl';
+
 
 function PreferredPayment() {
   console.log("[PreferredPayment] Component initialized");
@@ -36,7 +38,7 @@ function PreferredPayment() {
     }
 
     try {
-      const response = await fetch("https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api//modifyProfile", {
+      const response = await fetch(`${getBaseUrl()}/api//modifyProfile`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -66,7 +68,7 @@ function PreferredPayment() {
           return;
         }
 
-        const response = await fetch("https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api//modifyProfile", {
+        const response = await fetch(`${getBaseUrl()}/api//modifyProfile`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -149,7 +151,7 @@ function PreferredPayment() {
       setIsSubmitting(true);
 
       // Submit offline payment first
-      const offlinePaymentResponse = await fetch('https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api//offline-payment/submit', {
+      const offlinePaymentResponse = await fetch(`${getBaseUrl()}/api//offline-payment/submit`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -178,7 +180,7 @@ function PreferredPayment() {
       }
 
       // Submit preferred profile record
-      const preferredResponse = await fetch('https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api/preferred-profiles', {
+      const preferredResponse = await fetch(`${getBaseUrl()}/api/preferred-profiles`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

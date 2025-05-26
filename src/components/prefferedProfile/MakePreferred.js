@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Button, TextField, Typography, Alert, CircularProgress, Grid } from '@mui/material';
+import getBaseUrl from '../../utils/GetUrl';
 
 const MakePreferred = () => {
   const [searchCriteria, setSearchCriteria] = useState({
@@ -127,7 +128,7 @@ const MakePreferred = () => {
     try {
       const token = sessionStorage.getItem("token") || localStorage.getItem("token");
       
-      const response = await fetch(`https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api/preferred-profiles/check/${profileId}`, {
+      const response = await fetch(`${getBaseUrl()}/api/preferred-profiles/check/${profileId}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -141,7 +142,7 @@ const MakePreferred = () => {
       if (response.ok && data.success) {
         if (data.data.is_preferred) {
           // Get detailed preferred profile information
-          const detailResponse = await fetch(`https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api/preferred-profiles/profile/${profileId}`, {
+          const detailResponse = await fetch(`${getBaseUrl()}/api/preferred-profiles/profile/${profileId}`, {
             method: 'GET',
             headers: {
               'Content-Type': 'application/json',
@@ -205,7 +206,7 @@ const MakePreferred = () => {
       const token = sessionStorage.getItem("token") || localStorage.getItem("token");
       console.log("MakePreferred: Using token:", token ? "Token found" : "No token");
       
-      const response = await fetch(`https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api/search-by-upload`, {
+      const response = await fetch(`${getBaseUrl()}/api/search-by-upload`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

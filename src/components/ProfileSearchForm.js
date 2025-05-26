@@ -11,6 +11,7 @@
     import SearchResults from "./SearchResults";
     import useApiData from "../hooks/useApiData";
     import { Link } from 'react-router-dom'; // Import Link for potential navigation
+    import getBaseUrl from '../utils/GetUrl';
 
     const ProfileSearchForm = () => {
         const [searchQuery, setSearchQuery] = useState({
@@ -31,7 +32,7 @@
             try {
                 console.log("Sending search request with:", searchQuery);
                 const response = await fetch(
-                    `https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api//searchProfiles?profileFor=${searchQuery.profileFor}&minAge=${searchQuery.minAge}&maxAge=${searchQuery.maxAge}&gotra=${searchQuery.gotra}`,
+                    `${getBaseUrl()}/api//searchProfiles?profileFor=${searchQuery.profileFor}&minAge=${searchQuery.minAge}&maxAge=${searchQuery.maxAge}&gotra=${searchQuery.gotra}`,
                     {
                         method: "GET",
                         headers: { "Content-Type": "application/json" }

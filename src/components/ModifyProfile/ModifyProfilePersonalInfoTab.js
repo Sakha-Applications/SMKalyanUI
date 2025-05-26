@@ -6,7 +6,7 @@ import dayjs from "dayjs";
 import FormNavigation from "../FormNavigation";
 import useApiData from "../../hooks/useApiData";
 import axios from "axios";
-
+import getBaseUrl from '../../utils/GetUrl';
 
 const ModifyProfilePersonalInfoTab = ({ formData, handleChange, handleDOBChange, handleTimeBlur, tabIndex, setTabIndex }) => {
     const { isLoading, error, gotraOptions, rashiOptions, nakshatraOptions } = useApiData();
@@ -43,52 +43,75 @@ const ModifyProfilePersonalInfoTab = ({ formData, handleChange, handleDOBChange,
     // Initialize selected guru matha if formData has it
     useEffect(() => {
         if (formData.guruMatha && !guruMathaSelectedValue) {
-            // If guruMatha is already an object with value property, use it directly
-            if (typeof formData.guruMatha === 'object' && formData.guruMatha.value) {
-                setGuruMathaSelectedValue(formData.guruMatha);
-                setGuruMathaInputValue(formData.guruMatha.label || '');
+            console.log('Initializing GuruMatha with:', formData.guruMatha, typeof formData.guruMatha);
+            
+            // If guruMatha is already an object with label/value properties
+            if (typeof formData.guruMatha === 'object' && formData.guruMatha !== null) {
+                if (formData.guruMatha.label && formData.guruMatha.value) {
+                    setGuruMathaSelectedValue(formData.guruMatha);
+                    setGuruMathaInputValue(formData.guruMatha.label);
+                }
             }
-            // If guruMatha is already a string (name), create an object
-            else if (typeof formData.guruMatha === 'string' && formData.guruMatha) {
+            // If guruMatha is a string (name), use it directly
+            else if (typeof formData.guruMatha === 'string' && formData.guruMatha.trim()) {
+                const guruMathaName = formData.guruMatha.trim();
                 setGuruMathaSelectedValue({
-                    label: formData.guruMatha,
-                    value: formData.guruMatha  // In this case, the value is the name itself
+                    label: guruMathaName,
+                    value: guruMathaName
                 });
-                setGuruMathaInputValue(formData.guruMatha);
+                setGuruMathaInputValue(guruMathaName);
             }
-            // If it's a numeric ID, fetch the name
-            else if (!isNaN(formData.guruMatha)) {
-                const fetchGuruMathaDetails = async () => {
+            // If it's a numeric ID, fetch the corresponding name
+            else if (typeof formData.guruMatha === 'number' || 
+                     (typeof formData.guruMatha === 'string' && !isNaN(parseInt(formData.guruMatha)))) {
+                const fetchGuruMathaById = async () => {
                     try {
-                        const response = await axios.get(`https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api/guru-matha`);
-                        const options = response.data;
-                        const selectedOption = options.find(opt => opt.id === formData.guruMatha);
-                        if (selectedOption) {
-                            const guruMathaName = selectedOption.GuruMathaName;
-                            setGuruMathaSelectedValue({
-                                label: guruMathaName,
-                                value: guruMathaName // Store the name here
-                            });
-                            setGuruMathaInputValue(guruMathaName);
+                        console.log('Fetching GuruMatha by ID:', formData.guruMatha);
+                        // Fixed: Remove double slash in URL
+                        const response = await axios.get(`${getBaseUrl()}/api/guru-matha`);
+                        
+                        if (Array.isArray(response.data)) {
+                            const guruMathaId = parseInt(formData.guruMatha);
+                            const selectedOption = response.data.find(opt => 
+                                opt.id === guruMathaId || 
+                                opt.GuruMathaId === guruMathaId ||
+                                parseInt(opt.id) === guruMathaId ||
+                                parseInt(opt.GuruMathaId) === guruMathaId
+                            );
                             
-                            // Update the formData with the name
-                            const syntheticEvent = {
-                                target: {
-                                    name: 'guruMatha',
+                            if (selectedOption) {
+                                const guruMathaName = selectedOption.GuruMathaName || selectedOption.name || selectedOption.label;
+                                console.log('Found GuruMatha:', guruMathaName);
+                                
+                                setGuruMathaSelectedValue({
+                                    label: guruMathaName,
                                     value: guruMathaName
-                                }
-                            };
-                            handleChange(syntheticEvent);
+                                });
+                                setGuruMathaInputValue(guruMathaName);
+                                
+                                // Update the formData with the name instead of ID
+                                const syntheticEvent = {
+                                    target: {
+                                        name: 'guruMatha',
+                                        value: guruMathaName
+                                    }
+                                };
+                                handleChange(syntheticEvent);
+                            } else {
+                                console.warn('GuruMatha not found for ID:', formData.guruMatha);
+                                setGuruMathaError('GuruMatha not found');
+                            }
                         }
                     } catch (error) {
-                        console.error("Error fetching guru matha details:", error);
+                        console.error("Error fetching guru matha by ID:", error);
+                        setGuruMathaError(`Failed to fetch guru matha: ${error.message}`);
                     }
                 };
 
-                fetchGuruMathaDetails();
+                fetchGuruMathaById();
             }
         }
-    }, [formData.guruMatha]);
+    }, [formData.guruMatha, guruMathaSelectedValue, handleChange]);
 
     // Parse height from formData.height
     useEffect(() => {
@@ -124,7 +147,7 @@ const ModifyProfilePersonalInfoTab = ({ formData, handleChange, handleDOBChange,
                 }
             }
         }
-    }, [formData.height]);
+    }, [formData.height, formData.heightFeet, formData.heightInches, handleChange]);
 
     // Search guru matha when input changes
     useEffect(() => {
@@ -145,12 +168,14 @@ const ModifyProfilePersonalInfoTab = ({ formData, handleChange, handleDOBChange,
         setGuruMathaError(null);
 
         try {
-            const response = await axios.get(`https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api//guru-matha?search=${encodeURIComponent(searchText)}`);
+            // Fixed: Remove double slash in URL
+            const response = await axios.get(`${getBaseUrl()}/api/guru-matha?search=${encodeURIComponent(searchText)}`);
 
             if (Array.isArray(response.data)) {
                 const options = response.data.map((item) => ({
-                    label: item.GuruMathaName,
-                    value: item.GuruMathaName // Store the name here
+                    label: item.GuruMathaName || item.name || item.label,
+                    value: item.GuruMathaName || item.name || item.label,
+                    id: item.id || item.GuruMathaId // Keep ID for reference if needed
                 }));
                 setGuruMathaOptions(options);
             } else {
@@ -167,16 +192,23 @@ const ModifyProfilePersonalInfoTab = ({ formData, handleChange, handleDOBChange,
 
     // Handle selection of guru matha
     const handleGuruMathaChange = (event, newValue) => {
+        console.log('GuruMatha selected:', newValue);
         setGuruMathaSelectedValue(newValue);
 
         // Update the parent form data with the Name (label)
         const syntheticEvent = {
             target: {
                 name: 'guruMatha',
-                value: newValue ? newValue.value : '' // Store the label (name)
+                value: newValue ? newValue.value : ''
             }
         };
         handleChange(syntheticEvent);
+    };
+
+    // Handle input change for guru matha
+    const handleGuruMathaInputChange = (event, newInputValue) => {
+        console.log('GuruMatha input changed:', newInputValue);
+        setGuruMathaInputValue(newInputValue);
     };
 
     // Handle Height changes
@@ -257,15 +289,17 @@ const ModifyProfilePersonalInfoTab = ({ formData, handleChange, handleDOBChange,
                 value={guruMathaSelectedValue}
                 onChange={handleGuruMathaChange}
                 inputValue={guruMathaInputValue}
-                onInputChange={(event, newInputValue) => {
-                    setGuruMathaInputValue(newInputValue);
-                }}
+                onInputChange={handleGuruMathaInputChange}
                 options={guruMathaOptions}
                 loading={isGuruMathaLoading}
                 loadingText="Searching..."
                 noOptionsText={guruMathaInputValue.length < 2 ? "Type at least 2 characters" : "No options found"}
                 fullWidth
                 freeSolo // Allow custom values
+                isOptionEqualToValue={(option, value) => {
+                    if (!option || !value) return false;
+                    return option.value === value.value || option.label === value.label;
+                }}
                 sx={{ backgroundColor: "#fff", borderRadius: 1 }}
                 renderInput={(params) => (
                     <TextField

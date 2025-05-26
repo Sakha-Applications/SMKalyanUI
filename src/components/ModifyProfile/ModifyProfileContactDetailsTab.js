@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import { Box, TextField, Typography } from "@mui/material";
 import FormNavigation from "../FormNavigation";
 
+
 const ModifyProfileContactDetailsTab = ({ formData, handleChange, isActive, tabIndex, setTabIndex }) => {
     // Debug effect to see formData
     useEffect(() => {

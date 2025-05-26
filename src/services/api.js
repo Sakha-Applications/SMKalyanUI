@@ -1,6 +1,7 @@
 import axios from "axios";
+import getBaseUrl from '../utils/GetUrl';
 
-const API_URL = "https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api/";
+const API_URL = `${getBaseUrl()}/api/`;
 
 export const addUser = async (user) => {
     return axios.post(`${API_URL}/addUser`, user);

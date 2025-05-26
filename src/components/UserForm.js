@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { addUser } from "../services/api";
 import { TextField, Button, Box, Typography, Paper } from "@mui/material";
 import { useNavigate } from "react-router-dom";
+import getBaseUrl from '../utils/GetUrl';
 
 const UserForm = ({ refreshUsers }) => {
     const navigate = useNavigate();

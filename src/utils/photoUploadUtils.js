@@ -1,8 +1,9 @@
 // src/components/uploadProfilePhoto/photoUploadUtils.js
 
 import axios from 'axios';
+import getBaseUrl from '../../utils/GetUrl';
 
-const API_BASE_URL = 'https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net'; // Define your API base URL
+const API_BASE_URL = `${getBaseUrl()}`; // Define your API base URL
 
 export const handleSearchCriteriaChange = (event, setSearchCriteria, setProfileData, setPhotos, setPhotoPreviews, setFetchError, setUploadedPhotos, setDefaultPhoto) => {
     const { name, value } = event.target;

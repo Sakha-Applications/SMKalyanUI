@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom'; // Import Link
 import BackHomeButton from '../hooks/BackHomeButton'; // Import BackHomeButton (adjust path if needed)
+import getBaseUrl from '../utils/GetUrl';
 
 const ForgotPasswordScreen = () => {
   const [userIdOrEmail, setUserIdOrEmail] = useState('');
@@ -16,7 +17,7 @@ const ForgotPasswordScreen = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch('https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api//forgot-password', { // Adjust this URL
+      const response = await fetch(`${getBaseUrl()}/api//forgot-password`, { // Adjust this URL
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

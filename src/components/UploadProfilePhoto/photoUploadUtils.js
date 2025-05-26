@@ -1,12 +1,13 @@
 // src/components/UploadProfilePhoto/photoUploadUtils.js
 import axios from 'axios';
 import config from '../../config'; 
+import getBaseUrl from '../../utils/GetUrl';
 
 function getApiBaseUrl() {
   let url = config.apiUrl;
   if (!url || url.includes('${') || url === '') {
     console.warn('⚠️ Detected invalid API base URL, falling back to localhost.');
-    return 'https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api/';
+    return `${getBaseUrl()}/api/`;
   }
   return url;
 }

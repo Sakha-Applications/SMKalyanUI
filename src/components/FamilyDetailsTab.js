@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Box, Typography, TextField, MenuItem, Autocomplete, CircularProgress } from "@mui/material";
 import FormNavigation from "./FormNavigation"; 
 import axios from "axios";
+import getBaseUrl from '../utils/GetUrl';
 
 const FamilyDetailsTab = ({ formData, handleChange, tabIndex, setTabIndex, isActive }) => {
     // Father's Profession state
@@ -32,7 +33,7 @@ const FamilyDetailsTab = ({ formData, handleChange, tabIndex, setTabIndex, isAct
             else if (!isNaN(formData.fatherProfession)) {
                 const fetchProfessionDetails = async () => {
                     try {
-                        const response = await axios.get("https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api//profession");
+                        const response = await axios.get(`${getBaseUrl()}/api//profession`);
                         const professions = response.data;
                         const selectedProfession = professions.find(prof => prof.id === formData.fatherProfession);
                         if (selectedProfession) {
@@ -66,7 +67,7 @@ const FamilyDetailsTab = ({ formData, handleChange, tabIndex, setTabIndex, isAct
             else if (!isNaN(formData.motherProfession)) {
                 const fetchProfessionDetails = async () => {
                     try {
-                        const response = await axios.get("https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api//profession");
+                        const response = await axios.get(`${getBaseUrl()}/api//profession`);
                         const professions = response.data;
                         const selectedProfession = professions.find(prof => prof.id === formData.motherProfession);
                         if (selectedProfession) {
@@ -121,7 +122,7 @@ const FamilyDetailsTab = ({ formData, handleChange, tabIndex, setTabIndex, isAct
         }
         
         try {
-            const response = await axios.get(`https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api//profession?search=${encodeURIComponent(searchText)}`);
+            const response = await axios.get(`${getBaseUrl()}/api//profession?search=${encodeURIComponent(searchText)}`);
             console.log(`${fieldType} search response:`, response.data);
             
             if (Array.isArray(response.data)) {
@@ -165,7 +166,7 @@ const FamilyDetailsTab = ({ formData, handleChange, tabIndex, setTabIndex, isAct
     useEffect(() => {
         const fetchProfessions = async () => {
             try {
-                const response = await axios.get("https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api//profession");
+                const response = await axios.get(`${getBaseUrl()}/api//profession`);
                 if (Array.isArray(response.data)) {
                     const options = response.data.map((item) => ({
                         label: item.ProfessionName,

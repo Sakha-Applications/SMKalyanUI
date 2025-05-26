@@ -13,6 +13,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import ContactDetailsResults from "./ContactDetailsResults";
 import useApiData from "../../hooks/useApiData"; // Adjust the path as needed
 import { Link } from 'react-router-dom';
+import getBaseUrl from '../../utils/GetUrl';
 
 const ViewContactDetailsForm = () => {
     const [searchCriteria, setSearchCriteria] = useState({
@@ -40,7 +41,7 @@ const ViewContactDetailsForm = () => {
 
         try {
             const token = sessionStorage.getItem('token');
-            const response = await fetch('https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api//contact-details', {
+            const response = await fetch(`${getBaseUrl()}/api//contact-details`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

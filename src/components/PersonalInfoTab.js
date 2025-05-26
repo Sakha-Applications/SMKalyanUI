@@ -6,6 +6,7 @@ import dayjs from "dayjs";
 import FormNavigation from "./FormNavigation";
 import useApiData from "../hooks/useApiData";
 import axios from "axios";
+import getBaseUrl from '../utils/GetUrl';
 
 const PersonalInfoTab = ({ formData, handleChange, handleDOBChange, handleTimeBlur, tabIndex, setTabIndex }) => {
     const { isLoading, error, gotraOptions, rashiOptions, nakshatraOptions } = useApiData();
@@ -35,13 +36,13 @@ const PersonalInfoTab = ({ formData, handleChange, handleDOBChange, handleTimeBl
             else if (!isNaN(formData.guruMatha)) {
                 const fetchGuruMathaDetails = async () => {
                     try {
-                        const response = await axios.get("https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api//guru-matha");
+                        const response = await axios.get(`${getBaseUrl()}/api//guru-matha`);
                         const options = response.data;
                         const selectedOption = options.find(opt => opt.id === formData.guruMatha);
                         if (selectedOption) {
                             setGuruMathaSelectedValue({
                                 label: selectedOption.GuruMathaName,
-                                value: selectedOption.id
+                                value: selectedOption.guruMatha
                             });
                         }
                     } catch (error) {
@@ -73,7 +74,7 @@ const PersonalInfoTab = ({ formData, handleChange, handleDOBChange, handleTimeBl
         setGuruMathaError(null);
         
         try {
-            const response = await axios.get(`https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api//guru-matha?search=${encodeURIComponent(searchText)}`);
+            const response = await axios.get(`${getBaseUrl()}/api//guru-matha?search=${encodeURIComponent(searchText)}`);
             console.log("GuruMatha search response:", response.data);
             
             if (Array.isArray(response.data)) {

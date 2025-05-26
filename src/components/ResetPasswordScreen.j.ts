@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import getBaseUrl from '../utils/GetUrl';
+
 
 function ResetPasswordScreen() {
     const location = useLocation();
@@ -25,7 +27,7 @@ function ResetPasswordScreen() {
         }
 
         try {
-            const response = await fetch('https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api//updatePassword', {
+            const response = await fetch('${getBaseUrl()}/api//updatePassword', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

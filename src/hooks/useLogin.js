@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import getBaseUrl from '../../utils/GetUrl';
 
 const useLogin = () => {
     const [userId, setUserId] = useState('');
@@ -18,7 +19,7 @@ const useLogin = () => {
             if (userId) {
                 setIsLoading(true);
                 try {
-                    const response = await axios.get(`https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api//checkFirstLogin?userId=${userId}`);
+                    const response = await axios.get(`${getBaseUrl()}/api//checkFirstLogin?userId=${userId}`);
                     setIsFirstLogin(response.data.isFirstLogin);
                 } catch (err) {
                     console.error('Error checking first login:', err);
@@ -68,7 +69,7 @@ const useLogin = () => {
         }
 
         try {
-            const response = await axios.post('https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api//updatePassword', {
+            const response = await axios.post(`${getBaseUrl()}/api//updatePassword`, {
                 userId: userId,
                 newPassword: newPassword,
             });
@@ -98,7 +99,7 @@ const useLogin = () => {
         setError('');
 
         try {
-            const response = await axios.post('https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net/api//login', {
+            const response = await axios.post(`${getBaseUrl()}/api//login`, {
                 userId: userId,
                 password: currentPassword,
             });

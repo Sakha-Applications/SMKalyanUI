@@ -20,8 +20,9 @@ import CloseIcon from '@mui/icons-material/Close';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import getBaseUrl from '../../utils/GetUrl';
 
-const API_BASE_URL = 'https://sakhasvc-agfcdyb7bjarbtdw.centralus-01.azurewebsites.net';
+const API_BASE_URL = `${getBaseUrl()}`;
 const BACKEND_DEFAULT_IMAGE_URL = '/ProfilePhotos/defaultImage.jpg';
 
 const SharingContactDetails = () => {
