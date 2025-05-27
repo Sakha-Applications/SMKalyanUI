@@ -36,8 +36,8 @@ function App() {
         <Router>
             <Routes>
                 {/* Public routes */}
-                <Route path="/" element={<PublicHome />} />
-              <Route path="/home" element={<Home />} />
+           {/*     <Route path="/" element={<PublicHome />} />*/}
+              <Route path="/" element={<Home />} />
                 <Route path="/login" element={<LoginScreen />} />
                 <Route path="/profile-register" element={<ProfileRegisterForm />} />
                 <Route path="/forgot-password" element={<ForgotPasswordScreen />} />
