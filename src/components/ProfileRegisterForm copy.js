@@ -9,12 +9,13 @@ import {
     Button // Import Button from MUI if you want to style tab buttons
 } from "@mui/material";
 import BasicDetailsTab from "./BasicDetailsTab";
-import PersonalInfoTab from "./Components/Forms/PersonalInfoTab"; // Assuming this path
-import ContactDetailsTab from "./Components/Forms/ContactDetailsTab"; // Assuming this path
-import FamilyDetailsTab from "./Components/Forms/FamilyDetailsTab"; // Assuming this path
-import CareerEducationTab from "./Components/Forms/CareerEducationTab"; // Assuming this path
+import PersonalInfoTab from "./PersonalInfoTab";
+import ContactDetailsTab from "./ContactDetailsTab";
+import FamilyDetailsTab from "./FamilyDetailsTab";
+import CareerEducationTab from "./CareerEducationTab";
 import useFormData from "../hooks/useFormData";
 import axios from "axios";
+// import config from '../config'; // Relative path to src/config.js
 import getBaseUrl from '../utils/GetUrl';
 
 const ProfileDetails = () => {
@@ -34,6 +35,11 @@ const ProfileDetails = () => {
 
     const handleSubmit = async () => {
         // Validation (as before)
+      //  if (!/^\d{10}$/.test(formData.phone)) {
+        //    alert("Phone number must be exactly 10 digits.");
+          //  return;
+       // }
+
         if (!formData.dob) {
             alert("Date of Birth is mandatory.");
             setTabIndex(1);
@@ -46,8 +52,6 @@ const ProfileDetails = () => {
                 user_id: formData.email ? formData.email : formData.phone,
                 password: generateRandomPassword(),
             };
-
-            console.log("Submitting profile data:", { profileData: formData, userLoginData: userLoginData }); // Debug client-side
 
             const response = await axios.post(
                 `${getBaseUrl()}/api/addProfile`,
@@ -66,35 +70,26 @@ const ProfileDetails = () => {
 
             // --- Trigger email sending after the alert is closed ---
             try {
-                const emailPayload = {
-                    email: formData.email, // Ensure formData.email is correct
-                    profileId: profileId, // Send the profile ID in the email body if needed
-                    userId: newUserId,
-                    password: newPassword,
-                    // You can add other relevant information here
-                };
-
-                console.log("Attempting to send email with payload:", emailPayload); // Debug client-side
-                console.log("Email API Endpoint:", `${getBaseUrl()}/api/send-email`); // Debug client-side
-
                 const emailResponse = await axios.post(
-                    `${getBaseUrl()}/api/send-email`, // Corrected path: removed double slash
-                    emailPayload
+                    `${getBaseUrl()}/api//send-email`, // Replace with your actual email sending API endpoint
+                    {
+                        email: formData.email, // Ensure formData.email is correct
+                        profileId: profileId, // Send the profile ID in the email body if needed
+                        userId: newUserId,
+                        password: newPassword,
+                        // You can add other relevant information here
+                    }
                 );
-
-                console.log("Email API Response Status:", emailResponse.status); // Debug client-side
-                console.log("Email API Response Data:", emailResponse.data); // Debug client-side
 
                 if (emailResponse.status === 200) {
                     alert('Confirmation email sent successfully!');
                 } else {
-                    alert('Failed to send confirmation email. Check console for details.');
+                    alert('Failed to send confirmation email.');
                     console.error('Failed to send confirmation email:', emailResponse);
                 }
             } catch (error) {
-                alert('Error sending email. Check console for details.');
-                // Log more detailed error response from server if available
-                console.error('Error sending email:', error.response ? error.response.data : error.message);
+                alert('Error sending email.');
+                console.error('Error sending email:', error);
             }
 
             // Reset form data (as before)
@@ -142,8 +137,8 @@ const ProfileDetails = () => {
             setTabIndex(0);
             navigate('/'); // Redirect to the home page
         } catch (error) {
-            alert("Failed to create profile. Check console for details.");
-            console.error("Error submitting form (profile creation):", error.response ? error.response.data : error.message);
+            alert("Failed to create profile.");
+            console.error("Error submitting form:", error);
         }
     };
 
