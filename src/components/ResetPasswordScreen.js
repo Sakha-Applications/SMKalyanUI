@@ -28,7 +28,7 @@ function ResetPasswordScreen() {
 
         setIsLoading(true);
         try {
-            const response = await fetch('${getBaseUrl()}/api//updatePassword', {
+            const response = await fetch(`${getBaseUrl()}/api/updatePassword`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

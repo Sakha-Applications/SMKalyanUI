@@ -17,7 +17,7 @@ const ForgotPasswordScreen = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch(`${getBaseUrl()}/api//forgot-password`, { // Adjust this URL
+      const response = await fetch(`${getBaseUrl()}/api/forgot-password`, { // Adjust this URL
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

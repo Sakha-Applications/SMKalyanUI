@@ -113,12 +113,16 @@ const ProfileDetails = () => {
                 guruMatha: "",
                 dob: null,
                 timeOfBirth: "",
+                 // ADD THIS NEW FIELD
+                placeOfBirth: "", // Initialize placeOfBirth
                 currentAge: 0,
                 subCaste: "",
                 rashi: "",
                 height: 0,
                 nakshatra: "",
                 charanaPada: "",
+                // ADD THIS NEW FIELD
+                howDidYouKnow: "", // Initialize howDidYouKnow
                 email: "",
                 phone: "",
                 alternatePhone: "",
@@ -128,7 +132,13 @@ const ProfileDetails = () => {
                 fatherProfession: "",
                 motherName: "",
                 motherProfession: "",
+                aboutBrideGroom: "", // Initialize aboutBrideGroom
                 expectations: "",
+                 // ADD THESE NEW FIELDS FOR REFERENCE 1 and 2
+                reference1Name: "",
+                reference1PhonePhoneNumber: "",
+                reference2NamePhoneNumber: "",
+                reference2Phone: "",
                 siblings: "",
                 workingStatus: "",
                 education: "",
@@ -138,6 +148,8 @@ const ProfileDetails = () => {
                 annualIncome: 0,
                 profileCategory: "",
                 profileCategoryneed: "",
+                 // Add this new field here, with a default value if desired (e.g., "Yes")
+        shareDetailsOnPlatform: "Yes", // <--- ADD THIS LINE
             });
             setTabIndex(0);
             navigate('/'); // Redirect to the home page

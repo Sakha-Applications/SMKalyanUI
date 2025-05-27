@@ -3,6 +3,14 @@ import { Box, Typography, TextField, MenuItem, Autocomplete, CircularProgress } 
 import FormNavigation from "./FormNavigation"; 
 import axios from "axios";
 import getBaseUrl from '../utils/GetUrl';
+import countryData from "country-telephone-data"; // Import country-telephone-data
+
+// Define countryCodes globally within this file, similar to ContactDetailsTab
+const countryCodes = countryData.allCountries.map((country) => ({
+    code: `+${country.dialCode}`,
+    label: `${country.name} (+${country.dialCode})`,
+    iso2: country.iso2
+}));
 
 const FamilyDetailsTab = ({ formData, handleChange, tabIndex, setTabIndex, isActive }) => {
     // Father's Profession state
@@ -211,6 +219,48 @@ const FamilyDetailsTab = ({ formData, handleChange, tabIndex, setTabIndex, isAct
         };
         handleChange(syntheticEvent);
     };
+// Helper function for handling reference phone number changes
+    const handleReferencePhoneChange = (e) => {
+        const { name, value } = e.target;
+        // The name will be 'reference1PhoneNumber' or 'reference2PhoneNumber'
+        // The corresponding country code field will be 'reference1CountryCode' or 'reference2CountryCode'
+        const countryCodeFieldName = name.replace('PhoneNumber', 'CountryCode');
+
+        const updatedFormData = { ...formData, [name]: value };
+
+        const countryCode = updatedFormData[countryCodeFieldName] || "";
+        const number = updatedFormData[name] || "";
+
+        // Determine the combined phone number field name (e.g., 'reference1Phone')
+        const combinedPhoneFieldName = name.replace('PhoneNumber', 'Phone');
+
+        // Update the combined phone number in formData
+        handleChange({ target: { name: combinedPhoneFieldName, value: countryCode + number } });
+        // Update the specific phone number field (e.g., 'reference1PhoneNumber')
+        handleChange({ target: { name, value } });
+    };
+
+    // Helper function for handling reference country code changes
+    const handleReferenceCountryCodeChange = (e) => {
+        const { name, value } = e.target;
+        // The name will be 'reference1CountryCode' or 'reference2CountryCode'
+        // The corresponding phone number field will be 'reference1PhoneNumber' or 'reference2PhoneNumber'
+        const phoneNumberFieldName = name.replace('CountryCode', 'PhoneNumber');
+
+        const updatedFormData = { ...formData, [name]: value };
+
+        const countryCode = updatedFormData[name] || "";
+        const number = updatedFormData[phoneNumberFieldName] || "";
+
+        // Determine the combined phone number field name (e.g., 'reference1Phone')
+        const combinedPhoneFieldName = name.replace('CountryCode', 'Phone');
+
+        // Update the combined phone number in formData
+        handleChange({ target: { name: combinedPhoneFieldName, value: countryCode + number } });
+        // Update the specific country code field (e.g., 'reference1CountryCode')
+        handleChange({ target: { name, value } });
+    };
+
 
     if (!isActive) return null;
   
@@ -318,8 +368,26 @@ const FamilyDetailsTab = ({ formData, handleChange, tabIndex, setTabIndex, isAct
                 )}
             />
 
+ {/* NEW FIELD: About the bride/bridegroom */}
+            <Typography sx={{ fontWeight: "bold", color: "#444" }}>
+                About the bride/bridegroom:
+                <br />
+                ವಧು/ವರ ರ ಬಗ್ಗೆ ವಿವರ (ಅವರ ಕುಟುಂಬ, ಹವ್ಯಾಸ, ಅಪೇಕ್ಷೆ, ಜೀವನ ಶೈಲಿ, ಧಾರ್ಮಿಕ/ಸಾಮಾಜಿಕ ಚಿಂತನೆಗಳ ಬಗ್ಗೆ ಕೆಲವು ವಿಷಯ ತಿಳಿಸಿ)
+            </Typography>
+            <TextField
+                name="aboutBrideGroom" // Use the new field name
+                value={formData.aboutBrideGroom ?? ""} // Bind to the new formData field
+                onChange={handleChange}
+                fullWidth
+                multiline
+                rows={4} // Similar to expectations
+                sx={{ backgroundColor: "#fff", borderRadius: 1, gridColumn: "2 / span 3" }}
+            />
+
+
+
             {/* Your Expectations */}
-            <Typography sx={{ fontWeight: "bold", color: "#444" }}>Your Expectations:</Typography>
+            <Typography sx={{ fontWeight: "bold", color: "#444" }}>Your Expectations for bride/bridegroom::</Typography>
             <TextField 
                 name="expectations" 
                 value={formData.expectations ?? ""} 
@@ -342,7 +410,87 @@ const FamilyDetailsTab = ({ formData, handleChange, tabIndex, setTabIndex, isAct
                 required 
                 sx={{ backgroundColor: "#fff", borderRadius: 1, gridColumn: "2 / span 3" }} 
             />
-            
+
+ {/* NEW FIELD: Reference 1 */}
+            <Typography sx={{ fontWeight: "bold", color: "#444" }}>
+                Reference 1 - Provide name and phone number:
+                <br />
+                1 ವಧು/ವರ ನ/ಕುಟುಂಬದ ಬಗ್ಗೆ ಚೆನ್ನಾಗಿ ಪರಿಚಯ ವಿರುವವರ ಹೆಸರು, ದೂರವಾಣಿ ವಿವರ
+            </Typography>
+            <TextField
+                name="reference1Name"
+                value={formData.reference1Name ?? ""}
+                onChange={handleChange}
+                fullWidth
+                required
+                sx={{ backgroundColor: "#fff", borderRadius: 1, gridColumn: "2 / span 3" }} // Span across remaining columns
+            />
+
+            {/* Reference 1 Phone Number with Country Code */}
+            <Typography sx={{ fontWeight: "bold", color: "#444" }}>Reference 1 Phone:</Typography>
+            <TextField
+                select
+                name="reference1CountryCode"
+                value={formData.reference1CountryCode ?? "+91"}
+                onChange={handleReferenceCountryCodeChange} // Use new handler
+                fullWidth
+                sx={{ backgroundColor: "#fff", borderRadius: 1, gridColumn: "2 / span 1" }} // Occupy 1 column
+            >
+                {countryCodes.map((option) => (
+                    <MenuItem key={option.iso2 + option.code} value={option.code}>
+                        {option.label}
+                    </MenuItem>
+                ))}
+            </TextField>
+            <TextField
+                name="reference1PhoneNumber"
+                value={formData.reference1PhoneNumber ?? ""}
+                onChange={handleReferencePhoneChange} // Use new handler
+                fullWidth
+                sx={{ backgroundColor: "#fff", borderRadius: 1, gridColumn: "3 / span 2" }} // Occupy 2 columns
+            />
+
+    {/* NEW FIELD: Reference 2 */}
+            <Typography sx={{ fontWeight: "bold", color: "#444" }}>
+                Reference 2 - Provide name and phone number:
+                <br />
+                2 ವಧು/ವರ ನ/ಕುಟುಂಬದ ಬಗ್ಗೆ ಚೆನ್ನಾಗಿ ಪರಿಚಯ ವಿರುವವರ ಹೆಸರು, ದೂರವಾಣಿ ವಿವರ
+            </Typography>
+            <TextField
+                name="reference2Name"
+                value={formData.reference2Name ?? ""}
+                onChange={handleChange}
+                fullWidth
+                required
+                sx={{ backgroundColor: "#fff", borderRadius: 1, gridColumn: "2 / span 3" }}
+            />
+
+            {/* Reference 2 Phone Number with Country Code */}
+            <Typography sx={{ fontWeight: "bold", color: "#444" }}>Reference 2 Phone:</Typography>
+            <TextField
+                select
+                name="reference2CountryCode"
+                value={formData.reference2CountryCode ?? "+91"}
+                onChange={handleReferenceCountryCodeChange} // Use new handler
+                fullWidth
+                sx={{ backgroundColor: "#fff", borderRadius: 1, gridColumn: "2 / span 1" }}
+            >
+                {countryCodes.map((option) => (
+                    <MenuItem key={option.iso2 + option.code} value={option.code}>
+                        {option.label}
+                    </MenuItem>
+                ))}
+            </TextField>
+            <TextField
+                name="reference2PhoneNumber"
+                value={formData.reference2PhoneNumber ?? ""}
+                onChange={handleReferencePhoneChange} // Use new handler
+                fullWidth
+                sx={{ backgroundColor: "#fff", borderRadius: 1, gridColumn: "3 / span 2" }}
+            />
+
+
+
             <FormNavigation tabIndex={tabIndex} setTabIndex={setTabIndex} />
         </Box>
     );

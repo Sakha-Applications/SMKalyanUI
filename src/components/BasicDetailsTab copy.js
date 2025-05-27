@@ -598,43 +598,6 @@ const BasicDetailsTab = ({ formData, handleChange, tabIndex, setTabIndex }) => {
         </Select>
       </FormControl>
 
-            {/* NEW FIELD: Do you share your detail on platform */}
-      <Typography sx={{ fontWeight: "bold", color: "#444" }}>Do you share your detail on platform:</Typography>
-      <FormControl fullWidth required sx={{ backgroundColor: "#fff", borderRadius: 1 }}>
-        {/* Use formData.shareDetailsOnPlatform to control the value */}
-        <Select
-          name="shareDetailsOnPlatform"
-          value={formData.shareDetailsOnPlatform || "Yes"} // Default to "Yes" if not set
-          onChange={handleChange}
-        >
-          <MenuItem value="Yes">Yes</MenuItem>
-          <MenuItem value="No">No</MenuItem>
-        </Select>
-      </FormControl>
-      
-{/* NEW FIELD: How did you come to know about this Initiative/service ? */}
-      <Typography sx={{ fontWeight: "bold", color: "#444" }}>
-        How did you come to know about this Initiative/service ?
-      </Typography>
-      <FormControl fullWidth required sx={{ backgroundColor: "#fff", borderRadius: 1 }}>
-        <Select
-          name="howDidYouKnow" // Bind to the new formData field
-          value={formData.howDidYouKnow || ""} // Default value
-          onChange={handleChange}
-        >
-          <MenuItem value="">Select an Option</MenuItem> {/* Optional: A placeholder option */}
-          <MenuItem value="Friends">Friends</MenuItem>
-          <MenuItem value="Family">Family</MenuItem>
-          <MenuItem value="Social Media (Facebook, Instagram, LinkedIn, etc.)">Social Media (Facebook, Instagram, LinkedIn, etc.)</MenuItem>
-          <MenuItem value="WhatsApp Message">WhatsApp Message</MenuItem>
-          <MenuItem value="Community Outreach Program">Community Outreach Program</MenuItem>
-          <MenuItem value="Event or Conference">Event or Conference</MenuItem>
-          <MenuItem value="SMS or Phone Call">SMS or Phone Call</MenuItem>
-          <MenuItem value="Others">Others</MenuItem>
-        </Select>
-      </FormControl>
-
-
       <FormNavigation tabIndex={tabIndex} setTabIndex={setTabIndex} />
     </Box>
   );

@@ -36,7 +36,8 @@ const PersonalInfoTab = ({ formData, handleChange, handleDOBChange, handleTimeBl
             else if (!isNaN(formData.guruMatha)) {
                 const fetchGuruMathaDetails = async () => {
                     try {
-                        const response = await axios.get(`${getBaseUrl()}/api//guru-matha`);
+                        // FIX: Removed extra slash
+                        const response = await axios.get(`${getBaseUrl()}/api/guru-matha`);
                         const options = response.data;
                         const selectedOption = options.find(opt => opt.id === formData.guruMatha);
                         if (selectedOption) {
@@ -74,7 +75,8 @@ const PersonalInfoTab = ({ formData, handleChange, handleDOBChange, handleTimeBl
         setGuruMathaError(null);
         
         try {
-            const response = await axios.get(`${getBaseUrl()}/api//guru-matha?search=${encodeURIComponent(searchText)}`);
+            // FIX: Removed extra slash
+            const response = await axios.get(`${getBaseUrl()}/api/guru-matha?search=${encodeURIComponent(searchText)}`);
             console.log("GuruMatha search response:", response.data);
             
             if (Array.isArray(response.data)) {
@@ -95,6 +97,125 @@ const PersonalInfoTab = ({ formData, handleChange, handleDOBChange, handleTimeBl
         }
     };
 
+// --- NEW STATE FOR PLACE OF BIRTH ---
+    const [isPlaceOfBirthLoading, setIsPlaceOfBirthLoading] = useState(false);
+    const [placeOfBirthError, setPlaceOfBirthError] = useState(null);
+    const [placeOfBirthOptions, setPlaceOfBirthOptions] = useState([]);
+    const [placeOfBirthInputValue, setPlaceOfBirthInputValue] = useState('');
+    const [placeOfBirthSelectedValue, setPlaceOfBirthSelectedValue] = useState(null);
+
+// --- NEW useEffect for initializing placeOfBirth from formData ---
+useEffect(() => {
+    if (formData.placeOfBirth && !placeOfBirthSelectedValue) {
+        if (typeof formData.placeOfBirth === 'string' && formData.placeOfBirth) {
+            setPlaceOfBirthSelectedValue({
+                label: formData.placeOfBirth,
+                value: formData.placeOfBirth
+            });
+            setPlaceOfBirthInputValue(formData.placeOfBirth);
+        }
+        // If it's a numeric ID, fetch the name (assuming your API can resolve ID to name)
+        else if (!isNaN(formData.placeOfBirth)) {
+            const fetchPlaceOfBirthDetails = async () => {
+                try {
+                    // This line was already correct regarding the slash, no change needed here.
+                    const response = await axios.get(`${getBaseUrl()}/api/native-places`);
+                    const places = response.data;
+                    const selectedPlace = places.find(place => place.id === formData.placeOfBirth);
+                    if (selectedPlace) {
+                        setPlaceOfBirthSelectedValue({
+                            label: selectedPlace.nativeplace, // Assuming 'nativeplace' is the name field
+                            value: selectedPlace.nativeplace,
+                            id: selectedPlace.id
+                        });
+                        setPlaceOfBirthInputValue(selectedPlace.nativeplace);
+                        // Update form data with the name instead of ID
+                        const syntheticEvent = {
+                            target: {
+                                name: 'placeOfBirth',
+                                value: selectedPlace.nativeplace
+                            }
+                        };
+                        handleChange(syntheticEvent);
+                    }
+                } catch (error) {
+                    console.error("Error fetching place of birth details:", error);
+                }
+            };
+            fetchPlaceOfBirthDetails();
+        }
+    }
+}, [formData.placeOfBirth, placeOfBirthSelectedValue, handleChange]); // Added handleChange to dependencies
+
+// --- NEW useEffect for searching place of birth when input changes ---
+useEffect(() => {
+    const timer = setTimeout(() => {
+        if (placeOfBirthInputValue.length >= 2) {
+            searchPlacesOfBirth(placeOfBirthInputValue);
+        }
+    }, 300);
+
+    return () => clearTimeout(timer);
+}, [placeOfBirthInputValue]);
+
+    // --- NEW FUNCTION to search places of birth ---
+const searchPlacesOfBirth = async (searchText) => {
+    if (!searchText || searchText.length < 2) return;
+
+    setIsPlaceOfBirthLoading(true);
+    setPlaceOfBirthError(null);
+
+    try {
+        // FIX: Removed HTML tags and escaped characters.
+        const response = await axios.get(`${getBaseUrl()}/api/native-places?search=${encodeURIComponent(searchText)}`);
+        console.log("Place of birth search response:", response.data);
+
+        if (Array.isArray(response.data)) {
+            const options = response.data.map((item) => ({
+                label: item.nativeplace, // Assuming 'nativeplace' is the field for place names
+                value: item.nativeplace, // Storing the name as value as per your other autocomplete fields
+                id: item.id // Store ID separately if needed
+            }));
+            setPlaceOfBirthOptions(options);
+        } else {
+            console.error("Unexpected place of birth response format:", response.data);
+            setPlaceOfBirthError("Invalid data format received");
+        }
+    } catch (error) {
+        console.error("Error searching places of birth:", error);
+        setPlaceOfBirthError(`Failed to search places of birth: ${error.message}`);
+    } finally {
+        setIsPlaceOfBirthLoading(false);
+    }
+};
+
+
+
+// --- NEW HANDLER for place of birth selection ---
+const handlePlaceOfBirthChange = (event, newValue) => {
+    setPlaceOfBirthSelectedValue(newValue);
+
+    // Update the parent form data with the value (name of the place)
+    const syntheticEvent = {
+        target: {
+            name: 'placeOfBirth',
+            value: newValue ? newValue.value : ''
+        }
+    };
+    handleChange(syntheticEvent);
+
+    // If you need to store the ID in formData as well (e.g., placeOfBirthId)
+    // if (newValue && newValue.id) {
+    //     const idEvent = {
+    //         target: {
+    //             name: 'placeOfBirthId',
+    //             value: newValue.id
+    //         }
+    //     };
+    //     handleChange(idEvent);
+    // }
+};
+
     // Handle selection of guru matha
     const handleGuruMathaChange = (event, newValue) => {
         setGuruMathaSelectedValue(newValue);
@@ -108,6 +229,9 @@ const PersonalInfoTab = ({ formData, handleChange, handleDOBChange, handleTimeBl
         };
         handleChange(syntheticEvent);
     };
+
+
+
 
     // Handle height changes separately for feet and inches
     const handleHeightChange = (e) => {
@@ -179,39 +303,32 @@ const PersonalInfoTab = ({ formData, handleChange, handleDOBChange, handleTimeBl
                 </TextField>
             )}
 
-            {/* GuruMatha - AUTOCOMPLETE VERSION */}
-            <Typography sx={{ fontWeight: "bold", color: "#444" }}>GuruMatha:</Typography>
-            <Autocomplete
-                value={guruMathaSelectedValue}
-                onChange={handleGuruMathaChange}
-                inputValue={guruMathaInputValue}
-                onInputChange={(event, newInputValue) => {
-                    setGuruMathaInputValue(newInputValue);
-                }}
-                options={guruMathaOptions}
-                loading={isGuruMathaLoading}
-                loadingText="Searching..."
-                noOptionsText={guruMathaInputValue.length < 2 ? "Type at least 2 characters" : "No options found"}
-                fullWidth
-                sx={{ backgroundColor: "#fff", borderRadius: 1 }}
-                renderInput={(params) => (
-                    <TextField
-                        {...params}
-                        required
-                        helperText={guruMathaError || "Start typing to search guru matha"}
-                        error={!!guruMathaError}
-                        InputProps={{
-                            ...params.InputProps,
-                            endAdornment: (
-                                <>
-                                    {isGuruMathaLoading ? <CircularProgress color="inherit" size={20} /> : null}
-                                    {params.InputProps.endAdornment}
-                                </>
-                            ),
-                        }}
-                    />
-                )}
-            />
+{/* Sub Caste */}
+  <Typography sx={{ fontWeight: "bold", color: "#444" }}>Sub Caste:</Typography>
+  <FormControl fullWidth required sx={{ backgroundColor: "#fff", borderRadius: 1 }}>
+    <Select
+      name="subCaste"
+      value={formData.subCaste || "Madhva (ಮಾಧ್ವ)"} // Set default value
+      onChange={handleChange}
+    >
+      <MenuItem value="Madhva (ಮಾಧ್ವ)">Madhva (ಮಾಧ್ವ)</MenuItem>
+      <MenuItem value="Smarta (ಸ್ಮಾರ್ತ)">Smarta (ಸ್ಮಾರ್ತ)</MenuItem>
+      <MenuItem value="Srivaishnava (ಶ್ರೀವೈಷ್ಣವ)">Srivaishnava (ಶ್ರೀವೈಷ್ಣವ)</MenuItem>
+      <MenuItem value="Gaudiya Vaishnava (ಗೌಡೀಯ ವೈಷ್ಣವ)">Gaudiya Vaishnava (ಗೌಡೀಯ ವೈಷ್ಣವ)</MenuItem>
+      <MenuItem value="Deshastha (ದೇಶಸ್ಥ)">Deshastha (ದೇಶಸ್ಥ)</MenuItem>
+      <MenuItem value="Hoysala Karnataka Brahmin (ಹೊಯ್ಸಳ ಕರ್ನಾಟಕ ಬ್ರಾಹ್ಮಣ)">Hoysala Karnataka Brahmin (ಹೊಯ್ಸಳ ಕರ್ನಾಟಕ ಬ್ರಾಹ್ಮಣ)</MenuItem>
+      <MenuItem value="Hebbar (ಹೆಬ್ಬಾರ್)">Hebbar (ಹೆಬ್ಬಾರ್)</MenuItem>
+      <MenuItem value="Shivalli (ಶಿವಳ್ಳಿ)">Shivalli (ಶಿವಳ್ಳಿ)</MenuItem>
+      <MenuItem value="Iyer (ಅಯ್ಯರ್)">Iyer (ಅಯ್ಯರ್)</MenuItem>
+      <MenuItem value="Iyengar (ಅಯ್ಯಂಗಾರ್)">Iyengar (ಅಯ್ಯಂಗಾರ್)</MenuItem>
+      <MenuItem value="Tuluva Brahmins (ತುಳುಬ್ರಾಹ್ಮಣರು)">Tuluva Brahmins (ತುಳುಬ್ರಾಹ್ಮಣರು)</MenuItem>
+      <MenuItem value="Others (ಇತರರು)">Others (ಇತರರು)</MenuItem>
+    </Select>
+  </FormControl>
+
+
+
+            
 
             {/* Date of Birth */}
             <Typography sx={{ fontWeight: "bold", color: "#444" }}>Date of Birth: <span style={{ color: "red" }}>*</span></Typography>
@@ -258,31 +375,76 @@ const PersonalInfoTab = ({ formData, handleChange, handleDOBChange, handleTimeBl
                 InputProps={{ readOnly: true }} 
                 sx={{ backgroundColor: "#e0e0e0", borderRadius: 1 }} 
             />
+{/* NEW FIELD: Place of Birth - AUTOCOMPLETE VERSION */}
+        <Typography sx={{ fontWeight: "bold", color: "#444" }}>Place of Birth:</Typography>
+        <Autocomplete
+            value={placeOfBirthSelectedValue}
+            onChange={handlePlaceOfBirthChange}
+            inputValue={placeOfBirthInputValue}
+            onInputChange={(event, newInputValue) => {
+                setPlaceOfBirthInputValue(newInputValue);
+            }}
+            options={placeOfBirthOptions}
+            loading={isPlaceOfBirthLoading}
+            loadingText="Searching..."
+            noOptionsText={placeOfBirthInputValue.length < 2 ? "Type at least 2 characters" : "No options found"}
+            fullWidth
+            freeSolo // Allow custom values
+            sx={{ backgroundColor: "#fff", borderRadius: 1 }}
+            renderInput={(params) => (
+                <TextField
+                    {...params}
+                    required // Mark as required if it is
+                    helperText={placeOfBirthError || "Start typing to search your place of birth"}
+                    error={!!placeOfBirthError}
+                    InputProps={{
+                        ...params.InputProps,
+                        endAdornment: (
+                            <>
+                                {isPlaceOfBirthLoading ? <CircularProgress color="inherit" size={20} /> : null}
+                                {params.InputProps.endAdornment}
+                            </>
+                        ),
+                    }}
+                />
+            )}
+        />
 
-  {/* Sub Caste */}
-  <Typography sx={{ fontWeight: "bold", color: "#444" }}>Sub Caste:</Typography>
-  <FormControl fullWidth required sx={{ backgroundColor: "#fff", borderRadius: 1 }}>
-    <Select
-      name="subCaste"
-      value={formData.subCaste || "Madhva (ಮಾಧ್ವ)"} // Set default value
-      onChange={handleChange}
-    >
-      <MenuItem value="Madhva (ಮಾಧ್ವ)">Madhva (ಮಾಧ್ವ)</MenuItem>
-      <MenuItem value="Smarta (ಸ್ಮಾರ್ತ)">Smarta (ಸ್ಮಾರ್ತ)</MenuItem>
-      <MenuItem value="Srivaishnava (ಶ್ರೀವೈಷ್ಣವ)">Srivaishnava (ಶ್ರೀವೈಷ್ಣವ)</MenuItem>
-      <MenuItem value="Gaudiya Vaishnava (ಗೌಡೀಯ ವೈಷ್ಣವ)">Gaudiya Vaishnava (ಗೌಡೀಯ ವೈಷ್ಣವ)</MenuItem>
-      <MenuItem value="Deshastha (ದೇಶಸ್ಥ)">Deshastha (ದೇಶಸ್ಥ)</MenuItem>
-      <MenuItem value="Hoysala Karnataka Brahmin (ಹೊಯ್ಸಳ ಕರ್ನಾಟಕ ಬ್ರಾಹ್ಮಣ)">Hoysala Karnataka Brahmin (ಹೊಯ್ಸಳ ಕರ್ನಾಟಕ ಬ್ರಾಹ್ಮಣ)</MenuItem>
-      <MenuItem value="Hebbar (ಹೆಬ್ಬಾರ್)">Hebbar (ಹೆಬ್ಬಾರ್)</MenuItem>
-      <MenuItem value="Shivalli (ಶಿವಳ್ಳಿ)">Shivalli (ಶಿವಳ್ಳಿ)</MenuItem>
-      <MenuItem value="Iyer (ಅಯ್ಯರ್)">Iyer (ಅಯ್ಯರ್)</MenuItem>
-      <MenuItem value="Iyengar (ಅಯ್ಯಂಗಾರ್)">Iyengar (ಅಯ್ಯಂಗಾರ್)</MenuItem>
-      <MenuItem value="Tuluva Brahmins (ತುಳುಬ್ರಾಹ್ಮಣರು)">Tuluva Brahmins (ತುಳುಬ್ರಾಹ್ಮಣರು)</MenuItem>
-      <MenuItem value="Others (ಇತರರು)">Others (ಇತರರು)</MenuItem>
-    </Select>
-  </FormControl>
 
-
+{/* GuruMatha - AUTOCOMPLETE VERSION */}
+            <Typography sx={{ fontWeight: "bold", color: "#444" }}>GuruMatha:</Typography>
+            <Autocomplete
+                value={guruMathaSelectedValue}
+                onChange={handleGuruMathaChange}
+                inputValue={guruMathaInputValue}
+                onInputChange={(event, newInputValue) => {
+                    setGuruMathaInputValue(newInputValue);
+                }}
+                options={guruMathaOptions}
+                loading={isGuruMathaLoading}
+                loadingText="Searching..."
+                noOptionsText={guruMathaInputValue.length < 2 ? "Type at least 2 characters" : "No options found"}
+                fullWidth
+                sx={{ backgroundColor: "#fff", borderRadius: 1 }}
+                renderInput={(params) => (
+                    <TextField
+                        {...params}
+                        required
+                        helperText={guruMathaError || "Start typing to search guru matha"}
+                        error={!!guruMathaError}
+                        InputProps={{
+                            ...params.InputProps,
+                            endAdornment: (
+                                <>
+                                    {isGuruMathaLoading ? <CircularProgress color="inherit" size={20} /> : null}
+                                    {params.InputProps.endAdornment}
+                                </>
+                            ),
+                        }}
+                    />
+                )}
+            />
+  
 
 
             {/* Rashi */}
