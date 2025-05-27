@@ -408,24 +408,7 @@ const BasicDetailsTab = ({ formData, handleChange, tabIndex, setTabIndex }) => {
         sx={{ backgroundColor: "#e0e0e0", borderRadius: 1 }}
       />
 
-      {/* Name Label */}
-      <Typography sx={{ fontWeight: "bold", color: "#333" }}>Name:</Typography>
-
-      {/* Name Input Field spanning Columns 2, 3, and 4 */}
-      <TextField
-        name="name"
-        value={formData.name ?? ""}
-        onChange={handleChange}
-        helperText="Enter the Full Name"
-        fullWidth
-        required
-        sx={{
-          backgroundColor: "#fff",
-          borderRadius: 1,
-          gridColumn: "2 / span 3",
-        }}
-      />
-
+      
       {/* Profile Created For */}
       <Typography sx={{ fontWeight: "bold", color: "#444" }}>Profile Created For:</Typography>
       <FormControl fullWidth required sx={{ backgroundColor: "#fff", borderRadius: 1 }}>
@@ -450,11 +433,30 @@ const BasicDetailsTab = ({ formData, handleChange, tabIndex, setTabIndex }) => {
         </Select>
       </FormControl>
 
+{/* Name Label */}
+      <Typography sx={{ fontWeight: "bold", color: "#333" }}>Name:</Typography>
+
+      {/* Name Input Field spanning Columns 2, 3, and 4 */}
+      <TextField
+        name="name"
+        value={formData.name ?? ""}
+        onChange={handleChange}
+        helperText="Enter the Full Name"
+        fullWidth
+        required
+        sx={{
+          backgroundColor: "#fff",
+          borderRadius: 1,
+          gridColumn: "2 / span 3",
+        }}
+      />
+
+
       {/* Profile Category */}
       <Typography sx={{ fontWeight: "bold", color: "#444" }}>Bride/Groom Category:</Typography>
       <FormControl fullWidth required sx={{ backgroundColor: "#fff", borderRadius: 1 }}>
         <Select name="profileCategory" value={formData.profileCategory || ""} onChange={handleChange}>
-          <MenuItem value="Domastic">Domastic</MenuItem>
+          <MenuItem value="Domestic">Domestic</MenuItem>
           <MenuItem value="International">International</MenuItem>
           <MenuItem value="Vaidhik">Vaidhik</MenuItem>
         </Select>
@@ -464,7 +466,7 @@ const BasicDetailsTab = ({ formData, handleChange, tabIndex, setTabIndex }) => {
       <Typography sx={{ fontWeight: "bold", color: "#444" }}>Looking for Bride/Groom Category:</Typography>
       <FormControl fullWidth required sx={{ backgroundColor: "#fff", borderRadius: 1 }}>
         <Select name="profileCategoryneed" value={formData.profileCategoryneed || ""} onChange={handleChange}>
-          <MenuItem value="Domastic">Domastic</MenuItem>
+          <MenuItem value="Domestic">Domestic</MenuItem>
           <MenuItem value="International">International</MenuItem>
           <MenuItem value="Vaidhik">Vaidhik</MenuItem>
           <MenuItem value="Anyone">Anyone</MenuItem>

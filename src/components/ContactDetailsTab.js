@@ -74,7 +74,7 @@ const ContactDetailsTab = ({ formData, handleChange, isActive, tabIndex, setTabI
       <TextField
         select
         name="phoneCountryCode"
-        value={formData.phoneCountryCode ?? ""}
+        value={formData.phoneCountryCode ?? "+91"}
         onChange={handlePhoneChange}
         fullWidth
         required
@@ -100,7 +100,7 @@ const ContactDetailsTab = ({ formData, handleChange, isActive, tabIndex, setTabI
       <TextField
         select
         name="alternatePhoneCountryCode"
-        value={formData.alternatePhoneCountryCode ?? ""}
+        value={formData.alternatePhoneCountryCode ?? "+91"}
         onChange={handleAlternatePhoneChange}
         fullWidth
         sx={{ backgroundColor: "#fff", borderRadius: 1 }}
