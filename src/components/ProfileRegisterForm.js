@@ -9,10 +9,10 @@ import {
     Button // Import Button from MUI if you want to style tab buttons
 } from "@mui/material";
 import BasicDetailsTab from "./BasicDetailsTab";
-import PersonalInfoTab from "./Components/Forms/PersonalInfoTab"; // Assuming this path
-import ContactDetailsTab from "./Components/Forms/ContactDetailsTab"; // Assuming this path
-import FamilyDetailsTab from "./Components/Forms/FamilyDetailsTab"; // Assuming this path
-import CareerEducationTab from "./Components/Forms/CareerEducationTab"; // Assuming this path
+import PersonalInfoTab from "./PersonalInfoTab"; // Assuming this path
+import ContactDetailsTab from "./ContactDetailsTab"; // Assuming this path
+import FamilyDetailsTab from "./FamilyDetailsTab"; // Assuming this path
+import CareerEducationTab from "./CareerEducationTab"; // Assuming this path
 import useFormData from "../hooks/useFormData";
 import axios from "axios";
 import getBaseUrl from '../utils/GetUrl';
