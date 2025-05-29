@@ -18,6 +18,14 @@ const ModifyProfilePersonalInfoTab = ({ formData, handleChange, handleDOBChange,
     const [guruMathaInputValue, setGuruMathaInputValue] = useState('');
     const [guruMathaSelectedValue, setGuruMathaSelectedValue] = useState(null);
 
+// Place of Birth state
+const [isPlaceOfBirthLoading, setIsPlaceOfBirthLoading] = useState(false);
+const [placeOfBirthError, setPlaceOfBirthError] = useState(null);
+const [placeOfBirthOptions, setPlaceOfBirthOptions] = useState([]);
+const [placeOfBirthInputValue, setPlaceOfBirthInputValue] = useState('');
+const [placeOfBirthSelectedValue, setPlaceOfBirthSelectedValue] = useState(null);
+
+
     // Height state parsed from formData
     const [heightFeet, setHeightFeet] = useState('');
     const [heightInches, setHeightInches] = useState('');
@@ -113,6 +121,80 @@ const ModifyProfilePersonalInfoTab = ({ formData, handleChange, handleDOBChange,
         }
     }, [formData.guruMatha, guruMathaSelectedValue, handleChange]);
 
+// Initialize selected place of birth if formData has it
+useEffect(() => {
+    if (formData.placeOfBirth && !placeOfBirthSelectedValue) {
+        console.log('Initializing PlaceOfBirth with:', formData.placeOfBirth, typeof formData.placeOfBirth);
+        
+        // If placeOfBirth is already an object with label/value properties
+        if (typeof formData.placeOfBirth === 'object' && formData.placeOfBirth !== null) {
+            if (formData.placeOfBirth.label && formData.placeOfBirth.value) {
+                setPlaceOfBirthSelectedValue(formData.placeOfBirth);
+                setPlaceOfBirthInputValue(formData.placeOfBirth.label);
+            }
+        }
+        // If placeOfBirth is a string (name), use it directly
+        else if (typeof formData.placeOfBirth === 'string' && formData.placeOfBirth.trim()) {
+            const placeOfBirthName = formData.placeOfBirth.trim();
+            setPlaceOfBirthSelectedValue({
+                label: placeOfBirthName,
+                value: placeOfBirthName
+            });
+            setPlaceOfBirthInputValue(placeOfBirthName);
+        }
+        // If it's a numeric ID, fetch the corresponding name
+        else if (typeof formData.placeOfBirth === 'number' || 
+                 (typeof formData.placeOfBirth === 'string' && !isNaN(parseInt(formData.placeOfBirth)))) {
+            const fetchPlaceOfBirthById = async () => {
+                try {
+                    console.log('Fetching PlaceOfBirth by ID:', formData.placeOfBirth);
+                    const response = await axios.get(`${getBaseUrl()}/api/native-places`);
+                    
+                    if (Array.isArray(response.data)) {
+                        const placeOfBirthId = parseInt(formData.placeOfBirth);
+                        const selectedOption = response.data.find(opt => 
+                            opt.id === placeOfBirthId || 
+                            parseInt(opt.id) === placeOfBirthId
+                        );
+                        
+                        if (selectedOption) {
+                            const placeOfBirthName = selectedOption.nativeplace || selectedOption.name || selectedOption.label;
+                            console.log('Found PlaceOfBirth:', placeOfBirthName);
+                            
+                            setPlaceOfBirthSelectedValue({
+                                label: placeOfBirthName,
+                                value: placeOfBirthName
+                            });
+                            setPlaceOfBirthInputValue(placeOfBirthName);
+                            
+                            // Update the formData with the name instead of ID
+                            const syntheticEvent = {
+                                target: {
+                                    name: 'placeOfBirth',
+                                    value: placeOfBirthName
+                                }
+                            };
+                            handleChange(syntheticEvent);
+                        } else {
+                            console.warn('PlaceOfBirth not found for ID:', formData.placeOfBirth);
+                            setPlaceOfBirthError('Place of Birth not found');
+                        }
+                    }
+                } catch (error) {
+                    console.error("Error fetching place of birth by ID:", error);
+                    setPlaceOfBirthError(`Failed to fetch place of birth: ${error.message}`);
+                }
+            };
+
+            fetchPlaceOfBirthById();
+        }
+    }
+}, [formData.placeOfBirth, placeOfBirthSelectedValue, handleChange]);
+
+
+
+
+
     // Parse height from formData.height
     useEffect(() => {
         if (formData.height && typeof formData.height === 'string') {
@@ -159,6 +241,18 @@ const ModifyProfilePersonalInfoTab = ({ formData, handleChange, handleDOBChange,
 
         return () => clearTimeout(timer);
     }, [guruMathaInputValue]);
+
+    // Search place of birth when input changes
+useEffect(() => {
+    const timer = setTimeout(() => {
+        if (placeOfBirthInputValue.length >= 2) {
+            searchPlacesOfBirth(placeOfBirthInputValue);
+        }
+    }, 300);
+
+    return () => clearTimeout(timer);
+}, [placeOfBirthInputValue]);
+
 
     // Function to search guru matha options
     const searchGuruMatha = async (searchText) => {
@@ -211,6 +305,59 @@ const ModifyProfilePersonalInfoTab = ({ formData, handleChange, handleDOBChange,
         setGuruMathaInputValue(newInputValue);
     };
 
+    // Function to search place of birth options
+const searchPlacesOfBirth = async (searchText) => {
+    if (!searchText || searchText.length < 2) return;
+
+    setIsPlaceOfBirthLoading(true);
+    setPlaceOfBirthError(null);
+
+    try {
+        const response = await axios.get(`${getBaseUrl()}/api/native-places?search=${encodeURIComponent(searchText)}`);
+
+        if (Array.isArray(response.data)) {
+            const options = response.data.map((item) => ({
+                label: item.nativeplace || item.name || item.label,
+                value: item.nativeplace || item.name || item.label,
+                id: item.id // Keep ID for reference if needed
+            }));
+            setPlaceOfBirthOptions(options);
+        } else {
+            console.error("Unexpected place of birth response format:", response.data);
+            setPlaceOfBirthError("Invalid data format received");
+        }
+    } catch (error) {
+        console.error("Error searching place of birth:", error);
+        setPlaceOfBirthError(`Failed to search place of birth: ${error.message}`);
+    } finally {
+        setIsPlaceOfBirthLoading(false);
+    }
+};
+
+    // Handle selection of place of birth
+const handlePlaceOfBirthChange = (event, newValue) => {
+    console.log('PlaceOfBirth selected:', newValue);
+    setPlaceOfBirthSelectedValue(newValue);
+
+    // Update the parent form data with the Name (label)
+    const syntheticEvent = {
+        target: {
+            name: 'placeOfBirth',
+            value: newValue ? newValue.value : ''
+        }
+    };
+    handleChange(syntheticEvent);
+};
+
+// Handle input change for place of birth
+const handlePlaceOfBirthInputChange = (event, newInputValue) => {
+    console.log('PlaceOfBirth input changed:', newInputValue);
+    setPlaceOfBirthInputValue(newInputValue);
+};
+
+
+
+    
     // Handle Height changes
     const handleHeightChange = (event) => {
         const { name, value } = event.target;
@@ -283,6 +430,101 @@ const ModifyProfilePersonalInfoTab = ({ formData, handleChange, handleDOBChange,
                 </TextField>
             )}
 
+            {/* Sub Caste */}
+            <Typography sx={{ fontWeight: "bold", color: "#444" }}>Sub Caste: <span style={{ color: "red" }}>*</span></Typography>
+            <FormControl fullWidth required sx={{ backgroundColor: "#fff", borderRadius: 1 }}>
+                <Select
+                    name="subCaste"
+                    value={formData.subCaste || "Madhva (ಮಾಧ್ವ)"} // Set default value
+                    onChange={handleChange}
+                >
+                    <MenuItem value="Madhva (ಮಾಧ್ವ)">Madhva (ಮಾಧ್ವ)</MenuItem>
+                    <MenuItem value="Smarta (ಸ್ಮಾರ್ತ)">Smarta (ಸ್ಮಾರ್ತ)</MenuItem>
+                    <MenuItem value="Srivaishnava (ಶ್ರೀವೈಷ್ಣವ)">Srivaishnava (ಶ್ರೀವೈಷ್ಣವ)</MenuItem>
+                    <MenuItem value="Gaudiya Vaishnava (ಗೌಡೀಯ ವೈಷ್ಣವ)">Gaudiya Vaishnava (ಗೌಡೀಯ ವೈಷ್ಣವ)</MenuItem>
+                    <MenuItem value="Deshastha (ದೇಶಸ್ಥ)">Deshastha (ದೇಶಸ್ಥ)</MenuItem>
+                    <MenuItem value="Hoysala Karnataka Brahmin (ಹೊಯ್ಸಳ ಕರ್ನಾಟಕ ಬ್ರಾಹ್ಮಣ)">Hoysala Karnataka Brahmin (ಹೊಯ್ಸಳ ಕರ್ನಾಟಕ ಬ್ರಾಹ್ಮಣ)</MenuItem>
+                    <MenuItem value="Hebbar (ಹೆಬ್ಬಾರ್)">Hebbar (ಹೆಬ್ಬಾರ್)</MenuItem>
+                    <MenuItem value="Shivalli (ಶಿವಳ್ಳಿ)">Shivalli (ಶಿವಳ್ಳಿ)</MenuItem>
+                    <MenuItem value="Iyer (ಅಯ್ಯರ್)">Iyer (ಅಯ್ಯರ್)</MenuItem>
+                    <MenuItem value="Iyengar (ಅಯ್ಯಂಗಾರ್)">Iyengar (ಅಯ್ಯಂಗಾರ್)</MenuItem>
+                    <MenuItem value="Tuluva Brahmins (ತುಳುಬ್ರಾಹ್ಮಣರು)">Tuluva Brahmins (ತುಳುಬ್ರಾಹ್ಮಣರು)</MenuItem>
+                    <MenuItem value="Others (ಇತರರು)">Others (ಇತರರು)</MenuItem>
+                </Select>
+            </FormControl>
+
+
+
+            {/* Date of Birth (Read-only) */}
+            <Typography sx={{ fontWeight: "bold", color: "#444" }}>Date of Birth:</Typography>
+            <TextField
+                name="dob"
+                value={formData.dob ? dayjs(formData.dob).format("YYYY-MM-DD") : ""}
+                fullWidth
+                InputProps={{ readOnly: true }}
+                sx={{ backgroundColor: "#e0e0e0", borderRadius: 1 }}
+            />
+
+            {/* Time of Birth */}
+            <Typography sx={{ fontWeight: "bold", color: "#444" }}>Time of Birth: <span style={{ color: "red" }}>*</span></Typography>
+            <TextField
+                name="timeOfBirth"
+                value={formData.timeOfBirth ?? ""}
+                onChange={handleChange}
+                onBlur={handleTimeBlur}
+                helperText="Enter time in HH:MM:SS format"
+                fullWidth
+                required
+                sx={{ backgroundColor: "#fff", borderRadius: 1 }}
+            />
+
+            {/* Current Age (Read-only) */}
+            <Typography sx={{ fontWeight: "bold", color: "#444" }}>Current Age:</Typography>
+            <TextField
+                name="currentAge"
+                value={formData.currentAge ?? ""}
+                fullWidth
+                InputProps={{ readOnly: true }}
+                sx={{ backgroundColor: "#e0e0e0", borderRadius: 1 }}
+            />
+
+{/* Place of Birth */}
+<Typography sx={{ fontWeight: "bold", color: "#444" }}>Place of Birth: <span style={{ color: "red" }}>*</span></Typography>
+<Autocomplete
+    value={placeOfBirthSelectedValue}
+    onChange={handlePlaceOfBirthChange}
+    inputValue={placeOfBirthInputValue}
+    onInputChange={handlePlaceOfBirthInputChange}
+    options={placeOfBirthOptions}
+    loading={isPlaceOfBirthLoading}
+    loadingText="Searching..."
+    noOptionsText={placeOfBirthInputValue.length < 2 ? "Type at least 2 characters" : "No options found"}
+    fullWidth
+    freeSolo // Allow custom values
+    isOptionEqualToValue={(option, value) => {
+        if (!option || !value) return false;
+        return option.value === value.value || option.label === value.label;
+    }}
+    sx={{ backgroundColor: "#fff", borderRadius: 1 }}
+    renderInput={(params) => (
+        <TextField
+            {...params}
+            required
+            helperText={placeOfBirthError || "Start typing to search your place of birth"}
+            error={!!placeOfBirthError}
+            InputProps={{
+                ...params.InputProps,
+                endAdornment: (
+                    <>
+                        {isPlaceOfBirthLoading ? <CircularProgress color="inherit" size={20} /> : null}
+                        {params.InputProps.endAdornment}
+                    </>
+                ),
+            }}
+        />
+    )}
+/>
+
             {/* GuruMatha - AUTOCOMPLETE VERSION */}
             <Typography sx={{ fontWeight: "bold", color: "#444" }}>GuruMatha: <span style={{ color: "red" }}>*</span></Typography>
             <Autocomplete
@@ -320,61 +562,6 @@ const ModifyProfilePersonalInfoTab = ({ formData, handleChange, handleDOBChange,
                 )}
             />
 
-            {/* Date of Birth (Read-only) */}
-            <Typography sx={{ fontWeight: "bold", color: "#444" }}>Date of Birth:</Typography>
-            <TextField
-                name="dob"
-                value={formData.dob ? dayjs(formData.dob).format("YYYY-MM-DD") : ""}
-                fullWidth
-                InputProps={{ readOnly: true }}
-                sx={{ backgroundColor: "#e0e0e0", borderRadius: 1 }}
-            />
-
-            {/* Time of Birth */}
-            <Typography sx={{ fontWeight: "bold", color: "#444" }}>Time of Birth: <span style={{ color: "red" }}>*</span></Typography>
-            <TextField
-                name="timeOfBirth"
-                value={formData.timeOfBirth ?? ""}
-                onChange={handleChange}
-                onBlur={handleTimeBlur}
-                helperText="Enter time in HH:MM:SS format"
-                fullWidth
-                required
-                sx={{ backgroundColor: "#fff", borderRadius: 1 }}
-            />
-
-            {/* Current Age (Read-only) */}
-            <Typography sx={{ fontWeight: "bold", color: "#444" }}>Current Age:</Typography>
-            <TextField
-                name="currentAge"
-                value={formData.currentAge ?? ""}
-                fullWidth
-                InputProps={{ readOnly: true }}
-                sx={{ backgroundColor: "#e0e0e0", borderRadius: 1 }}
-            />
-
-            {/* Sub Caste */}
-            <Typography sx={{ fontWeight: "bold", color: "#444" }}>Sub Caste: <span style={{ color: "red" }}>*</span></Typography>
-            <FormControl fullWidth required sx={{ backgroundColor: "#fff", borderRadius: 1 }}>
-                <Select
-                    name="subCaste"
-                    value={formData.subCaste || "Madhva (ಮಾಧ್ವ)"} // Set default value
-                    onChange={handleChange}
-                >
-                    <MenuItem value="Madhva (ಮಾಧ್ವ)">Madhva (ಮಾಧ್ವ)</MenuItem>
-                    <MenuItem value="Smarta (ಸ್ಮಾರ್ತ)">Smarta (ಸ್ಮಾರ್ತ)</MenuItem>
-                    <MenuItem value="Srivaishnava (ಶ್ರೀವೈಷ್ಣವ)">Srivaishnava (ಶ್ರೀವೈಷ್ಣವ)</MenuItem>
-                    <MenuItem value="Gaudiya Vaishnava (ಗೌಡೀಯ ವೈಷ್ಣವ)">Gaudiya Vaishnava (ಗೌಡೀಯ ವೈಷ್ಣವ)</MenuItem>
-                    <MenuItem value="Deshastha (ದೇಶಸ್ಥ)">Deshastha (ದೇಶಸ್ಥ)</MenuItem>
-                    <MenuItem value="Hoysala Karnataka Brahmin (ಹೊಯ್ಸಳ ಕರ್ನಾಟಕ ಬ್ರಾಹ್ಮಣ)">Hoysala Karnataka Brahmin (ಹೊಯ್ಸಳ ಕರ್ನಾಟಕ ಬ್ರಾಹ್ಮಣ)</MenuItem>
-                    <MenuItem value="Hebbar (ಹೆಬ್ಬಾರ್)">Hebbar (ಹೆಬ್ಬಾರ್)</MenuItem>
-                    <MenuItem value="Shivalli (ಶಿವಳ್ಳಿ)">Shivalli (ಶಿವಳ್ಳಿ)</MenuItem>
-                    <MenuItem value="Iyer (ಅಯ್ಯರ್)">Iyer (ಅಯ್ಯರ್)</MenuItem>
-                    <MenuItem value="Iyengar (ಅಯ್ಯಂಗಾರ್)">Iyengar (ಅಯ್ಯಂಗಾರ್)</MenuItem>
-                    <MenuItem value="Tuluva Brahmins (ತುಳುಬ್ರಾಹ್ಮಣರು)">Tuluva Brahmins (ತುಳುಬ್ರಾಹ್ಮಣರು)</MenuItem>
-                    <MenuItem value="Others (ಇತರರು)">Others (ಇತರರು)</MenuItem>
-                </Select>
-            </FormControl>
 
             {/* Rashi */}
             <Typography sx={{ fontWeight: "bold", color: "#444" }}>Rashi: <span style={{ color: "red" }}>*</span></Typography>

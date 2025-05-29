@@ -27,6 +27,9 @@ const getUserInfo = async () => {
   const token = sessionStorage.getItem("token");
   const email = localStorage.getItem("userEmail");
 
+    console.log("[Donate] Email from localStorage:", email);
+  console.log("[Donate] Token from sessionStorage:", token);
+
   if (!token || !email) {
     console.warn("[Donate] Missing token or email in storage");
     return { profileId: "", email: "", token: "" };
@@ -53,17 +56,21 @@ const getUserInfo = async () => {
 
 useEffect(() => {
   const fetchUserProfile = async () => {
-    try {
+    
       console.log("[Donate] Fetching user profile");
 
       const email = localStorage.getItem("userEmail");
       const token = sessionStorage.getItem("token");
+
+      console.log("[Donate] Token:", token);
+    console.log("[Donate] Email from localStorage:", email);
 
       if (!email || !token) {
         console.warn("Donate: Missing email or token in storage");
         return;
       }
 
+      try {
       const response = await fetch(`${getBaseUrl()}/api/modifyProfile`, {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -90,7 +97,11 @@ useEffect(() => {
     }
   };
 
-  fetchUserProfile();
+   // Wait slightly to allow session/localStorage to stabilize
+  setTimeout(() => {
+    fetchUserProfile();
+  }, 100);
+  
 }, []);
 
   const [donationSuccess, setDonationSuccess] = useState(false);
@@ -111,17 +122,7 @@ useEffect(() => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [userToken, setUserToken] = useState('');
 
-    useEffect(() => {
-    const userInfo = getUserInfo();
-    setDonationInfo(prev => ({
-      ...prev,
-      contactInfo: userInfo.email || '',
-      email: userInfo.email || '', // Added email field to match table structure
-      profileId: userInfo.profileId || ''
-    }));
-    setUserToken(userInfo.token || '');
-  }, []);
-
+  
 
   
   const handleInputChange = (e) => {

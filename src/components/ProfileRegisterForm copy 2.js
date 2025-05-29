@@ -25,7 +25,6 @@ const ProfileDetails = () => {
     const [tabIndex, setTabIndex] = useState(0);
     const [showDonationDialog, setShowDonationDialog] = useState(false);
     const [profileCreationData, setProfileCreationData] = useState(null);
-    const [isProcessing, setIsProcessing] = useState(false);
     
     const tabLabels = [
         "Basic Details",
@@ -51,7 +50,7 @@ const ProfileDetails = () => {
             if (loginResponse.data.token) {
                 console.log("✅ Auto-login successful:", loginResponse.data);
                 
-                // Store tokens and user info in session/local storage
+// Store tokens and user info in session/local storage
                 sessionStorage.setItem("token", loginResponse.data.token);
                 sessionStorage.setItem("isLoggedIn", "true");
                 if (loginResponse.data.user && loginResponse.data.user.email) {
@@ -62,52 +61,29 @@ const ProfileDetails = () => {
                 }
                 
                 console.log("✅ Login tokens stored successfully");
-                return true; // Return success status
+
+                // THIS IS THE EXACT PLACE TO COPY THE CODE
+                setTimeout(() => {
+                    console.log("✅ Delayed navigation after auto-login success...");
+                    navigate("/donate"); // Navigate to the Donate page
+                }, 100); // Small delay to allow state to settle
             } else {
                 console.error("❌ Auto-login failed: No token received.");
-                return false;
+                alert("Auto-login failed. Please try logging in manually.");
+                navigate("/login"); // Redirect to login on auto-login failure
             }
         } catch (autoLoginError) {
             console.error("❌ Error during auto-login:", autoLoginError);
-            return false;
+            alert("An error occurred during auto-login. Please try logging in manually.");
+            navigate("/login"); // Redirect to login on error
         }
-    };
-
-    const sendEmailToUser = async (profileId, email) => {
-        try {
-            const emailPayload = {
-                email: email,
-                profileId: profileId,
-            };
-
-            console.log("📧 Sending email with payload:", emailPayload);
-            const emailResponse = await axios.post(
-                `${getBaseUrl()}/api/send-email`,
-                emailPayload
-            );
-
-            if (emailResponse.status === 200) {
-                console.log('✅ Email sent successfully!');
-                return true;
-            } else {
-                console.log('⚠️ Failed to send email.');
-                return false;
-            }
-        } catch (emailError) {
-            console.log('⚠️ Email service not available.');
-            console.error('Error sending email:', emailError.response?.data || emailError.message);
-            return false;
-        }
-    };
-
+    }        
     const handleSubmit = async () => {
         if (!formData.dob) {
             alert("Date of Birth is mandatory.");
             setTabIndex(1);
             return;
         }
-
-        setIsProcessing(true);
 
         const password = generateRandomPassword();
         const userLoginData = {
@@ -120,23 +96,26 @@ const ProfileDetails = () => {
         };
 
         try {
-            console.log("➡️ Step 1: Creating profile...");
-            console.log("Sending profile data:", { profileData: formData });
+            console.log("➡️ Sending profile data:", { profileData: formData });
 
-            // STEP 1: Create profile
+            // First API call - Create profile
             const profileResponse = await axios.post(
                 `${getBaseUrl()}/api/addProfile`,
                 { profileData: formData }
             );
 
             const { profileId } = profileResponse.data;
-            console.log("✅ Step 1 Complete: Profile created successfully:", profileResponse.data);
+            console.log("✅ Profile created successfully:", profileResponse.data);
 
-            // Prepare user login creation
+            // Second API call - Create user login
+            console.log("➡️ Creating user login:", userLoginData);
+            
+            
             let loginCreated = false;
             let finalUserId = userLoginData.user_id;
             let finalPassword = password;
-            let autoLoginSuccess = false;
+            
+            console.log("🔄 Auto-login payload:", { userId: finalUserId, password: finalPassword });
 
             try {
                 const loginResponse = await axios.post(
@@ -155,33 +134,29 @@ const ProfileDetails = () => {
                 // Check if it's a duplicate entry error
                 if (loginError.response?.status === 500 && 
                     loginError.response?.data?.details?.includes('Duplicate entry')) {
-                    console.log("⚠️ User login already exists, will proceed with existing credentials...");
-                    loginCreated = true;
+                    console.log("⚠️ User login already exists, will try to login with existing credentials...");
+                    loginCreated = true; // We'll try to login anyway
                 } else {
                     console.error("❌ Failed to create user login:", loginError);
                     alert(`Profile created successfully!\nProfile ID: ${profileId}\nWarning: Failed to create user login. Please contact support.`);
-                    setIsProcessing(false);
-                    return;
+                    return; // Don't proceed with donation if login creation failed completely
                 }
             }
 
+            // Show success alert
+            alert(`Profile created successfully!\nProfile ID: ${profileId}\nUser ID: ${finalUserId}\nPassword: ${finalPassword}`);
+            
             // Auto-login the user if login was created successfully
+            let autoLoginSuccess = false;
             if (loginCreated) {
                 autoLoginSuccess = await autoLoginUser(finalUserId, finalPassword);
+                
                 if (!autoLoginSuccess) {
                     console.log("⚠️ Auto-login failed, user will need to login manually for donation");
                 }
             }
-
-            // Show success alert with profile details
-            alert(`Profile created successfully!\nProfile ID: ${profileId}\nUser ID: ${finalUserId}\nPassword: ${finalPassword}`);
             
-            // STEP 2: Send email to user
-            console.log("➡️ Step 2: Sending email to user...");
-            await sendEmailToUser(profileId, formData.email);
-            console.log("✅ Step 2 Complete: Email sent");
-
-            // Store the profile creation data for donation dialog
+            // Store the profile creation data for potential donation
             setProfileCreationData({
                 profileId,
                 userId: finalUserId,
@@ -192,27 +167,44 @@ const ProfileDetails = () => {
                 autoLoginSuccess
             });
             
-            // STEP 3: Show donation dialog
-            console.log("➡️ Step 3: Showing donation dialog...");
-            setIsProcessing(false);
+            console.log("Value of formData.user?.autoLoginSuccess:", formData.user?.autoLoginSuccess);
+                console.log("Calling setShowDonationDialog(true) now...");
+            // Show donation dialog
             setShowDonationDialog(true);
 
+            // Email sending logic (optional - backend already sends email)
+            try {
+                const emailPayload = {
+                    email: formData.email,
+                    profileId,
+                };
+
+                console.log("Attempting to send additional email with payload:", emailPayload);
+                const emailResponse = await axios.post(
+                    `${getBaseUrl()}/api/send-email`,
+                    emailPayload
+                );
+
+                if (emailResponse.status === 200) {
+                    console.log('Additional email sent successfully!');
+                } else {
+                    console.log('Failed to send additional email.');
+                }
+            } catch (emailError) {
+                console.log('Additional email service not available.');
+                console.error('Error sending additional email:', emailError.response?.data || emailError.message);
+            }
+
         } catch (error) {
-            setIsProcessing(false);
             alert("Failed to create profile. Check console for details.");
             console.error("Error submitting form:", error.response?.data || error.message);
         }
     };
 
     const handleDonationChoice = async (wantsToDonate) => {
-        console.log("➡️ Step 4: User made donation choice:", wantsToDonate ? "Yes" : "Maybe Later");
-        
         setShowDonationDialog(false);
         
         if (wantsToDonate) {
-            // User chooses "Yes" -> Navigate to /donate
-            console.log("➡️ Step 4a: User wants to donate");
-            
             // Ensure user is logged in before going to donate page
             if (profileCreationData && !profileCreationData.autoLoginSuccess) {
                 console.log("🔐 Auto-login was not successful, attempting login again before donation...");
@@ -224,11 +216,12 @@ const ProfileDetails = () => {
                 
                 if (!loginSuccess) {
                     alert("Unable to automatically log you in. Please login manually and then visit the donation page.");
-                    resetFormAndNavigateHome();
+                    resetFormAndNavigate();
                     return;
                 }
             }
     
+            // ✅ If re-login successful, update state so useEffect triggers navigation
             // Store additional user info for the Donate component
             if (profileCreationData) {
                 localStorage.setItem("userEmail", profileCreationData.email);
@@ -240,18 +233,19 @@ const ProfileDetails = () => {
                 }));
             }
             
-            console.log("🎯 Step 5: Navigating to donate page...");
+            console.log("🎯 Navigating to donate page with user logged in");
+            // Navigate to donate page
+// MISSING NAVIGATION LINE GOES HERE
+// 🎉 ADD THIS LINE! This will redirect the user to the /donate page.
             navigate("/donate");
-            
         } else {
-            // User chooses "Maybe Later" -> Navigate to home
-            console.log("➡️ Step 4b: User chose Maybe Later");
-            console.log("🏠 Step 5: Navigating to home page...");
-            resetFormAndNavigateHome();
+            // User chose "Maybe Later"
+            resetFormAndNavigate();
         }
-    };
+           };
+  
 
-    const resetFormAndNavigateHome = () => {
+    const resetFormAndNavigate = () => {
         // Clear any stored login data if user chooses not to donate
         sessionStorage.removeItem("token");
         sessionStorage.removeItem("tempProfileData");
@@ -312,8 +306,7 @@ const ProfileDetails = () => {
         });
 
         setTabIndex(0);
-        setProfileCreationData(null);
-        navigate('/'); // Navigate to home page
+        navigate('/');
     };
 
     const generateRandomPassword = (length = 10) => {
@@ -419,7 +412,6 @@ const ProfileDetails = () => {
                 onClose={() => {}} // Prevent closing by clicking outside
                 maxWidth="sm"
                 fullWidth
-                disableEscapeKeyDown // Prevent closing with ESC key
                 PaperProps={{
                     sx: {
                         borderRadius: 2,
@@ -473,7 +465,6 @@ const ProfileDetails = () => {
                     <Button
                         onClick={() => handleDonationChoice(false)}
                         variant="outlined"
-                        disabled={isProcessing}
                         sx={{
                             px: 3,
                             py: 1,
@@ -490,7 +481,6 @@ const ProfileDetails = () => {
                     <Button
                         onClick={() => handleDonationChoice(true)}
                         variant="contained"
-                        disabled={isProcessing}
                         sx={{
                             px: 3,
                             py: 1,

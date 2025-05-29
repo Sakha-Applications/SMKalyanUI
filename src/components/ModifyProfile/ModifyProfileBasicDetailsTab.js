@@ -55,8 +55,8 @@ const ModifyProfileBasicDetailsTab = ({ formData, handleChange, tabIndex, setTab
             });
             setCurrentLocationInputValue(formData.current_location);
         }
-    }, [formData]);
-    
+    }, [formData, motherTongueSelectedValue, nativePlaceSelectedValue, currentLocationSelectedValue]); // Added dependencies
+
     // Fetch mother tongues on component mount
     useEffect(() => {
         const fetchMotherTongues = async () => {
@@ -86,7 +86,7 @@ const ModifyProfileBasicDetailsTab = ({ formData, handleChange, tabIndex, setTab
         fetchMotherTongues();
     }, []);
     
-    // Search native places when input changes fo
+    // Search native places when input changes
     useEffect(() => {
         const timer = setTimeout(() => {
             if (nativePlaceInputValue.length >= 2) {
@@ -225,12 +225,12 @@ const ModifyProfileBasicDetailsTab = ({ formData, handleChange, tabIndex, setTab
             gridTemplateColumns: "2fr 8fr 2fr 8fr", // 4 columns: Label (2fr), Input (8fr)
             gap: 3,
             alignItems: "center",
-            justifyContent: "center",
+            justifyContent: "center", // Restored from original
             p: 4,
             backgroundColor: "#f5f5f5",
             borderRadius: 2,
             boxShadow: 2,
-            maxWidth: "100%",
+            maxWidth: "100%", // Restored from original
             margin: "auto"
         }}>
             {/* ID (Auto-generated) */}
@@ -252,21 +252,9 @@ const ModifyProfileBasicDetailsTab = ({ formData, handleChange, tabIndex, setTab
                 sx={{ backgroundColor: "#e0e0e0", borderRadius: 1 }}
             />
 
-            {/* Name */}
-            <Typography sx={{ fontWeight: "bold", color: "#333", gridColumn: "1" }}>Name:</Typography>
-            <TextField
-                name="name"
-                value={formData.name ?? ""}
-                onChange={handleChange}
-                fullWidth
-                required
-                sx={{ backgroundColor: "#fff", borderRadius: 1, gridColumn: "2 / 4" }} // Span from column 2 to 4
-            />
-            <Box />
-
-            {/* Profile Created For */}
-            <Typography sx={{ fontWeight: "bold", color: "#444", gridColumn: "1" }}>Profile Created For:</Typography>
-            <FormControl fullWidth required sx={{ backgroundColor: "#fff", borderRadius: 1, gridColumn: "2" }}>
+            {/* MOVED: Profile Created For */}
+            <Typography sx={{ fontWeight: "bold", color: "#444" }}>Profile Created For:</Typography>
+            <FormControl fullWidth required sx={{ backgroundColor: "#fff", borderRadius: 1 }}>
                 <Select name="profile_created_for" value={formData.profile_created_for || ""} onChange={handleChange}>
                     <MenuItem value="Self">Self</MenuItem>
                     <MenuItem value="Son">Son</MenuItem>
@@ -276,7 +264,7 @@ const ModifyProfileBasicDetailsTab = ({ formData, handleChange, tabIndex, setTab
                 </Select>
             </FormControl>
 
-            {/* This Profile is For */}
+            {/* MOVED: This Profile is For */}
             <Typography sx={{ fontWeight: "bold", color: "#444" }}>This Profile is For:</Typography>
             <FormControl fullWidth required sx={{ backgroundColor: "#fff", borderRadius: 1 }}>
                 <Select name="profile_for" value={formData.profile_for || ""} onChange={handleChange}>
@@ -285,7 +273,19 @@ const ModifyProfileBasicDetailsTab = ({ formData, handleChange, tabIndex, setTab
                 </Select>
             </FormControl>
 
-            {/* Mother Tongue - Changed to Autocomplete */}
+            {/* Name - Original position and styling */}
+            <Typography sx={{ fontWeight: "bold", color: "#333", gridColumn: "1" }}>Name:</Typography>
+            <TextField
+                name="name"
+                value={formData.name ?? ""}
+                onChange={handleChange}
+                fullWidth
+                required
+                sx={{ backgroundColor: "#fff", borderRadius: 1, gridColumn: "2 / 4" }} // Span from column 2 to 4
+            />
+            <Box /> {/* This empty Box was in your original to align the grid */}
+
+            {/* Mother Tongue - Original styling for Autocomplete */}
             <Typography sx={{ fontWeight: "bold", color: "#444" }}>Mother Tongue:</Typography>
             <Autocomplete
                 value={motherTongueSelectedValue}
@@ -293,6 +293,10 @@ const ModifyProfileBasicDetailsTab = ({ formData, handleChange, tabIndex, setTab
                 inputValue={motherTongueInputValue}
                 onInputChange={(event, newInputValue) => {
                     setMotherTongueInputValue(newInputValue);
+                    // If user clears the input, reset the form data field
+                    if (newInputValue === '') {
+                        handleChange({ target: { name: "mother_tongue", value: "" } });
+                    }
                 }}
                 options={motherTongueOptions}
                 loading={isMotherTongueLoading}
@@ -318,7 +322,7 @@ const ModifyProfileBasicDetailsTab = ({ formData, handleChange, tabIndex, setTab
                 )}
             />
 
-            {/* Native Place - Changed to Autocomplete */}
+            {/* Native Place - Original styling for Autocomplete */}
             <Typography sx={{ fontWeight: "bold", color: "#444" }}>Native Place:</Typography>
             <Autocomplete
                 value={nativePlaceSelectedValue}
@@ -326,6 +330,9 @@ const ModifyProfileBasicDetailsTab = ({ formData, handleChange, tabIndex, setTab
                 inputValue={nativePlaceInputValue}
                 onInputChange={(event, newInputValue) => {
                     setNativePlaceInputValue(newInputValue);
+                    if (newInputValue === '') {
+                        handleChange({ target: { name: "native_place", value: "" } });
+                    }
                 }}
                 options={nativePlaceOptions}
                 loading={isNativePlaceLoading}
@@ -353,7 +360,7 @@ const ModifyProfileBasicDetailsTab = ({ formData, handleChange, tabIndex, setTab
                 )}
             />
 
-            {/* Current Location - Changed to Autocomplete */}
+            {/* Current Location - Original styling for Autocomplete */}
             <Typography sx={{ fontWeight: "bold", color: "#444" }}>Current Location:</Typography>
             <Autocomplete
                 value={currentLocationSelectedValue}
@@ -361,6 +368,9 @@ const ModifyProfileBasicDetailsTab = ({ formData, handleChange, tabIndex, setTab
                 inputValue={currentLocationInputValue}
                 onInputChange={(event, newInputValue) => {
                     setCurrentLocationInputValue(newInputValue);
+                    if (newInputValue === '') {
+                        handleChange({ target: { name: "current_location", value: "" } });
+                    }
                 }}
                 options={currentLocationOptions}
                 loading={isCurrentLocationLoading}
@@ -391,7 +401,7 @@ const ModifyProfileBasicDetailsTab = ({ formData, handleChange, tabIndex, setTab
             {/* Profile Status */}
             <Typography sx={{ fontWeight: "bold", color: "#444" }}>Profile Status:</Typography>
             <FormControl fullWidth required sx={{ backgroundColor: "#fff", borderRadius: 1 }}>
-                <Select name="profile_status" value={formData.profile_status || ""} onChange={handleChange}>
+                <Select name="profileStatus" value={formData.profileStatus || ""} onChange={handleChange}>
                     <MenuItem value="Active">Active</MenuItem>
                     <MenuItem value="Inactive">Inactive</MenuItem>
                 </Select>
@@ -405,6 +415,41 @@ const ModifyProfileBasicDetailsTab = ({ formData, handleChange, tabIndex, setTab
                     <MenuItem value="Divorced">Divorced</MenuItem>
                     <MenuItem value="Separated">Separated</MenuItem>
                     <MenuItem value="Widowed">Widowed</MenuItem>
+                </Select>
+            </FormControl>
+
+            {/* NEW FIELD: Do you share your detail on platform */}
+            <Typography sx={{ fontWeight: "bold", color: "#444" }}>Do you share your detail on platform:</Typography>
+            <FormControl fullWidth required sx={{ backgroundColor: "#fff", borderRadius: 1 }}>
+                <Select
+                    name="shareDetailsOnPlatform"
+                    value={formData.shareDetailsOnPlatform || "Yes"} // Default to "Yes" if not set
+                    onChange={handleChange}
+                >
+                    <MenuItem value="Yes">Yes</MenuItem>
+                    <MenuItem value="No">No</MenuItem>
+                </Select>
+            </FormControl>
+
+            {/* NEW FIELD: How did you come to know about this Initiative/service ? */}
+            <Typography sx={{ fontWeight: "bold", color: "#444" }}>
+                How did you come to know about this Initiative/service ?
+            </Typography>
+            <FormControl fullWidth required sx={{ backgroundColor: "#fff", borderRadius: 1 }}>
+                <Select
+                    name="howDidYouKnow" // Bind to the new formData field
+                    value={formData.howDidYouKnow || ""} // Default value
+                    onChange={handleChange}
+                >
+                    <MenuItem value="">Select an Option</MenuItem> {/* Optional: A placeholder option */}
+                    <MenuItem value="Friends">Friends</MenuItem>
+                    <MenuItem value="Family">Family</MenuItem>
+                    <MenuItem value="Social Media (Facebook, Instagram, LinkedIn, etc.)">Social Media (Facebook, Instagram, LinkedIn, etc.)</MenuItem>
+                    <MenuItem value="WhatsApp Message">WhatsApp Message</MenuItem>
+                    <MenuItem value="Community Outreach Program">Community Outreach Program</MenuItem>
+                    <MenuItem value="Event or Conference">Event or Conference</MenuItem>
+                    <MenuItem value="SMS or Phone Call">SMS or Phone Call</MenuItem>
+                    <MenuItem value="Others">Others</MenuItem>
                 </Select>
             </FormControl>
 
