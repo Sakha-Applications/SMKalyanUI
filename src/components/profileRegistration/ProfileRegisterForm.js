@@ -1,120 +1,93 @@
-import React, { useState } from "react";
-import { Tabs, Tab, Paper, Typography, Box } from "@mui/material";
-import { Link } from 'react-router-dom'; // Import Link
-import BasicDetailsTab from "./BasicDetailsTab";
-import PersonalInfoTab from "./PersonalInfoTab";
-import ContactDetailsTab from "./ContactDetailsTab";
-import FamilyDetailsTab from "./FamilyDetailsTab";
-import CareerEducationTab from "./CareerEducationTab";
-import useFormData from "../hooks/useFormData";
-import axios from "axios";
+// src/components/profileRegistration/ProfileRegisterForm.js
+// This is the main component for the /profile-register route.
+// It uses your useFormData hook and orchestrates the ProfileRegistration component.
 
-const ProfileDetails = () => {
-  const [tabIndex, setTabIndex] = useState(0);
-  const tabLabels = ["Basic Details", "Personal Info", "Contact Details", "Family Details", "Career & Education"];
+import React, { useEffect } from 'react';
+// Assuming useFormData is in src/hooks/useFormData.js
+import useFormData from '../../hooks/useFormData'; // Adjust path as per your project structure
+import ProfileRegistration from './ProfileRegistration'; // Adjust path
 
-  const { formData, setFormData, handleChange, handleDOBChange, handleTimeBlur } = useFormData();
+// Mock utility functions - replace with your actual implementations or remove if not needed directly here
+// Ensure axios and getBaseUrl are configured for useApiData and any direct calls in popups.
+// For this example, we'll assume they are globally available or handled by your setup.
+if (!window.getBaseUrl) {
+    window.getBaseUrl = () => 'https://api.example.com'; // Mock
+}
+if (!window.axios) {
+    window.axios = { // Mock
+        get: async (url) => {
+            console.log(`Mock Global Axios GET request to: ${url}`);
+             if (url.includes('/native-places') || url.includes('/mother-tongues') || url.includes('/guru-matha') || url.includes('/cities')) {
+                if (url.includes('search=')) {
+                    const query = url.split('search=')[1].toLowerCase();
+                    if (query.startsWith('ka')) {
+                    if (url.includes('/native-places') || url.includes('/cities')) return { data: [{ id: '1', name: 'Karkala' }, { id: '2', name: 'Kasargod' }] };
+                    if (url.includes('/mother-tongues')) return { data: [{ id: '1', name: 'Kannada' }, { id: '2', name: 'Kashmiri' }] };
+                    if (url.includes('/guru-matha')) return { data: [{ id: '1', name: 'Kashi Matha' }] };
+                    }
+                    if (query.startsWith('ud')) {
+                        if(url.includes('/guru-matha')) return { data: [{id: '2', name: 'Udupi Matha'}]};
+                        if(url.includes('/native-places') || url.includes('/cities')) return { data: [{id: '3', name: 'Udupi'}]};
+                    }
+                }
+                 return { data: [] };
+            }
+            return { data: [] };
+        }
+    };
+}
 
-  const handleSubmit = async () => {
-    // ... (Your existing handleSubmit function remains the same)
-  };
 
-  const generateRandomPassword = (length = 10) => {
-    // ... (Your existing generateRandomPassword function remains the same)
-  };
+export default function ProfileRegisterForm() {
+  const {
+    formData,
+    setFormData,
+    handleChange,
+    handleDOBChange,
+    handleTimeBlur
+  } = useFormData();
+
+  // Effect to derive profileFor from gender, if not already handled in useFormData
+  useEffect(() => {
+    if (formData.gender) {
+      let newProfileFor = '';
+      if (formData.gender === "Male") {
+        newProfileFor = "Bridegroom";
+      } else if (formData.gender === "Female") {
+        newProfileFor = "Bride";
+      }
+      // Only update if different to avoid infinite loops if setFormData is a dependency
+      if (formData.profileFor !== newProfileFor) {
+        setFormData(prevData => ({
+          ...prevData,
+          profileFor: newProfileFor,
+        }));
+      }
+    }
+  }, [formData.gender, formData.profileFor, setFormData]);
+
+  // Effect to combine height, if not already handled in useFormData
+   useEffect(() => {
+    const { heightFeet, heightInches } = formData;
+    let newHeight = '';
+    if (heightFeet && heightInches) {
+      newHeight = `${heightFeet}'${heightInches}"`;
+    }
+    if (formData.height !== newHeight) {
+        setFormData(prev => ({ ...prev, height: newHeight }));
+    }
+  }, [formData.heightFeet, formData.heightInches, formData.height, setFormData]);
+
 
   return (
-    <div className="bg-gray-50 font-sans antialiased min-h-screen">
-      {/* Navigation Bar (Similar to Home) */}
-      <nav className="bg-white shadow-md py-4">
-        <div className="container mx-auto flex justify-between items-center px-6">
-          <Link to="/" className="text-xl font-bold text-indigo-700">
-            ProfileConnect {/* Or your app name */}
-          </Link>
-          <div>
-            <Link to="/" className="text-gray-700 hover:text-indigo-500">
-              Back to Home
-            </Link>
-          </div>
-        </div>
-      </nav>
-
-      {/* Main Content Section - Your Profile Details Form */}
-      <section className="py-16">
-        <div className="container mx-auto px-6">
-          <Paper elevation={3} sx={{ maxWidth: "80%", mx: "auto", p: 3, mt: 4, backgroundColor: "#f9f9f9" }}>
-            <Typography variant="h5" align="center" gutterBottom>
-              Profile Details
-            </Typography>
-            <Tabs value={tabIndex} onChange={(e, newIndex) => setTabIndex(newIndex)} variant="fullWidth">
-              {tabLabels.map((label, index) => (<Tab key={index} label={label} />))}
-            </Tabs>
-
-            <Box sx={{ mt: 2 }}>
-              {tabIndex === 0 && (
-                <BasicDetailsTab
-                  formData={formData}
-                  handleChange={handleChange}
-                  tabIndex={tabIndex}
-                  setTabIndex={setTabIndex}
-                />
-              )}
-
-              {tabIndex === 1 && (
-                <PersonalInfoTab
-                  formData={formData}
-                  setFormData={setFormData}
-                  handleChange={handleChange}
-                  handleDOBChange={handleDOBChange}
-                  handleTimeBlur={handleTimeBlur}
-                  tabIndex={tabIndex}
-                  setTabIndex={setTabIndex}
-                />
-              )}
-
-              {tabIndex === 2 && (
-                <ContactDetailsTab
-                  formData={formData}
-                  handleChange={handleChange}
-                  isActive={true}
-                  tabIndex={tabIndex}
-                  setTabIndex={setTabIndex}
-                />
-              )}
-
-              {tabIndex === 3 && (
-                <FamilyDetailsTab
-                  formData={formData}
-                  handleChange={handleChange}
-                  isActive={true}
-                  tabIndex={tabIndex}
-                  setTabIndex={setTabIndex}
-                />
-              )}
-
-              {tabIndex === 4 && (
-                <CareerEducationTab
-                  formData={formData}
-                  handleChange={handleChange}
-                  isActive={true}
-                  tabIndex={tabIndex}
-                  setTabIndex={setTabIndex}
-                  handleSubmit={handleSubmit}
-                />
-              )}
-            </Box>
-          </Paper>
-        </div>
-      </section>
-
-      {/* Footer (Optional) */}
-      <footer className="bg-white shadow-inner py-6 text-center text-gray-700 text-sm">
-        <div className="container mx-auto px-6">
-          <p className="mt-2">&copy; {new Date().getFullYear()} ProfileConnect. All rights reserved.</p>
-        </div>
-      </footer>
+    <div className="bg-gradient-to-br from-slate-900 to-slate-700 min-h-screen flex items-center justify-center py-8 px-4 font-sans">
+      <ProfileRegistration
+        formData={formData}
+        handleChange={handleChange}
+        handleDOBChange={handleDOBChange}
+        handleTimeBlur={handleTimeBlur}
+        setFormData={setFormData} // Pass setFormData for popups that might need more direct updates
+      />
     </div>
   );
-};
-
-export default ProfileDetails;
+}
