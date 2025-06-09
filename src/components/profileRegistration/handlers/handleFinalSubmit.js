@@ -44,6 +44,8 @@ const handleFinalSubmit = async ({ formData, setIsProcessing, setShowDonationDia
       currentAge: finalAge
     };
 
+    console.log("📤 Final payload to backend:", JSON.stringify(payload, null, 2));
+
     if (!formData.profileId) {
       alert("❌ Missing profile ID. Cannot complete submission.");
       setIsProcessing(false);

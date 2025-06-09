@@ -18,10 +18,31 @@ import TableContainer from '@mui/material/TableContainer';
 import TableRow from '@mui/material/TableRow';
 import { Link } from 'react-router-dom';
 import getBaseUrl from '../utils/GetUrl';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+import { useNavigate } from 'react-router-dom';
 
 function Donate() {
   console.log("[Donate] Component initialized");
-  
+
+      const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+const navigate = useNavigate();
+
+const handleCancelClick = () => {
+  setCancelDialogOpen(true);
+};
+
+const handleConfirmCancel = () => {
+  setCancelDialogOpen(false);
+  navigate('/dashboard'); // Redirect to dashboard
+};
+
+const handleCancelDialogClose = () => {
+  setCancelDialogOpen(false);
+};
+
   // Get user info from localStorage or context
 const getUserInfo = async () => {
   const token = sessionStorage.getItem("token");
@@ -39,6 +60,7 @@ const getUserInfo = async () => {
     const response = await fetch(`${getBaseUrl()}/api/modifyProfile`, {
       headers: { Authorization: `Bearer ${token}` }
     });
+
 
     const data = await response.json();
     if (response.ok && data?.profile_id) {
@@ -625,26 +647,41 @@ useEffect(() => {
               </Grid>
             </Box>
             
-            <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
-              <Button
-                type="submit"
-                variant="contained"
-                disabled={isSubmitting}
-                sx={{
-                  bgcolor: "#3f51b5",
-                  color: "white",
-                  py: 1.5,
-                  px: 4,
-                  fontSize: "1.1rem",
-                  fontWeight: "medium",
-                  '&:hover': {
-                    bgcolor: "#303f9f"
-                  }
-                }}
-              >
-                {isSubmitting ? 'Submitting...' : 'Submit Donation Information'}
-              </Button>
-            </Box>
+            <Box sx={{ display: "flex", justifyContent: "center", gap: 2, mt: 4 }}>
+  <Button
+    variant="outlined"
+    color="error"
+    onClick={handleCancelClick}
+    sx={{
+      py: 1.5,
+      px: 4,
+      fontSize: "1.1rem",
+      fontWeight: "medium"
+    }}
+  >
+    Cancel
+  </Button>
+
+  <Button
+    type="submit"
+    variant="contained"
+    disabled={isSubmitting}
+    sx={{
+      bgcolor: "#3f51b5",
+      color: "white",
+      py: 1.5,
+      px: 4,
+      fontSize: "1.1rem",
+      fontWeight: "medium",
+      '&:hover': { bgcolor: "#303f9f" }
+    }}
+  >
+    {isSubmitting ? 'Submitting...' : 'Submit Donation Information'}
+  </Button>
+</Box>
+
+
+
           </Box>
         </Paper>
       </Container>
@@ -667,6 +704,22 @@ useEffect(() => {
           {snackbarMessage}
         </Alert>
       </Snackbar>
+      <Dialog
+  open={cancelDialogOpen}
+  onClose={handleCancelDialogClose}
+>
+  <DialogTitle>Are you sure you want to cancel?</DialogTitle>
+  <DialogContent>
+    <Typography>You can donate later by coming back to this page. Do you want to go back to the dashboard?</Typography>
+  </DialogContent>
+  <DialogActions>
+    <Button onClick={handleCancelDialogClose}>Stay on this page</Button>
+    <Button onClick={handleConfirmCancel} color="primary" autoFocus>
+      Yes, Go to Dashboard
+    </Button>
+  </DialogActions>
+</Dialog>
+
     </Box>
   );
 }

@@ -8,6 +8,7 @@ import dayjs from 'dayjs';
 import MultiSelectCheckbox from '../common/MultiSelectCheckbox';
 import validateRequiredFields from '../common/validateRequiredFields';
 import ValidationErrorDialog from '../common/ValidationErrorDialog'; // ✅ ADDED THIS IMPORT
+import StateCitySelector from "../common/StateCitySelector";
 
 const Popup3_PersonalDetails = ({
   formData,
@@ -119,9 +120,11 @@ const Popup3_PersonalDetails = ({
     if (!formData.marriedStatus) newErrors.marriedStatus = "Married Status is required";
     if (!formData.heightFeet || !formData.heightInches) newErrors.height = "Height is required";
     if (!formData.profileCategory) newErrors.profileCategory = "Bride/Groom category is required";
-    if (!nativePlaceInput) newErrors.nativePlace = "Native place is required";
+    if (!formData.nativePlace) newErrors.nativePlace = "Native place is required";
+if (!formData.placeOfBirth) newErrors.placeOfBirth = "Place of birth is required";
+
     if (!formData.timeOfBirth) newErrors.timeOfBirth = "Time of birth is required";
-    if (!placeOfBirthInput) newErrors.placeOfBirth = "Place of birth is required";
+    
     if (!formData.aboutBrideGroom) newErrors.aboutBrideGroom = "About Yourself is required";
 
     setErrors(newErrors);
@@ -210,6 +213,7 @@ const Popup3_PersonalDetails = ({
 
         <div>
           <L htmlFor="timeOfBirth">Time of Birth <span className="text-red-500">*</span></L>
+          
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <TimePicker
               value={formData.timeOfBirth ? dayjs(formData.timeOfBirth, 'HH:mm:ss') : null}
@@ -217,6 +221,7 @@ const Popup3_PersonalDetails = ({
                 const formatted = time ? time.format('HH:mm:ss') : '';
                 handleChange({ target: { name: 'timeOfBirth', value: formatted } });
               }}
+              
               renderInput={(params) => (
                 <I
                   {...params}
@@ -229,20 +234,25 @@ const Popup3_PersonalDetails = ({
               )}
             />
           </LocalizationProvider>
+        <div>
+    <small>Select time of birth in hh:mm AM/PM format (e.g. 08:30 AM)</small>
+  </div>
         </div>
 
-        {renderAutocomplete("Native Place", nativePlaceInput, setNativePlaceInput, nativePlaceOptions, setNativePlaceOptions, showNPOptions, setShowNPOptions, "nativePlace", searchPlaces)}
-        {renderAutocomplete("Place of Birth", placeOfBirthInput, setPlaceOfBirthInput, placeOfBirthOptions, setPlaceOfBirthOptions, showPOBOptions, setShowPOBOptions, "placeOfBirth", searchPlaces)}
+<StateCitySelector
+  formData={formData}
+  handleChange={handleChange}
+  cityField="nativePlace"
+  labelPrefix="Native"
+/>
 
-        <MultiSelectCheckbox
-          label="Dietary Preference"
-          name="diet"
-          options={dietOptions}
-          selectedValues={(formData.diet || []).map(item => ({ label: item, value: item }))}
-          onChange={(name, values) =>
-            handleChange({ target: { name, value: values.map(v => v.label || v.value || v) } })
-          }
-        />
+<StateCitySelector
+  formData={formData}
+  handleChange={handleChange}
+  cityField="placeOfBirth"
+  labelPrefix="Place of Birth"
+/>
+
 
         <MultiSelectCheckbox
           label="Hobbies"
@@ -269,7 +279,7 @@ const Popup3_PersonalDetails = ({
       </div>
 
       <div className="flex justify-between pt-4">
-        <B variant="outline" onClick={onPrevious}>Previous</B>
+        <B variant="outline" onClick={onPrevious} disabled>Previous</B>
         <B onClick={validateAndProceed}>Save & Next</B>
       </div>
     </div>

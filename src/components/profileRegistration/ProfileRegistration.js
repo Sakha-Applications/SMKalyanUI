@@ -43,6 +43,7 @@ const ProfileRegistration = () => {
   };
 
   const handlePopup2Signup = async () => {
+    
     const success = await handleUserAndProfileCreation({
       formData,
       setFormData,
@@ -54,6 +55,8 @@ const ProfileRegistration = () => {
       setIsProcessing,
       navigate
     });
+    
+    
   };
 
   const handlePreviousPopup = () => {
@@ -140,12 +143,19 @@ const ProfileRegistration = () => {
           currentStep={currentStep}
           isProcessing={isProcessing}
           setIsProcessing={setIsProcessing}
+          // Additional props for Popup2
+          setProfileAlreadyCreated={setProfileAlreadyCreated}
+          setUserAlreadyCreated={setUserAlreadyCreated}
+          setUserCreationData={setUserCreationData}
+          setShowUserCreatedDialog={setShowUserCreatedDialog}
+          setProfileCreationData={setProfileCreationData}
+          navigate={navigate}
           isLastStep={currentStep === popups.length - 1}
           handleIntermediateProfileUpdate={handleIntermediateProfileUpdate}
         />
       </StepContainer>
 
-      {/* ✅ User Created Confirmation Dialog */}
+      {/* User Created Confirmation Dialog */}
       <Dialog open={showUserCreatedDialog} maxWidth="sm" fullWidth>
         <DialogTitle>User Account Created Successfully! ✅</DialogTitle>
         <DialogContent>
@@ -159,7 +169,7 @@ const ProfileRegistration = () => {
             Would you like to continue completing your profile now or do it later?
           </Typography>
         </DialogContent>
-        <DialogActions>
+          <DialogActions>
           <Button onClick={() => handleUserCreationConfirmation(false)} variant="outlined" color="warning">
             Complete Later
           </Button>
@@ -169,7 +179,7 @@ const ProfileRegistration = () => {
         </DialogActions>
       </Dialog>
 
-      {/* ✅ Donation Prompt Dialog */}
+      {/* Donation Prompt Dialog */}
       <Dialog open={showDonationDialog} maxWidth="xs" fullWidth onClose={() => setShowDonationDialog(false)}>
         <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <VolunteerActivism sx={{ color: '#f44336' }} /> Support Our Mission
@@ -187,7 +197,7 @@ const ProfileRegistration = () => {
             Not Now
           </Button>
           <Button startIcon={<Favorite />} onClick={() => handleDonationChoice(true)} variant="contained" color="primary">
-            Yes, I’ll Donate
+            Yes, I'll Donate
           </Button>
         </DialogActions>
       </Dialog>

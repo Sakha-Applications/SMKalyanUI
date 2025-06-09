@@ -7,6 +7,7 @@ import renderAutocomplete from './helpers/renderAutocomplete';
 import MultiSelectCheckbox from '../common/MultiSelectCheckbox';
 import validateRequiredFields from '../common/validateRequiredFields';
 import ValidationErrorDialog from '../common/ValidationErrorDialog';
+import { Country } from 'country-state-city';
 
 const Popup4_CareerEducation = ({
   formData,
@@ -32,6 +33,9 @@ const Popup4_CareerEducation = ({
   const [showDesigOptions, setShowDesigOptions] = useState(false);
 
   const [showErrorDialog, setShowErrorDialog] = useState(false);
+
+  const [countries] = useState(Country.getAllCountries());
+
 
   // Fixed: Change from array of objects to array of strings
   const countryOptions = [
@@ -143,24 +147,23 @@ const Popup4_CareerEducation = ({
             <option value="Others">Others</option>
           </S>
         </div>
-
-        <div>
-          <L htmlFor="countryLivingIn">Country Living In</L>
-          <S
-            name="countryLivingIn"
-            value={formData.countryLivingIn || ''}
-            onChange={handleChange}
-            className="w-full"
-          >
-            <option value="">-- Select Country --</option>
-            {/* Fixed: Map over strings instead of objects */}
-            {countryOptions.map((country) => (
-              <option key={country} value={country}>
-                {country}
-              </option>
-            ))}
-          </S>
-        </div>
+<div>
+    <L htmlFor="countryLivingIn">Country Living In</L>
+<S
+  name="countryLivingIn"
+  value={formData.countryLivingIn || ''}
+  onChange={handleChange}
+  className="w-full"
+>
+  <option value="">-- Select Country --</option>
+  {countries.map((country) => (
+    <option key={country.isoCode} value={country.name}>
+      {country.name}
+    </option>
+  ))}
+</S>
+</div>
+        
 
         <div>
           <L>Annual Income in INR</L>

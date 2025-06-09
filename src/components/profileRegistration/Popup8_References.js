@@ -23,45 +23,19 @@ const Popup8_References = ({
 const [errors, setErrors] = useState({});
 const [showErrorDialog, setShowErrorDialog] = useState(false);
 
-  useEffect(() => {
-    if (formData.reference1CountryCode && formData.reference1RawPhone) {
-      handleChange({
-        target: {
-          name: 'reference1Phone',
-          value: `${formData.reference1CountryCode}${formData.reference1RawPhone}`,
-        },
-      });
-    }
-  }, [formData.reference1CountryCode, formData.reference1RawPhone]);
-
-  useEffect(() => {
-    if (formData.reference2CountryCode && formData.reference2RawPhone) {
-      handleChange({
-        target: {
-          name: 'reference2Phone',
-          value: `${formData.reference2CountryCode}${formData.reference2RawPhone}`,
-        },
-      });
-    }
-  }, [formData.reference2CountryCode, formData.reference2RawPhone]);
 
 const validateAndProceed = async () => {
   const requiredFields = [
     { name: "reference1Name", label: "Reference 1 Name" },
-    { name: "reference1RawPhone", label: "Reference 1 Phone Number" }
+    { name: "reference1PhoneNumber", label: "Reference 1 Phone Number" }
   ];
 
   const newErrors = validateRequiredFields(formData, requiredFields);
   setErrors(newErrors);
 
   if (Object.keys(newErrors).length === 0) {
-    const updatedFormData = {
-      ...formData,
-      reference1Phone: `${formData.reference1CountryCode || ''}${formData.reference1RawPhone || ''}`,
-      reference2Phone: `${formData.reference2CountryCode || ''}${formData.reference2RawPhone || ''}`
-    };
-
-    const success = await handleIntermediateProfileUpdate({ formData: updatedFormData, setIsProcessing });
+    
+    const success = await handleIntermediateProfileUpdate({ formData, setIsProcessing });
     if (success) onNext();
   } else {
     setShowErrorDialog(true);
@@ -98,35 +72,46 @@ const validateAndProceed = async () => {
       </div>
 
       {/* Reference 1 Phone */}
-      <div>
-        <L>Reference 1 Phone <span className="text-red-500">*</span></L>
-        <div className="flex space-x-2">
-          <TextField
-            select
-            name="reference1CountryCode"
-            value={formData.reference1CountryCode || '+91'}
-            onChange={handleChange}
-            sx={{ width: 110, backgroundColor: '#fff', borderRadius: 1 }}
-            required
-          >
-            {countryCodes.map(option => (
-              <MenuItem key={option.iso2 + option.code} value={option.code}>
-                {option.label}
-              </MenuItem>
-            ))}
-          </TextField>
-          <I
-            name="reference1RawPhone"
-            type="tel"
-            value={formData.reference1RawPhone || ''}
-            onChange={handleChange}
-            placeholder="Phone number"
-            required
-            className="flex-1"
-          />
-        </div>
-      </div>
-
+{/* Reference 1 Phone */}
+<div>
+  <L>Reference 1 Phone <span className="text-red-500">*</span></L>
+  <div className="flex space-x-2 w-full">
+    <TextField
+      select
+      name="reference1PhoneCountryCode"
+      value={formData.reference1PhoneCountryCode || '+91'}
+      onChange={handleChange}
+      sx={{
+        minWidth: 140,
+        maxWidth: 200,
+        backgroundColor: '#fff',
+        borderRadius: 1,
+        '& .MuiInputBase-root': {
+          height: '40px',
+        },
+        '& .MuiInputBase-input': {
+          padding: '8px 14px',
+        }
+      }}
+      required
+    >
+      {countryCodes.map(option => (
+        <MenuItem key={option.iso2 + option.code} value={option.code}>
+          {option.label}
+        </MenuItem>
+      ))}
+    </TextField>
+    <I
+      name="reference1PhoneNumber"
+      type="tel"
+      value={formData.reference1PhoneNumber || ''}
+      onChange={handleChange}
+      placeholder="Phone number"
+      required
+      className="flex-1"
+    />
+  </div>
+</div>
       {/* Reference 2 Name */}
       <div>
         <L>Reference 2 Name</L>
@@ -138,34 +123,44 @@ const validateAndProceed = async () => {
         />
       </div>
 
-      {/* Reference 2 Phone */}
-      <div>
-        <L>Reference 2 Phone</L>
-        <div className="flex space-x-2">
-          <TextField
-            select
-            name="reference2CountryCode"
-            value={formData.reference2CountryCode || '+91'}
-            onChange={handleChange}
-            sx={{ width: 110, backgroundColor: '#fff', borderRadius: 1 }}
-          >
-            {countryCodes.map(option => (
-              <MenuItem key={option.iso2 + option.code} value={option.code}>
-                {option.label}
-              </MenuItem>
-            ))}
-          </TextField>
-          <I
-            name="reference2RawPhone"
-            type="tel"
-            value={formData.reference2RawPhone || ''}
-            onChange={handleChange}
-            placeholder="Phone number"
-            className="flex-1"
-          />
-        </div>
-      </div>
-
+{/* Reference 2 Phone */}
+<div>
+  <L>Reference 2 Phone</L>
+  <div className="flex space-x-2 w-full">
+    <TextField
+      select
+      name="reference2PhoneCountryCode"
+      value={formData.reference2PhoneCountryCode || '+91'}
+      onChange={handleChange}
+      sx={{
+        minWidth: 140,
+        maxWidth: 200,
+        backgroundColor: '#fff',
+        borderRadius: 1,
+        '& .MuiInputBase-root': {
+          height: '40px',
+        },
+        '& .MuiInputBase-input': {
+          padding: '8px 14px',
+        }
+      }}
+    >
+      {countryCodes.map(option => (
+        <MenuItem key={option.iso2 + option.code} value={option.code}>
+          {option.label}
+        </MenuItem>
+      ))}
+    </TextField>
+    <I
+      name="reference2PhoneNumber"
+      type="tel"
+      value={formData.reference2PhoneNumber || ''}
+      onChange={handleChange}
+      placeholder="Phone number"
+      className="flex-1"
+    />
+  </div>
+</div>
       {/* Navigation */}
       <div className="flex justify-between pt-6">
         <B variant="outline" onClick={onPrevious}>⬅️ Previous</B>

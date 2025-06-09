@@ -130,7 +130,8 @@ const [showErrorDialog, setShowErrorDialog] = useState(false);
 
       <div>
         <Label>Expectations</Label>
-        <TextArea name="expectations" value={formData.expectations || ''} onChange={handleChange} rows={3} />
+        <TextArea name="expectations" value={formData.expectations || ''} onChange={handleChange} 
+        placeholder="Write something about your preferred match..." rows={3} />
       </div>
 
       <div>
@@ -203,17 +204,6 @@ const [showErrorDialog, setShowErrorDialog] = useState(false);
   ))}
 </Select>
 
-<RadioGroup
-  legend="Manglik / Dosha"
-  name="preferredManglikStatus"
-  options={[
-    { label: "Manglik", value: "Manglik" },
-    { label: "Non-Manglik", value: "Non-Manglik" },
-    { label: "Doesn't Matter", value: "Doesn't Matter" }
-  ]}
-  selectedValue={formData.preferredManglikStatus || ''}
-  onChange={handleChange}
-/>
 
 
       <div className="flex justify-between pt-6">

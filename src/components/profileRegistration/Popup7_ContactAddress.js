@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Label as L, Input as I, Button as B, Select as S } from '../common/FormElements';
 import countryData from 'country-telephone-data';
 import useApiData from '../../hooks/useApiData';
-
+import TextField from '@mui/material/TextField';
+import MenuItem from '@mui/material/MenuItem';
+import StateCitySelector from '../common/StateCitySelector';
 import validateRequiredFields from '../common/validateRequiredFields';
 import ValidationErrorDialog from '../common/ValidationErrorDialog';
 
@@ -79,32 +81,41 @@ const [showErrorDialog, setShowErrorDialog] = useState(false);
     </div>
   );
 
-  const combineAddress = (prefix) => {
-    const parts = [
-      formData[`${prefix}HouseNo`] || '',
-      formData[`${prefix}Street`] || '',
-      formData[`${prefix}Area`] || '',
-      formData[`${prefix}City`] || '',
-      formData[`${prefix}PIN`] || ''
-    ].filter(Boolean);
-    return parts.join(', ');
-  };
+const combineAddress = (prefix) => {
+  const parts = [
+    formData[`${prefix}HouseNo`] || '',
+    formData[`${prefix}Street`] || '',
+    formData[`${prefix}Area`] || '',
+
+    formData[`${prefix}City`] || '',
+    formData[`${prefix}State`] || '',     // ✅ Added state
+    formData[`${prefix}PIN`] || ''
+  ].filter(Boolean);
+
+  return parts.join(', ');
+};
 
   const handleCopyAddress = (e) => {
-    const checked = e.target.checked;
-    setCopyChecked(checked);
-    if (checked) {
-      setFormData((prev) => ({
-        ...prev,
-        residenceHouseNo: prev.communicationHouseNo || '',
-        residenceStreet: prev.communicationStreet || '',
-        residenceArea: prev.communicationArea || '',
-        residenceCity: prev.communicationCity || '',
-        residencePIN: prev.communicationPIN || ''
-      }));
-      setResCityInput(formData.communicationCity || '');
-    }
-  };
+  const checked = e.target.checked;
+  setCopyChecked(checked);
+
+  if (checked) {
+    setFormData((prev) => ({
+      ...prev,
+      // Basic address fields
+      residenceHouseNo: prev.communicationHouseNo || '',
+      residenceStreet: prev.communicationStreet || '',
+      residenceArea: prev.communicationArea || '',
+      residencePIN: prev.communicationPIN || '',
+
+      // ✅ New: State and City
+      residenceState: prev.communicationState || '',
+      residenceCity: prev.communicationCity || ''
+    }));
+
+    setResCityInput(formData.communicationCity || '');
+  }
+};
 
   const validateAndProceed = async () => {
   const comm = combineAddress('communication');
@@ -126,16 +137,11 @@ const [showErrorDialog, setShowErrorDialog] = useState(false);
   setErrors(newErrors);
 
   if (Object.keys(newErrors).length === 0) {
-    const combinedAlternatePhone = (formData.alternatePhoneCountryCode || '') + (formData.alternatePhoneNumber || '');
-    const combinedGuardianPhone = (formData.guardianPhoneCountryCode || '') + (formData.guardianPhoneNumber || '');
-
     setFormData((prev) => ({
-      ...prev,
-      communicationAddress: comm,
-      residenceAddress: resi,
-      alternatePhone: combinedAlternatePhone,
-      guardianPhone: combinedGuardianPhone,
-    }));
+  ...prev,
+  communicationAddress: comm,
+  residenceAddress: resi
+}));
 
     const success = await handleIntermediateProfileUpdate({ formData: updatedFormData, setIsProcessing });
     if (success) onNext();
@@ -161,46 +167,76 @@ const [showErrorDialog, setShowErrorDialog] = useState(false);
       </div>
 <h3 className="font-semibold text-gray-800 pt-4 pb-1">Other Contact Details</h3>
 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-  <div>
+  {/* Alternate Phone - full width row */}
+  <div className="md:col-span-2">
     <L>Alternate Phone</L>
-    <div className="flex space-x-2">
-      <S
+    <div className="flex space-x-2 w-full">
+      <TextField
+        select
         name="alternatePhoneCountryCode"
         value={formData.alternatePhoneCountryCode || '+91'}
         onChange={handleChange}
-        className="min-w-[90px] max-w-[120px]"
+        sx={{
+          width: 160,
+          backgroundColor: "#fff",
+          borderRadius: 1,
+          '& .MuiInputBase-root': {
+            height: '40px',
+          },
+          '& .MuiInputBase-input': {
+            padding: '8px 14px',
+          }
+        }}
       >
         {countryCodes.map((option) => (
-          <option key={option.iso2} value={option.code}>{option.label}</option>
+          <MenuItem key={option.iso2 + option.code} value={option.code}>
+            {option.label}
+          </MenuItem>
         ))}
-      </S>
+      </TextField>
       <I
         name="alternatePhoneNumber"
         value={formData.alternatePhoneNumber || ''}
         onChange={handleChange}
         className="flex-1"
+        placeholder="Phone number"
       />
     </div>
   </div>
 
-  <div>
+  {/* Guardian Phone - full width row */}
+  <div className="md:col-span-2">
     <L>Guardian Phone</L>
-    <div className="flex space-x-2">
-      <S
+    <div className="flex space-x-2 w-full">
+      <TextField
+        select
         name="guardianPhoneCountryCode"
         value={formData.guardianPhoneCountryCode || '+91'}
         onChange={handleChange}
-        className="min-w-[90px] max-w-[120px]"
+        sx={{
+          width: 160,
+          backgroundColor: "#fff",
+          borderRadius: 1,
+          '& .MuiInputBase-root': {
+            height: '40px',
+          },
+          '& .MuiInputBase-input': {
+            padding: '8px 14px',
+          }
+        }}
       >
         {countryCodes.map((option) => (
-          <option key={option.iso2} value={option.code}>{option.label}</option>
+          <MenuItem key={option.iso2 + option.code} value={option.code}>
+            {option.label}
+          </MenuItem>
         ))}
-      </S>
+      </TextField>
       <I
         name="guardianPhoneNumber"
         value={formData.guardianPhoneNumber || ''}
         onChange={handleChange}
         className="flex-1"
+        placeholder="Phone number"
       />
     </div>
   </div>
@@ -212,9 +248,18 @@ const [showErrorDialog, setShowErrorDialog] = useState(false);
         <div><L>House No</L><I name="communicationHouseNo" value={formData.communicationHouseNo || ''} onChange={handleChange} /></div>
         <div><L>Street</L><I name="communicationStreet" value={formData.communicationStreet || ''} onChange={handleChange} /></div>
         <div><L>Area</L><I name="communicationArea" value={formData.communicationArea || ''} onChange={handleChange} /></div>
-        <div>
-          {renderAutocomplete("City", commCityInput, setCommCityInput, commCityOptions, showCommCity, setShowCommCity, "communicationCity")}
-        </div>
+        
+         {/* ✅ Replace city input with this */}
+  <div className="md:col-span-3">
+    <StateCitySelector
+      formData={formData}
+      handleChange={handleChange}
+      cityField="communicationCity"
+      labelPrefix="Communication"
+    />
+  </div>
+        
+        
         <div><L>PIN Code</L><I name="communicationPIN" value={formData.communicationPIN || ''} onChange={handleChange} /></div>
       </div>
 
@@ -228,9 +273,19 @@ const [showErrorDialog, setShowErrorDialog] = useState(false);
         <div><L>House No</L><I name="residenceHouseNo" value={formData.residenceHouseNo || ''} onChange={handleChange} /></div>
         <div><L>Street</L><I name="residenceStreet" value={formData.residenceStreet || ''} onChange={handleChange} /></div>
         <div><L>Area</L><I name="residenceArea" value={formData.residenceArea || ''} onChange={handleChange} /></div>
-        <div>
-          {renderAutocomplete("City", resCityInput, setResCityInput, resCityOptions, showResCity, setShowResCity, "residenceCity")}
-        </div>
+         {/* ✅ Replace city input with this */}
+  <div className="md:col-span-3">
+    <StateCitySelector
+      formData={formData}
+      handleChange={handleChange}
+      cityField="residenceCity"
+      labelPrefix="Residence"
+    />
+  </div>
+        
+        
+        
+        
         <div><L>PIN Code</L><I name="residencePIN" value={formData.residencePIN || ''} onChange={handleChange} /></div>
       </div>
 

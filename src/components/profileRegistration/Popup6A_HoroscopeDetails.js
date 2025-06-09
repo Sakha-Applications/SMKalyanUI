@@ -125,20 +125,6 @@ const Popup6A_HoroscopeDetails = ({ formData, handleChange, onNext, onPrevious,
           </S>
         </div>
 
-<div>
-  <L>Manglik Status <span className="text-red-500">*</span></L>
-  <RadioGroup
-    name="manglikStatus"
-    legend=""
-    options={[
-      { label: "Manglik", value: "Manglik" },
-      { label: "Non-Manglik", value: "Non-Manglik" },
-      { label: "Doesn't Matter", value: "Doesn't Matter" }
-    ]}
-    selectedValue={formData.manglikStatus || ''}
-    onChange={handleChange}
-  />
-</div>
 
         <div>
           <L>Charana Pada <span className="text-red-500">*</span></L>
@@ -151,7 +137,19 @@ const Popup6A_HoroscopeDetails = ({ formData, handleChange, onNext, onPrevious,
           </S>
         </div>
 
-        {/* Guru Matha Autocomplete */}
+
+        <div>
+          <L>Sub Caste <span className="text-red-500">*</span></L>
+          <S name="subCaste" value={formData.subCaste || ''} onChange={handleChange} required error={!!errors.subCaste} helperText={errors.subCaste}>
+            <option value="">Select</option>
+            <option value="Madhva (ಮಾಧ್ವ)">Madhva (ಮಾಧ್ವ)</option>
+            <option value="Smarta (ಸ್ಮಾರ್ತ)">Smarta (ಸ್ಮಾರ್ತ)</option>
+            <option value="Srivaishnava (ಶ್ರೀವೈಷ್ಣವ)">Srivaishnava (ಶ್ರೀವೈಷ್ಣವ)</option>
+            <option value="Others (ಇತರರು)">Others (ಇತರರು)</option>
+          </S>
+        </div>
+
+                {/* Guru Matha Autocomplete */}
         <div className="autocomplete-dropdown">
           <L>Guru Matha <span className="text-red-500">*</span></L>
           <I
@@ -182,16 +180,6 @@ const Popup6A_HoroscopeDetails = ({ formData, handleChange, onNext, onPrevious,
           )}
         </div>
 
-        <div>
-          <L>Sub Caste <span className="text-red-500">*</span></L>
-          <S name="subCaste" value={formData.subCaste || ''} onChange={handleChange} required error={!!errors.subCaste} helperText={errors.subCaste}>
-            <option value="">Select</option>
-            <option value="Madhva (ಮಾಧ್ವ)">Madhva (ಮಾಧ್ವ)</option>
-            <option value="Smarta (ಸ್ಮಾರ್ತ)">Smarta (ಸ್ಮಾರ್ತ)</option>
-            <option value="Srivaishnava (ಶ್ರೀವೈಷ್ಣವ)">Srivaishnava (ಶ್ರೀವೈಷ್ಣವ)</option>
-            <option value="Others (ಇತರರು)">Others (ಇತರರು)</option>
-          </S>
-        </div>
       </div>
 
       <div className="flex justify-between pt-4">

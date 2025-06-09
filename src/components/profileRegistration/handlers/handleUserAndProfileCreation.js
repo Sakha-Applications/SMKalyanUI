@@ -11,6 +11,26 @@ const generateRandomPassword = (length = 10) => {
   return password;
 };
 
+const checkProfileExists = async (profileId) => {
+  if (!profileId) return false;
+
+  try {
+    console.log("🔍 Step 0: Checking if profile already exists...");
+    console.log("📤 Profile ID check payload:", profileId);
+
+    const response = await axios.get(`${getBaseUrl()}/api/profile/${profileId}`);
+
+    const exists = !!response?.data?.profileId;
+    console.log(`✅ Profile ${profileId} ${exists ? "exists" : "not found"}`);
+    
+    return exists;
+  } catch (error) {
+    console.error("❌ Error checking if profile exists:", error);
+    return false;
+  }
+};
+
+
 const handleUserAndProfileCreation = async ({
   formData,
   setFormData,
@@ -20,12 +40,26 @@ const handleUserAndProfileCreation = async ({
   setShowUserCreatedDialog,
   setProfileCreationData,
   setIsProcessing,
-  navigate
+  navigate,
+  setErrorMessage // Add this to show error messages to user
 }) => {
   setIsProcessing(true);
 
   try {
+    // Step 0: Check if profile already exists
+    const profileExists = await checkProfileExists(formData.profileId);
+
+if (profileExists) {
+  console.log("⚠️ Profile already exists:", formData.profileId);
+  setIsProcessing(false);
+  return false;
+}
+    // Step 1: Create new profile
+    
+    
     console.log("➡️ Step 1: Creating new profile...");
+    console.log("📤 Profile creation payload:", JSON.stringify({ profileData: formData }, null, 2));
+
     const profileResponse = await axios.post(`${getBaseUrl()}/api/addProfile`, {
       profileData: formData
     });
@@ -101,6 +135,18 @@ const handleUserAndProfileCreation = async ({
 
   } catch (error) {
     console.error("❌ Error during user/profile creation:", error?.response?.data || error.message);
+    
+    // Set user-friendly error message
+    if (setErrorMessage) {
+      if (error?.response?.data?.message) {
+        setErrorMessage(error.response.data.message);
+      } else if (error.message.includes('Profile already exists')) {
+        setErrorMessage('A profile with this email or phone number already exists. Please check your details or try logging in.');
+      } else {
+        setErrorMessage('An error occurred during registration. Please try again.');
+      }
+    }
+    
     setIsProcessing(false);
     return false;
   }

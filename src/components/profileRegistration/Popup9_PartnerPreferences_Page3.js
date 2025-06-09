@@ -4,6 +4,8 @@ import React, { useEffect, useState } from 'react';
 import { Label as L, Button as B } from '../common/FormElements';
 import MultiSelectCheckbox from '../common/MultiSelectCheckbox';
 import useApiData from '../../hooks/useApiData';
+import MultiStateCitySelector from '../common/MultiStateCitySelector';
+import MultiCountrySelector from '../common/MultiCountrySelector';
 
 const Popup9_PartnerPreferences_Page3 = ({ formData, handleChange, onNext, onPrevious }) => {
   const { searchPlaces, searchProfessions } = useApiData();
@@ -113,66 +115,66 @@ const hobbyOptions = [
 
       <h2 className="text-lg font-semibold">Geographic Preferences</h2>
 
+      
       <div>
-        <MultiSelectCheckbox
-          label="Origin of Native"
-          name="preferredNativeOrigins"
-          placeholder="Type to search Native (min 2 characters)"
-          options={originOptions}
-          selectedValues={formatSelectedValues('preferredNativeOrigins')}
-          onSearch={setOriginInput}
-          searchInput={originInput}
-          loading={originLoading}
-          onChange={(name, values) => {
-            handleChange({ target: { name, value: values.map(v => v.label || v.value || v) } });
-            setOriginInput('');
-          }}
-        />
+<MultiStateCitySelector
+  labelPrefix="Origin of Native"
+  name="preferredNativeOrigins"
+  selectedValues={formatSelectedValues('preferredNativeOrigins')}
+  onChange={(name, values) =>
+    handleChange({
+      target: {
+        name,
+        value: values.map((v) => ({
+          label: v.label || v.value,
+          value: v.value || v.label,
+          state: v.state || ''
+        }))
+      }
+    })
+  }
+/>
+
+
       </div>
 
-      <div>
-        <MultiSelectCheckbox
-          label="City Living In"
-          name="preferredCities"
-          placeholder="Type to search City (min 2 characters)"
-          options={cityOptions}
-          selectedValues={formatSelectedValues('preferredCities')}
-          onSearch={setCityInput}
-          searchInput={cityInput}
-          loading={cityLoading}
-          onChange={(name, values) => {
-            handleChange({ target: { name, value: values.map(v => v.label || v.value || v) } });
-            setCityInput('');
-          }}
-        />
-      </div>
+<MultiStateCitySelector
+  labelPrefix="City Living In"
+  name="preferredCities"
+  selectedValues={formatSelectedValues('preferredCities')}
+  onChange={(name, values) =>
+    handleChange({
+      target: {
+        name,
+        value: values.map((v) => ({
+          label: v.label || v.value,
+          value: v.value || v.label,
+          state: v.state || ''
+        }))
+      }
+    })
+  }
+/>
 
       <div>
-        <MultiSelectCheckbox
-          label="Country Living In"
-          name="preferredCountries"
-          options={countryOptions}
-          selectedValues={formatSelectedValues('preferredCountries')}
-          onChange={(name, values) =>
-            handleChange({ target: { name, value: values.map(v => v.label || v.value || v) } })
-          }
-        />
+<MultiCountrySelector
+  label="Country Living In"
+  name="preferredCountries"
+  selectedValues={formatSelectedValues('preferredCountries')}
+  onChange={(name, values) =>
+    handleChange({
+      target: {
+        name,
+        value: values.map(v => v.label || v.value)
+      }
+    })
+  }
+/>
       </div>
 
       <h2 className="text-lg font-semibold">Lifestyle Preferences</h2>
 
-      <div>
-        <MultiSelectCheckbox
-          label="Dietary Preference"
-          name="preferredDiet"
-          options={dietOptions}
-          selectedValues={formatSelectedValues('preferredDiet')}
-          onChange={(name, values) =>
-            handleChange({ target: { name, value: values.map(v => v.label || v.value || v) } })
-          }
-        />
-      </div>
-
+  
       <div>
 <MultiSelectCheckbox
   label="Profession Preference"

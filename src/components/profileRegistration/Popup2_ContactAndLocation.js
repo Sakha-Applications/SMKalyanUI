@@ -8,6 +8,9 @@ import MenuItem from '@mui/material/MenuItem';
 import countryData from "country-telephone-data";
 import validateRequiredFields from '../common/validateRequiredFields';
 import ValidationErrorDialog from '../common/ValidationErrorDialog';
+import useApiData from '../../hooks/useApiData';
+import handleIntermediateProfileUpdate from './handlers/handleIntermediateProfileUpdate';
+import handleUserAndProfileCreation from './handlers/handleUserAndProfileCreation';
 
 const Popup2_ContactAndLocation = ({
   formData,
@@ -15,10 +18,17 @@ const Popup2_ContactAndLocation = ({
   handleDOBChange,
   onNext,
   onPrevious,
-  isProcessing
+  isProcessing,
+  setIsProcessing,
+  setFormData,
+  setProfileAlreadyCreated,
+  setUserAlreadyCreated,
+  setUserCreationData,
+  setShowUserCreatedDialog,
+  setProfileCreationData,
+  navigate
 }) => {
   const [errors, setErrors] = useState({});
-
   const [showErrorDialog, setShowErrorDialog] = useState(false);
 
   const countryCodes = countryData.allCountries.map((country) => ({
@@ -27,17 +37,17 @@ const Popup2_ContactAndLocation = ({
     iso2: country.iso2
   }));
 
-  const validateAndProceed = () => {
+  const { checkProfileExists } = useApiData();
+
+  const validateAndProceed = async () => {
   const requiredFields = [
     { name: "phoneNumber", label: "Phone Number" },
     { name: "email", label: "Email" },
     { name: "dob", label: "Date of Birth" }
   ];
 
-  // Step 1: Validate required fields
   const newErrors = validateRequiredFields(formData, requiredFields);
 
-  // Step 2: Custom validation logic
   if (formData.email && !formData.email.includes('@')) {
     newErrors.email = "Valid email is required.";
   }
@@ -59,24 +69,28 @@ const Popup2_ContactAndLocation = ({
     }
   }
 
-  // Step 3: Set errors and proceed
+  if (!formData.profileId || formData.profileId.trim() === '') {
+    newErrors.general = "Profile ID could not be generated. Please check your name and phone number.";
+  }
+
   setErrors(newErrors);
 
   if (Object.keys(newErrors).length === 0) {
-    console.log("✅ All validations passed. Triggering signup...");
+    // ✅ Just allow parent (ProfileRegistration) to proceed with creation
+    setIsProcessing(false);
     onNext();
   } else {
-    // Show error dialog when there are validation errors
     setShowErrorDialog(true);
   }
 };
 
-  const getEmailHelperText = () => {
-    if (errors.email) return errors.email;
-    if (!formData.email) return "e.g., user@example.com";
-    return formData.email.includes('@') ? '' : "Enter a valid email address.";
-  };
 
+
+ const getEmailHelperText = () => {
+  if (errors.email) return errors.email;
+  if (!formData.email) return "e.g., user@example.com";
+  return formData.email.includes('@') ? '' : "Enter a valid email address.";
+};
   const getPhoneHelperText = () => {
     if (errors.phoneNumber) return errors.phoneNumber;
     if (!formData.phoneNumber) return "e.g., 9876543210";
@@ -86,10 +100,18 @@ const Popup2_ContactAndLocation = ({
   return (
     <div className="space-y-6">
       <ValidationErrorDialog 
-  errors={errors}
-  isOpen={showErrorDialog}
-  onClose={() => setShowErrorDialog(false)}
-/>
+        errors={errors}
+        isOpen={showErrorDialog}
+        onClose={() => setShowErrorDialog(false)}
+      />
+      
+      {/* Show ProfileId for debugging - remove in production */}
+      {formData.profileId && (
+        <div className="bg-green-50 p-2 rounded text-sm">
+          <strong>Profile ID:</strong> {formData.profileId}
+        </div>
+      )}
+
       {/* Email - Row 1 */}
       <div>
         <Label>Email ID <span className="text-red-500">*</span></Label>
@@ -113,13 +135,19 @@ const Popup2_ContactAndLocation = ({
             select
             name="phoneCountryCode"
             value={formData.phoneCountryCode ?? "+91"}
-            onChange={(e) => {
-              const phoneCountryCode = e.target.value;
-              const phoneNumber = formData.phoneNumber || '';
-              handleChange({ target: { name: 'phoneCountryCode', value: phoneCountryCode } });
-              handleChange({ target: { name: 'phone', value: phoneCountryCode + phoneNumber } });
+            onChange={handleChange}
+            sx={{
+              minWidth: 140,
+              maxWidth: 200,
+              backgroundColor: "#fff",
+              borderRadius: 1,
+              '& .MuiInputBase-root': {
+                height: '40px',
+              },
+              '& .MuiInputBase-input': {
+                padding: '8px 14px',
+              }
             }}
-            sx={{ width: 110, backgroundColor: "#fff", borderRadius: 1 }}
             required
           >
             {countryCodes.map((option) => (
@@ -133,12 +161,7 @@ const Popup2_ContactAndLocation = ({
             type="tel"
             name="phoneNumber"
             value={formData.phoneNumber || ''}
-            onChange={(e) => {
-              const phoneNumber = e.target.value;
-              const phoneCountryCode = formData.phoneCountryCode || '+91';
-              handleChange({ target: { name: 'phoneNumber', value: phoneNumber } });
-              handleChange({ target: { name: 'phone', value: phoneCountryCode + phoneNumber } });
-            }}
+            onChange={handleChange}
             required
             placeholder="1234567890"
             error={!!errors.phoneNumber}
@@ -151,7 +174,7 @@ const Popup2_ContactAndLocation = ({
       {/* DOB - Row 3 */}
       <div>
         <Label>Date of Birth <span className="text-red-500">*</span></Label>
-        <LocalizationProvider dateAdapter={AdapterDayjs} locale="en">
+        <LocalizationProvider dateAdapter={AdapterDayjs}>
           <DatePicker
             views={["year", "month", "day"]}
             value={formData.dob ? dayjs(formData.dob) : null}
@@ -163,9 +186,15 @@ const Popup2_ContactAndLocation = ({
               textField: {
                 fullWidth: true,
                 required: true,
-                error: !formData.dob,
-                helperText: !formData.dob ? "Date of Birth is required" : "",
-                sx: { backgroundColor: "#fff", borderRadius: 1 },
+                error: !!errors.dob,
+                helperText: errors.dob || (!formData.dob ? "Date of Birth is required" : ""),
+                sx: { 
+                  backgroundColor: "#fff", 
+                  borderRadius: 1,
+                  '& .MuiInputBase-root': {
+                    height: '40px',
+                  }
+                },
               },
             }}
           />
@@ -176,7 +205,7 @@ const Popup2_ContactAndLocation = ({
       <div className="flex justify-between pt-6">
         <Button onClick={onPrevious} variant="outline">Previous</Button>
         <Button onClick={validateAndProceed} disabled={isProcessing} variant="primary">
-          {isProcessing ? "Processing..." : "Sign Up"}
+          {isProcessing ? "Processing Profile Registration..." : "Sing Up"}
         </Button>
       </div>
     </div>

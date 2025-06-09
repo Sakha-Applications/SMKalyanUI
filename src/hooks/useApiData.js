@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import getBaseUrl from '../utils/GetUrl';
 
+
 const useApiData = (endpoint) => {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -345,6 +346,20 @@ const searchDesignations = async (searchText) => {
         }
     }, [endpoint]);
 
+    // ✅ Check if profile exists by profileId
+const checkProfileExists = async (profileId) => {
+  if (!profileId) return false;
+
+  try {
+    const baseUrl = getBaseUrl();
+    const response = await axios.get(`${baseUrl}/api/profile/${profileId}`);
+    return response?.data?.profileId ? true : false;
+  } catch (error) {
+    console.error("❌ Error checking if profile exists:", error);
+    return false;
+  }
+};
+
     return {
         // Loading states
         isLoading,
@@ -359,6 +374,9 @@ const searchDesignations = async (searchText) => {
         motherTongueOptions,
         cityOptions,
         nativePlaceOptions,
+
+        checkProfileExists,
+
         
         // Search functions
         searchProfessions,          // 🔍 Profession search

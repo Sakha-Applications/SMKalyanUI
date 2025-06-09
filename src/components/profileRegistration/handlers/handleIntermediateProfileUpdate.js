@@ -16,6 +16,8 @@ const handleIntermediateProfileUpdate = async ({ formData, setIsProcessing }) =>
 
     const updatePayload = { profileData: formData };
 
+    console.log("📤 Intermediate payload:", JSON.stringify(updatePayload, null, 2));
+
     // ✅ Use PUT and pass profileId in the URL (required by backend)
     const response = await axios.put(
       `${getBaseUrl()}/api/direct/updateProfile/${formData.profileId}`,

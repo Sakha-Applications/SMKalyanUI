@@ -3,6 +3,7 @@ import { Label, Input, Select, RadioGroup, Button } from '../common/FormElements
 import useApiData from '../../hooks/useApiData';
 import validateRequiredFields from '../common/validateRequiredFields';
 import ValidationErrorDialog from '../common/ValidationErrorDialog';
+import StateCitySelector from '../common/StateCitySelector';
 
 const Popup1_BasicInfo = ({ formData, handleChange, onNext }) => {
   const [errors, setErrors] = useState({});
@@ -204,7 +205,18 @@ const Popup1_BasicInfo = ({ formData, handleChange, onNext }) => {
         />
       </div>
 
-      <div>
+      
+      {renderAutocomplete("Mother Tongue", motherTongueInput, setMotherTongueInput, mtOptions, mtShow, loadingMT, setMtShow, "motherTongue", setJustSelectedMT)}
+
+      <StateCitySelector
+  formData={formData}
+  handleChange={handleChange}
+  cityField="currentLocation"
+  labelPrefix="Residing"
+/>
+
+
+<div>
         <RadioGroup
           name="gender"
           legend="Gender"
@@ -224,10 +236,6 @@ const Popup1_BasicInfo = ({ formData, handleChange, onNext }) => {
           <Input value={formData.gender === "Male" ? "Bride" : "Bridegroom (Groom)"} readOnly />
         </div>
       )}
-
-      {renderAutocomplete("Mother Tongue", motherTongueInput, setMotherTongueInput, mtOptions, mtShow, loadingMT, setMtShow, "motherTongue", setJustSelectedMT)}
-
-      {renderAutocomplete("Residing City", residingCityInput, setResidingCityInput, rcOptions, rcShow, loadingRC, setRcShow, "currentLocation", setJustSelectedRC)}
 
       <div className="flex justify-end pt-4">
         <Button onClick={validateAndProceed} variant="primary">Next</Button>
