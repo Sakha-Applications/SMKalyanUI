@@ -128,6 +128,20 @@ const Popup4_CareerEducation = ({
           errors
         })}
 
+<div>
+  <L htmlFor="currentCompany">Current Company</L>
+  <input
+    type="text"
+    name="current_company"
+    value={formData.current_company || ''}
+    onChange={handleChange}
+    className="w-full border rounded px-2 py-1"
+    placeholder="Enter your current company"
+  />
+</div>
+
+
+
         <div>
           <L>Working Status <span className="text-red-500">*</span></L>
           <S

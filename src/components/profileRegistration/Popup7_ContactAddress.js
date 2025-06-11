@@ -95,25 +95,26 @@ const combineAddress = (prefix) => {
   return parts.join(', ');
 };
 
-  const handleCopyAddress = (e) => {
+const handleCopyAddress = (e) => {
   const checked = e.target.checked;
   setCopyChecked(checked);
 
   if (checked) {
+    const updatedCity = formData.communicationCity || '';
+    const updatedState = formData.communicationState || '';
+
     setFormData((prev) => ({
       ...prev,
-      // Basic address fields
       residenceHouseNo: prev.communicationHouseNo || '',
       residenceStreet: prev.communicationStreet || '',
       residenceArea: prev.communicationArea || '',
       residencePIN: prev.communicationPIN || '',
-
-      // ✅ New: State and City
-      residenceState: prev.communicationState || '',
-      residenceCity: prev.communicationCity || ''
+      residenceCity: updatedCity,
+      residenceState: updatedState
     }));
 
-    setResCityInput(formData.communicationCity || '');
+    // 🔧 ensure inputs reflect copied values
+    setResCityInput(updatedCity);
   }
 };
 
@@ -255,6 +256,7 @@ const combineAddress = (prefix) => {
       formData={formData}
       handleChange={handleChange}
       cityField="communicationCity"
+      stateField="communicationState"
       labelPrefix="Communication"
     />
   </div>
@@ -279,6 +281,7 @@ const combineAddress = (prefix) => {
       formData={formData}
       handleChange={handleChange}
       cityField="residenceCity"
+      stateField="residenceState"
       labelPrefix="Residence"
     />
   </div>

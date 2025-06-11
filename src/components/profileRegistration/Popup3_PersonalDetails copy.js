@@ -1,11 +1,13 @@
+// src/components/profileRegistration/Popup3_PersonalDetails.js
 import React, { useState } from 'react';
 import { Label as L, Input as I, Select as S, TextArea, Button as B } from '../common/FormElements';
+import useApiData from '../../hooks/useApiData';
 import { LocalizationProvider, TimePicker } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
 import MultiSelectCheckbox from '../common/MultiSelectCheckbox';
 import validateRequiredFields from '../common/validateRequiredFields';
-import ValidationErrorDialog from '../common/ValidationErrorDialog';
+import ValidationErrorDialog from '../common/ValidationErrorDialog'; // ✅ ADDED THIS IMPORT
 import StateCitySelector from "../common/StateCitySelector";
 
 const Popup3_PersonalDetails = ({
@@ -17,9 +19,26 @@ const Popup3_PersonalDetails = ({
   setIsProcessing,
   handleIntermediateProfileUpdate
 }) => {
+  const { searchPlaces } = useApiData();
   const [errors, setErrors] = useState({});
-  const [showErrorDialog, setShowErrorDialog] = useState(false);
+  const [showErrorDialog, setShowErrorDialog] = useState(false); // ✅ ADDED THIS STATE
 
+  const [placeOfBirthInput, setPlaceOfBirthInput] = useState(formData.placeOfBirth || '');
+  const [nativePlaceInput, setNativePlaceInput] = useState(formData.nativePlace || '');
+
+  const [placeOfBirthOptions, setPlaceOfBirthOptions] = useState([]);
+  const [nativePlaceOptions, setNativePlaceOptions] = useState([]);
+
+  const [showPOBOptions, setShowPOBOptions] = useState(false);
+  const [showNPOptions, setShowNPOptions] = useState(false);
+
+  const handleAutocompleteSelect = (field, value, inputSetter, optionsSetter, showSetter) => {
+    inputSetter(value.label);
+    showSetter(false);
+    handleChange({ target: { name: field, value: value.label } });
+  };
+
+  // Define options (ideally import from central constants if available)
   const dietOptions = [
     { label: 'Vegetarian' },
     { label: 'Eggetarian' },
@@ -55,35 +74,83 @@ const Popup3_PersonalDetails = ({
     return `${years} years${months > 0 ? ` ${months} months` : ''}`;
   };
 
+  const renderAutocomplete = (label, inputVal, inputSetter, options, optionsSetter, show, setShow, fieldName, searchFn) => {
+    const isError = !!errors[fieldName];
+    const helperText = isError ? errors[fieldName] : 'Start typing to search...';
+
+    return (
+      <div className="autocomplete-dropdown relative">
+        <L>{label} <span className="text-red-500">*</span></L>
+        <I
+          value={inputVal}
+          onChange={async (e) => {
+            const val = e.target.value;
+            inputSetter(val);
+            if (val.length >= 2) {
+              const results = await searchFn(val);
+              optionsSetter(results);
+              setShow(true);
+            } else {
+              optionsSetter([]);
+              setShow(false);
+            }
+          }}
+          error={isError}
+          helperText={helperText}
+        />
+        {show && options.length > 0 && (
+          <ul className="absolute z-10 bg-white border max-h-40 overflow-y-auto mt-1 w-full shadow-md text-sm">
+            {options.map((opt) => (
+              <li
+                key={opt.id}
+                className="px-3 py-2 hover:bg-gray-200 cursor-pointer"
+                onClick={() => handleAutocompleteSelect(fieldName, opt, inputSetter, optionsSetter, setShow)}
+              >
+                {opt.label}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    );
+  };
+
   const validateAndProceed = async () => {
     const newErrors = {};
     if (!formData.marriedStatus) newErrors.marriedStatus = "Married Status is required";
     if (!formData.heightFeet || !formData.heightInches) newErrors.height = "Height is required";
     if (!formData.profileCategory) newErrors.profileCategory = "Bride/Groom category is required";
     if (!formData.nativePlace) newErrors.nativePlace = "Native place is required";
-    if (!formData.placeOfBirth) newErrors.placeOfBirth = "Place of birth is required";
+if (!formData.placeOfBirth) newErrors.placeOfBirth = "Place of birth is required";
+
     if (!formData.timeOfBirth) newErrors.timeOfBirth = "Time of birth is required";
+    
     if (!formData.aboutBrideGroom) newErrors.aboutBrideGroom = "About Yourself is required";
 
     setErrors(newErrors);
 
     if (Object.keys(newErrors).length === 0) {
+      handleChange({ target: { name: 'placeOfBirth', value: placeOfBirthInput } });
+      handleChange({ target: { name: 'nativePlace', value: nativePlaceInput } });
+
       const success = await handleIntermediateProfileUpdate({ formData, setIsProcessing });
       console.log("Update Success:", success);
       if (success) onNext();
     } else {
-      setShowErrorDialog(true);
+      setShowErrorDialog(true); // ✅ ADDED THIS TO SHOW ERROR DIALOG
     }
   };
 
   return (
     <div className="space-y-6">
+      {/* ✅ ADDED ERROR DIALOG COMPONENT */}
       <ValidationErrorDialog 
         errors={errors}
         isOpen={showErrorDialog}
         onClose={() => setShowErrorDialog(false)}
       />
 
+      {/* Top Bar with Profile Info */}
       <div className="bg-slate-100 border border-slate-300 rounded-md p-3 mb-4 shadow-sm text-sm flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div><strong>Profile ID:</strong> {formData.profileId || 'N/A'}</div>
         <div><strong>Name:</strong> {formData.name || 'N/A'}</div>
@@ -146,6 +213,7 @@ const Popup3_PersonalDetails = ({
 
         <div>
           <L htmlFor="timeOfBirth">Time of Birth <span className="text-red-500">*</span></L>
+          
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <TimePicker
               value={formData.timeOfBirth ? dayjs(formData.timeOfBirth, 'HH:mm:ss') : null}
@@ -153,6 +221,7 @@ const Popup3_PersonalDetails = ({
                 const formatted = time ? time.format('HH:mm:ss') : '';
                 handleChange({ target: { name: 'timeOfBirth', value: formatted } });
               }}
+              
               renderInput={(params) => (
                 <I
                   {...params}
@@ -165,24 +234,25 @@ const Popup3_PersonalDetails = ({
               )}
             />
           </LocalizationProvider>
-          <div>
-            <small>Select time of birth in hh:mm AM/PM format (e.g. 08:30 AM)</small>
-          </div>
+        <div>
+    <small>Select time of birth in hh:mm AM/PM format (e.g. 08:30 AM)</small>
+  </div>
         </div>
 
-        <StateCitySelector
-          formData={formData}
-          handleChange={handleChange}
-          cityField="nativePlace"
-          labelPrefix="Native"
-        />
+<StateCitySelector
+  formData={formData}
+  handleChange={handleChange}
+  cityField="nativePlace"
+  labelPrefix="Native"
+/>
 
-        <StateCitySelector
-          formData={formData}
-          handleChange={handleChange}
-          cityField="placeOfBirth"
-          labelPrefix="Place of Birth"
-        />
+<StateCitySelector
+  formData={formData}
+  handleChange={handleChange}
+  cityField="placeOfBirth"
+  labelPrefix="Place of Birth"
+/>
+
 
         <MultiSelectCheckbox
           label="Hobbies"

@@ -6,12 +6,17 @@ const StateCitySelector = ({
   formData,
   handleChange,
   cityField = "currentLocation",
+  stateField = "stateCode",
   labelPrefix = "",
 }) => {
   const [states] = useState(State.getStatesOfCountry('IN'));
-  const [selectedStateCode, setSelectedStateCode] = useState("");
+  const [selectedStateCode, setSelectedStateCode] = useState(formData[stateField] || "");
   const [cities, setCities] = useState([]);
   const [isOtherCity, setIsOtherCity] = useState(false);
+
+  useEffect(() => {
+  setSelectedStateCode(formData[stateField] || "");
+}, [formData[stateField]]);
 
   useEffect(() => {
     if (selectedStateCode) {
@@ -23,6 +28,13 @@ const StateCitySelector = ({
     }
   }, [selectedStateCode]);
 
+  useEffect(() => {
+  if (formData[stateField]) {
+    const cityList = City.getCitiesOfState("IN", formData[stateField]);
+    setCities(cityList);
+  }
+}, [formData[stateField]]);
+
   return (
     <div className="space-y-3">
       {/* State Dropdown */}
@@ -33,7 +45,8 @@ const StateCitySelector = ({
           onChange={(e) => {
             const code = e.target.value;
             setSelectedStateCode(code);
-            handleChange({ target: { name: cityField, value: "" } }); // clear city
+ handleChange({ target: { name: stateField, value: code } }); // update formData
+  handleChange({ target: { name: cityField, value: "" } });    // clear city
           }}
           className="w-full border rounded px-2 py-1"
         >
