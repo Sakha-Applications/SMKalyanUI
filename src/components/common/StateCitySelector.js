@@ -8,32 +8,32 @@ const StateCitySelector = ({
   cityField = "currentLocation",
   stateField = "stateCode",
   labelPrefix = "",
+  countryCode = "IN" // ✅ NEW PROP with fallback to India
 }) => {
-  const [states] = useState(State.getStatesOfCountry('IN'));
+  const [states, setStates] = useState([]);
   const [selectedStateCode, setSelectedStateCode] = useState(formData[stateField] || "");
   const [cities, setCities] = useState([]);
   const [isOtherCity, setIsOtherCity] = useState(false);
 
+  // 🔁 Load states dynamically from selected country
   useEffect(() => {
-  setSelectedStateCode(formData[stateField] || "");
-}, [formData[stateField]]);
+    const fetchedStates = State.getStatesOfCountry(countryCode);
+    setStates(fetchedStates);
+  }, [countryCode]);
+
+  useEffect(() => {
+    setSelectedStateCode(formData[stateField] || "");
+  }, [formData[stateField]]);
 
   useEffect(() => {
     if (selectedStateCode) {
-      const cityList = City.getCitiesOfState("IN", selectedStateCode);
+      const cityList = City.getCitiesOfState(countryCode, selectedStateCode);
       setCities(cityList);
       setIsOtherCity(false);
     } else {
       setCities([]);
     }
-  }, [selectedStateCode]);
-
-  useEffect(() => {
-  if (formData[stateField]) {
-    const cityList = City.getCitiesOfState("IN", formData[stateField]);
-    setCities(cityList);
-  }
-}, [formData[stateField]]);
+  }, [selectedStateCode, countryCode]);
 
   return (
     <div className="space-y-3">
@@ -45,8 +45,8 @@ const StateCitySelector = ({
           onChange={(e) => {
             const code = e.target.value;
             setSelectedStateCode(code);
- handleChange({ target: { name: stateField, value: code } }); // update formData
-  handleChange({ target: { name: cityField, value: "" } });    // clear city
+            handleChange({ target: { name: stateField, value: code } });
+            handleChange({ target: { name: cityField, value: "" } }); // clear city
           }}
           className="w-full border rounded px-2 py-1"
         >

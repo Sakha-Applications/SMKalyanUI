@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { FaUserPlus, FaSearch, FaCamera, FaArrowRight } from 'react-icons/fa';
-import PreferredProfilesSection from './prefferedProfile/PreferredProfilesSection';
+import PreferredProfilesSection from './preferredProfile/PreferredProfilesSection';
 
 // Import the image
 import backgroundImage from '../assets/Image/kalayan_bg_img.png'; // Adjust the path as needed

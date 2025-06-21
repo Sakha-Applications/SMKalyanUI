@@ -39,17 +39,19 @@ const MultiStateCitySelector = ({
     }
   }, [selectedStateCode]);
 
-  useEffect(() => {
-    if (cityInput.length >= 1) {
-      const filtered = allCities.filter((city) =>
-        city.label.toLowerCase().includes(cityInput.toLowerCase())
-      );
-      setFilteredCities(filtered);
-      setShowDropdown(true);
-    } else {
-      setShowDropdown(false);
-    }
-  }, [cityInput, allCities]);
+ useEffect(() => {
+  if (cityInput.length >= 1) {
+    const filtered = allCities
+      .filter((city) => city.label.toLowerCase().includes(cityInput.toLowerCase()));
+
+    // ✅ Fallback if no match found
+    setFilteredCities(filtered.length > 0 ? filtered : [{ label: ".", value: "." }]);
+
+    setShowDropdown(true);
+  } else {
+    setShowDropdown(false);
+  }
+}, [cityInput, allCities]);
 
   const addCity = (city) => {
     const exists = selectedCities.some(

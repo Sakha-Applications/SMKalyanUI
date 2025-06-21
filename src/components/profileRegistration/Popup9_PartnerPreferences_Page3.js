@@ -6,6 +6,7 @@ import MultiSelectCheckbox from '../common/MultiSelectCheckbox';
 import useApiData from '../../hooks/useApiData';
 import MultiStateCitySelector from '../common/MultiStateCitySelector';
 import MultiCountrySelector from '../common/MultiCountrySelector';
+import MultiCountryStateCitySelector from '../common/MultiCountryStateCitySelector';
 
 const Popup9_PartnerPreferences_Page3 = ({ formData, handleChange, onNext, onPrevious }) => {
   const { searchPlaces, searchProfessions } = useApiData();
@@ -117,59 +118,26 @@ const hobbyOptions = [
 
       
       <div>
-<MultiStateCitySelector
+
+<MultiCountryStateCitySelector
   labelPrefix="Origin of Native"
   name="preferredNativeOrigins"
-  selectedValues={formatSelectedValues('preferredNativeOrigins')}
+  selectedValues={formData.preferredNativeOrigins || []}
   onChange={(name, values) =>
-    handleChange({
-      target: {
-        name,
-        value: values.map((v) => ({
-          label: v.label || v.value,
-          value: v.value || v.label,
-          state: v.state || ''
-        }))
-      }
-    })
+    handleChange({ target: { name, value: values } })
   }
 />
 
-
-      </div>
-
-<MultiStateCitySelector
+<MultiCountryStateCitySelector
   labelPrefix="City Living In"
   name="preferredCities"
-  selectedValues={formatSelectedValues('preferredCities')}
+  selectedValues={formData.preferredCities || []}
   onChange={(name, values) =>
-    handleChange({
-      target: {
-        name,
-        value: values.map((v) => ({
-          label: v.label || v.value,
-          value: v.value || v.label,
-          state: v.state || ''
-        }))
-      }
-    })
+    handleChange({ target: { name, value: values } })
   }
 />
 
-      <div>
-<MultiCountrySelector
-  label="Country Living In"
-  name="preferredCountries"
-  selectedValues={formatSelectedValues('preferredCountries')}
-  onChange={(name, values) =>
-    handleChange({
-      target: {
-        name,
-        value: values.map(v => v.label || v.value)
-      }
-    })
-  }
-/>
+
       </div>
 
       <h2 className="text-lg font-semibold">Lifestyle Preferences</h2>

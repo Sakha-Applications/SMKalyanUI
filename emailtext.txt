@@ -1,0 +1,3 @@
+An email has been sent to your email id. Please check your email and verify the email address.
+Note: If you do not receive the email, please check the junk folder of your email client.
+In case you do not receive the mail, you can use the Forgot Password option to change the password.

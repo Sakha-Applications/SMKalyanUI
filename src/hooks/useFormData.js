@@ -9,6 +9,8 @@ const useFormData = () => {
     profileCreatedFor: "",
     gender: "", // used for UI logic
     motherTongue: "",
+    currentLocationCountry: "",     // for Residing Country (Popup 1)
+    currentLocationState: "", // Add this to Popup 1 section
     currentLocation: "",
     profileFor: "", // derived from gender
 
@@ -26,8 +28,12 @@ const useFormData = () => {
     heightInches: "",
     height: "", // combined feet+inches
     profileCategory: "",
+    nativePlaceCountry: "",
+    nativePlaceState: "",
     nativePlace: "",
-    placeOfBirth: "",
+    placeOfBirthCountry: "",
+placeOfBirthState: "",
+placeOfBirth: "",
     timeOfBirth: "",
     aboutBrideGroom: "",
     diet: [],

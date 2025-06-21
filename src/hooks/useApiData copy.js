@@ -1,5 +1,5 @@
-// src/hooks/useApiData.js
-import { useState, useEffect, useCallback } from "react";
+// useApiData.js
+import { useState, useEffect } from "react";
 import axios from "axios";
 import getBaseUrl from '../utils/GetUrl';
 
@@ -19,7 +19,7 @@ const useApiData = (endpoint) => {
     const [nativePlaceOptions, setNativePlaceOptions] = useState([]);
 
     // 🔍 Search professions with enhanced error handling and caching
-    const searchProfessions = useCallback(async (searchText) => {
+    const searchProfessions = async (searchText) => {
         if (!searchText || searchText.length < 2) return [];
 
         try {
@@ -39,10 +39,10 @@ const useApiData = (endpoint) => {
             console.error('Error searching professions:', error);
             return [];
         }
-    }, []); // Empty dependency array for stability
+    };
 
     // 📥 Get profession by ID with enhanced error handling
-    const getProfessionById = useCallback(async (professionId) => {
+    const getProfessionById = async (professionId) => {
         if (!professionId) return null;
         
         try {
@@ -63,59 +63,59 @@ const useApiData = (endpoint) => {
             console.error('Error fetching profession by ID:', error);
             return null;
         }
-    }, []); // Empty dependency array
+    };
 
     // 🔍 Search education
-    const searchEducation = useCallback(async (searchText) => {
-        if (!searchText || searchText.length < 2) return [];
+const searchEducation = async (searchText) => {
+    if (!searchText || searchText.length < 2) return [];
 
-        try {
-            const baseUrl = getBaseUrl();
-            const response = await axios.get(`${baseUrl}/api/education?search=${encodeURIComponent(searchText)}`);
-            if (Array.isArray(response.data)) {
-                return response.data.map(item => ({
-                    label: item.EducationName || item.name,
-                    value: item.id
-                }));
-            } else {
-                console.warn("Unexpected education response format:", response.data);
-                return [];
-            }
-        } catch (error) {
-            console.error("Error searching education:", error);
+    try {
+        const baseUrl = getBaseUrl();
+        const response = await axios.get(`${baseUrl}/api/education?search=${encodeURIComponent(searchText)}`);
+        if (Array.isArray(response.data)) {
+            return response.data.map(item => ({
+                label: item.EducationName || item.name,
+                value: item.id
+            }));
+        } else {
+            console.warn("Unexpected education response format:", response.data);
             return [];
         }
-    }, []); // Empty dependency array
+    } catch (error) {
+        console.error("Error searching education:", error);
+        return [];
+    }
+};
 
-    // 🔍 Search designations
-    const searchDesignations = useCallback(async (searchText) => {
-        if (!searchText || searchText.length < 2) return [];
+// 🔍 Search designations
+const searchDesignations = async (searchText) => {
+    if (!searchText || searchText.length < 2) return [];
 
-        try {
-            const baseUrl = getBaseUrl();
-            const response = await axios.get(`${baseUrl}/api/designation?search=${encodeURIComponent(searchText)}`);
-            if (Array.isArray(response.data)) {
-                return response.data.map(item => ({
-                    label: item.DesignationName || item.name,
-                    value: item.id
-                }));
-            } else {
-                console.warn("Unexpected designation response format:", response.data);
-                return [];
-            }
-        } catch (error) {
-            console.error("Error searching designation:", error);
+    try {
+        const baseUrl = getBaseUrl();
+        const response = await axios.get(`${baseUrl}/api/designation?search=${encodeURIComponent(searchText)}`);
+        if (Array.isArray(response.data)) {
+            return response.data.map(item => ({
+                label: item.DesignationName || item.name,
+                value: item.id
+            }));
+        } else {
+            console.warn("Unexpected designation response format:", response.data);
             return [];
         }
-    }, []); // Empty dependency array
+    } catch (error) {
+        console.error("Error searching designation:", error);
+        return [];
+    }
+};
 
     // 🔍 Search mother tongues
-    const searchMotherTongues = useCallback(async (searchText) => {
+    const searchMotherTongues = async (searchText) => {
         if (!searchText || searchText.length < 2) return [];
 
         try {
             const baseUrl = getBaseUrl();
-            const response = await axios.get(`${baseUrl}/api/mother-tongues`); // Consider changing this API for efficiency if list is large
+            const response = await axios.get(`${baseUrl}/api/mother-tongues`);
             console.log("DEBUG: Full list fetched for mother tongues:", response.data);
 
             if (Array.isArray(response.data)) {
@@ -134,10 +134,10 @@ const useApiData = (endpoint) => {
             console.error("Error in searchMotherTongues:", error);
             return [];
         }
-    }, []); // Empty dependency array
+    };
 
     // 📥 Get mother tongue by ID
-    const getMotherTongueById = useCallback(async (id) => {
+    const getMotherTongueById = async (id) => {
         if (!id) return null;
         
         try {
@@ -157,10 +157,10 @@ const useApiData = (endpoint) => {
             console.error('Error fetching mother tongue by ID:', error);
         }
         return null;
-    }, []); // Empty dependency array
+    };
 
     // 🔍 Search native/residing places (shared API)
-    const searchPlaces = useCallback(async (searchText) => {
+    const searchPlaces = async (searchText) => {
         if (!searchText || searchText.length < 2) return [];
         
         try {
@@ -184,10 +184,10 @@ const useApiData = (endpoint) => {
             console.error("Error searching native/residing places:", error);
             return [];
         }
-    }, []); // Empty dependency array
+    };
 
     // 🔍 Search Guru Matha
-    const searchGuruMatha = useCallback(async (searchText) => {
+    const searchGuruMatha = async (searchText) => {
         if (!searchText || searchText.length < 2) return [];
 
         try {
@@ -207,10 +207,10 @@ const useApiData = (endpoint) => {
             console.error("Error searching guru matha:", error);
             return [];
         }
-    }, []); // Empty dependency array
+    };
 
     // 📥 Get place by ID
-    const getPlaceById = useCallback(async (id) => {
+    const getPlaceById = async (id) => {
         if (!id) return null;
         
         try {
@@ -226,7 +226,7 @@ const useApiData = (endpoint) => {
             console.error("Error fetching place by ID:", error);
         }
         return null;
-    }, []); // Empty dependency array
+    };
 
     // 🔁 Auto-fetch master data
     useEffect(() => {
@@ -344,21 +344,21 @@ const useApiData = (endpoint) => {
             };
             fetchAllData();
         }
-    }, [endpoint]); // Endpoint is a dependency, as it changes the behavior
+    }, [endpoint]);
 
     // ✅ Check if profile exists by profileId
-    const checkProfileExists = useCallback(async (profileId) => { // <--- ADD useCallback
-        if (!profileId) return false;
+const checkProfileExists = async (profileId) => {
+  if (!profileId) return false;
 
-        try {
-            const baseUrl = getBaseUrl();
-            const response = await axios.get(`${baseUrl}/api/profile/${profileId}`);
-            return response?.data?.profileId ? true : false;
-        } catch (error) {
-            console.error("❌ Error checking if profile exists:", error);
-            return false;
-        }
-    }, []); // Empty dependency array
+  try {
+    const baseUrl = getBaseUrl();
+    const response = await axios.get(`${baseUrl}/api/profile/${profileId}`);
+    return response?.data?.profileId ? true : false;
+  } catch (error) {
+    console.error("❌ Error checking if profile exists:", error);
+    return false;
+  }
+};
 
     return {
         // Loading states
@@ -377,16 +377,18 @@ const useApiData = (endpoint) => {
 
         checkProfileExists,
 
-        // Search functions (now stable)
-        searchProfessions,          
-        getProfessionById,          
-        searchMotherTongues,        
-        getMotherTongueById,        
-        searchPlaces,               
-        getPlaceById,               
-        searchGuruMatha,            
-        searchEducation,
-        searchDesignations
+        
+        // Search functions
+        searchProfessions,          // 🔍 Profession search
+        getProfessionById,          // 📥 Get profession by ID
+        searchMotherTongues,        // 🔍 Mother tongue search
+        getMotherTongueById,        // 📥 Get mother tongue by ID
+        searchPlaces,               // 🔍 Places search
+        getPlaceById,               // 📥 Get place by ID
+        searchGuruMatha,             // 🔍 Guru Matha search
+         // 👇 Newly added
+  searchEducation,
+  searchDesignations
     };
 };
 

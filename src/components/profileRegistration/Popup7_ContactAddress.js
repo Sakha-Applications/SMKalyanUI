@@ -7,7 +7,7 @@ import MenuItem from '@mui/material/MenuItem';
 import StateCitySelector from '../common/StateCitySelector';
 import validateRequiredFields from '../common/validateRequiredFields';
 import ValidationErrorDialog from '../common/ValidationErrorDialog';
-
+import CountryStateCitySelector from "../common/CountryStateCitySelector";
 
 const Popup7_ContactAddress = ({
   formData,
@@ -86,14 +86,15 @@ const combineAddress = (prefix) => {
     formData[`${prefix}HouseNo`] || '',
     formData[`${prefix}Street`] || '',
     formData[`${prefix}Area`] || '',
-
     formData[`${prefix}City`] || '',
-    formData[`${prefix}State`] || '',     // ✅ Added state
+    formData[`${prefix}State`] || '',
+    formData[`${prefix}Country`] || '',  // ✅ NEW
     formData[`${prefix}PIN`] || ''
   ].filter(Boolean);
 
   return parts.join(', ');
 };
+
 
 const handleCopyAddress = (e) => {
   const checked = e.target.checked;
@@ -102,21 +103,32 @@ const handleCopyAddress = (e) => {
   if (checked) {
     const updatedCity = formData.communicationCity || '';
     const updatedState = formData.communicationState || '';
+    const updatedCountry = formData.communicationCountry || '';
 
+    // ✅ Step 1: Update residenceCountry and reset state/city temporarily
     setFormData((prev) => ({
       ...prev,
       residenceHouseNo: prev.communicationHouseNo || '',
       residenceStreet: prev.communicationStreet || '',
       residenceArea: prev.communicationArea || '',
       residencePIN: prev.communicationPIN || '',
-      residenceCity: updatedCity,
-      residenceState: updatedState
+      residenceCountry: updatedCountry,
+      residenceState: '',   // force reset to prevent premature overwrite
+      residenceCity: ''     // force reset
     }));
 
-    // 🔧 ensure inputs reflect copied values
-    setResCityInput(updatedCity);
+    // ✅ Step 2: Delay setting city and state
+    setTimeout(() => {
+      setFormData((prev) => ({
+        ...prev,
+        residenceState: updatedState,
+        residenceCity: updatedCity
+      }));
+      setResCityInput(updatedCity);
+    }, 150); // gives CountryStateCitySelector time to update options
   }
 };
+
 
   const validateAndProceed = async () => {
   const comm = combineAddress('communication');
@@ -252,38 +264,42 @@ const handleCopyAddress = (e) => {
         
          {/* ✅ Replace city input with this */}
   <div className="md:col-span-3">
-    <StateCitySelector
-      formData={formData}
-      handleChange={handleChange}
-      cityField="communicationCity"
-      stateField="communicationState"
-      labelPrefix="Communication"
-    />
+    
+    <CountryStateCitySelector
+  formData={formData}
+  handleChange={handleChange}
+  countryField="communicationCountry"
+  stateField="communicationState"
+  cityField="communicationCity"
+  labelPrefix="Communication"
+/>
   </div>
         
         
         <div><L>PIN Code</L><I name="communicationPIN" value={formData.communicationPIN || ''} onChange={handleChange} /></div>
       </div>
 
-      <div className="flex items-center space-x-2 mt-2">
-        <input type="checkbox" checked={copyChecked} onChange={handleCopyAddress} id="copyAddress" />
-        <label htmlFor="copyAddress" className="text-sm text-gray-700">Same as Communication Address</label>
-      </div>
-
       <h3 className="font-semibold text-gray-800 pt-2 pb-1">Residence Address</h3>
+<div className="flex items-center space-x-2 mt-2">
+  <input type="checkbox" checked={copyChecked} onChange={handleCopyAddress} id="copyAddress" />
+  <label htmlFor="copyAddress" className="text-sm text-gray-700">Copy form Communication Address if the residence address is same</label>
+</div>
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div><L>House No</L><I name="residenceHouseNo" value={formData.residenceHouseNo || ''} onChange={handleChange} /></div>
         <div><L>Street</L><I name="residenceStreet" value={formData.residenceStreet || ''} onChange={handleChange} /></div>
         <div><L>Area</L><I name="residenceArea" value={formData.residenceArea || ''} onChange={handleChange} /></div>
          {/* ✅ Replace city input with this */}
   <div className="md:col-span-3">
-    <StateCitySelector
-      formData={formData}
-      handleChange={handleChange}
-      cityField="residenceCity"
-      stateField="residenceState"
-      labelPrefix="Residence"
-    />
+    <CountryStateCitySelector
+  formData={formData}
+  handleChange={handleChange}
+  countryField="residenceCountry"
+  stateField="residenceState"
+  cityField="residenceCity"
+  labelPrefix="Residence"
+/>
+
   </div>
         
         

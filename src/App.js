@@ -16,8 +16,10 @@ import About from './components/About';
 import ContactDetails from './components/ViewContactDetails/ViewContactDetailsForm';
 import SharingContactDetails from './components/ViewContactDetails/SharingContactDetails';
 import PublicHome from './components/PublicHome'; // Import the new component
-import MakePreferred from './components/prefferedProfile/MakePreferred';
-import PreferredPayment from './components/prefferedProfile/PreferredPayment';
+import MakePreferred from './components/preferredProfile/MakePreferred';
+import PreferredPayment from './components/preferredProfile/PreferredPayment';
+import PartnerPreferencesPage from "./components/ModifyProfile/PartnerPreferencesPage";
+import MyProfilePage from "./components/ModifyProfile/MyProfilePage";
 
 // Protected route component
 const ProtectedRoute = ({ children }) => {
@@ -44,6 +46,8 @@ function App() {
                 <Route path="/forgot-password" element={<ForgotPasswordScreen />} />
                 <Route path="/reset-password" element={<ResetPasswordScreen />} />
                 <Route path="/about" element={<About />} />
+<Route path="/partner-preferences" element={<PartnerPreferencesPage />} />
+<Route path="/my-profile" element={<MyProfilePage />} />
 
                 {/* Protected routes */}
                 <Route

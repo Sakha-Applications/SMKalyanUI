@@ -3,7 +3,7 @@ import { Label, Input, Select, RadioGroup, Button } from '../common/FormElements
 import useApiData from '../../hooks/useApiData';
 import validateRequiredFields from '../common/validateRequiredFields';
 import ValidationErrorDialog from '../common/ValidationErrorDialog';
-import StateCitySelector from '../common/StateCitySelector';
+import CountryStateCitySelector from '../common/CountryStateCitySelector';
 
 const Popup1_BasicInfo = ({ formData, handleChange, onNext }) => {
   const [errors, setErrors] = useState({});
@@ -208,9 +208,11 @@ const Popup1_BasicInfo = ({ formData, handleChange, onNext }) => {
       
       {renderAutocomplete("Mother Tongue", motherTongueInput, setMotherTongueInput, mtOptions, mtShow, loadingMT, setMtShow, "motherTongue", setJustSelectedMT)}
 
-      <StateCitySelector
+      <CountryStateCitySelector
   formData={formData}
   handleChange={handleChange}
+  countryField="currentLocationCountry"
+  stateField="currentLocationState"
   cityField="currentLocation"
   labelPrefix="Residing"
 />

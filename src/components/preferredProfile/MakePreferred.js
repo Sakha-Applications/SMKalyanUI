@@ -1,4 +1,4 @@
-// src/components/prefferedProfile/MakePreferred.js
+// src/components/preferredProfile/MakePreferred.js
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Button, TextField, Typography, Alert, CircularProgress, Grid } from '@mui/material';

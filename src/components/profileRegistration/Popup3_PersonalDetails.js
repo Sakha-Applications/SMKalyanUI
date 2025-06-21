@@ -7,6 +7,7 @@ import MultiSelectCheckbox from '../common/MultiSelectCheckbox';
 import validateRequiredFields from '../common/validateRequiredFields';
 import ValidationErrorDialog from '../common/ValidationErrorDialog';
 import StateCitySelector from "../common/StateCitySelector";
+import CountryStateCitySelector from "../common/CountryStateCitySelector";
 
 const Popup3_PersonalDetails = ({
   formData,
@@ -170,19 +171,23 @@ const Popup3_PersonalDetails = ({
           </div>
         </div>
 
-        <StateCitySelector
-          formData={formData}
-          handleChange={handleChange}
-          cityField="nativePlace"
-          labelPrefix="Native"
-        />
+<CountryStateCitySelector
+  formData={formData}
+  handleChange={handleChange}
+  countryField="nativePlaceCountry"
+  stateField="nativePlaceState"
+  cityField="nativePlace"
+  labelPrefix="Native"
+/>
 
-        <StateCitySelector
-          formData={formData}
-          handleChange={handleChange}
-          cityField="placeOfBirth"
-          labelPrefix="Place of Birth"
-        />
+  <CountryStateCitySelector
+  formData={formData}
+  handleChange={handleChange}
+  countryField="placeOfBirthCountry"
+  stateField="placeOfBirthState"
+  cityField="placeOfBirth"
+  labelPrefix="Place of Birth"
+/>
 
         <MultiSelectCheckbox
           label="Hobbies"

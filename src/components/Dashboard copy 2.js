@@ -36,7 +36,7 @@ const Dashboard = () => {
             <div className="mb-2">
               <TopNavTabs />
               <SecondaryNavBar />
-             
+              <ThirdNavBar />
             </div>
 
             <DashboardLayout>

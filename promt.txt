@@ -1,0 +1,63 @@
+ Project Context Setup — Please remember this context for all future replies in this thread:
+
+
+
+- 💻 I’m developing a full-stack web application.
+
+- Frontend: React.js
+
+- Backend: Node.js (Express-based)
+
+- Database: MySQL
+
+- Code Versioning: Visual Studio Code with Git (locally), using GitHub or private VSS
+
+- Development Environment: Local laptop (Windows, npm, localhost ports)
+
+- Production Environment: Azure Web Apps + Azure MySQL
+
+- Deployment: Manual or Git-based push to Azure
+
+- I handle frontend-backend API integration myself, including environment-based configurations (e.g., `.env` files for local vs. cloud)
+
+
+
+⚙️ Tech expectations:
+
+- Use consistent syntax for async/await, no `then()` unless needed
+
+- Maintain separate frontend and backend folders
+
+- Backend APIs connect directly to MySQL using `mysql2` or `sequelize`
+
+- React uses hooks, context, and dynamic routes
+
+
+
+❗Instruction:
+
+When I ask for code help, assume this full-stack environment.
+
+Do not make assumptions about cloud functions, Firebase, MongoDB, or Next.js unless I explicitly mention a change.
+
+
+
+🧪 If the problem sounds environment-related, ask whether it’s local or cloud, and guide accordingly (e.g., localhost vs Azure config).
+
+
+
+📦 If I mention uploading/downloading images, understand I use Azure Blob Storage. ❗Important instructions:
+
+- DO NOT provide full rewritten components unless I explicitly ask.
+
+- Only focus on the specific function/snippet I provide.
+
+- DO NOT assume the rest of the code — ask if something seems missing.
+
+- DO NOT strip or simplify logic for dropdowns, Autocompletes, or state objects.
+
+- DO NOT change input/output types unless I confirm.
+
+Just guide me to identify the gap or logic flaw. Do not assume or replace code structure.
+
+currently we are working on midifcations for profile data which is registered from regitration module. we have set up like MyProfilePage will ack as key code which is availble in D:\1. Data\1. Personal DOcument\00.SM\NewProject\dev\SMKalyanUI\src\components\ModifyProfile directory and we have EditModeProfile and ViewModeProfile files in D:\1. Data\1. Personal DOcument\00.SM\NewProject\dev\SMKalyanUI\src\components\ModifyProfile\PartnerPreferences. then we all sections files in D:\1. Data\1. Personal DOcument\00.SM\NewProject\dev\SMKalyanUI\src\components\ModifyProfile\PartnerPreferences\sections. these files like horoscope,education,basic few more other section files will render the fileds for both view and edit mode. currently hosroscope and education sections are working perfectly fine. we need to ensure all other section should work seemlessly as desired. in this conext we need to work. some time I will provide you the code files which are used for profile registration module so that you can refer and it should work like registration module when we are editing the fileds. i have different type of fields like autocomplete, select, text etc. now please review the file my current challenge is Native Country,Native State,Native City,Current Location Country,Current Location State are populating with existing values
