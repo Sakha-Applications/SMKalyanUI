@@ -5,6 +5,9 @@ import LoginScreen from './components/LoginScreen';
 // import ProfileRegisterForm from './components/ProfileRegisterForm';
 import ProfileRegisterForm from './components/profileRegistration/ProfileRegisterForm';
 import ProfileSearchForm from './components/ProfileSearchForm';
+
+import BasicSearchForm from './components/Search/BasicSearchForm'; 
+
 import ResetPasswordScreen from './components/ResetPasswordScreen';
 import Dashboard from './components/Dashboard';
 import ForgotPasswordScreen from './components/ForgotPasswordScreen';
@@ -114,8 +117,19 @@ function App() {
                         </ProtectedRoute>
                     }
                 />
+                
                 <Route path="/make-preferred" element={<MakePreferred />} />
 <Route path="/preferred-payment" element={<PreferredPayment />} />
+            <Route
+                    path="/basic-search"
+                    element={
+                        <ProtectedRoute>
+                            <BasicSearchForm />
+                        </ProtectedRoute>
+                    }
+                />
+
+            
             </Routes>
         </Router>
     );

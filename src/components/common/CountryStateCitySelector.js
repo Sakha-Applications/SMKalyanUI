@@ -26,76 +26,91 @@ const CountryStateCitySelector = ({
   const [selectedState, setSelectedState] = useState(null);
 
   // Effect to set internal states (selectedCountry, selectedState) based on formData props
-  // NOW EXPECTS ISO CODES FROM formData
+  // NOW EXPECTS ISO CODES FROM formData for countryField and stateField
   useEffect(() => {
     console.log(`DEBUG_CSC_EFFECT_INIT: ${labelPrefix} - formData[countryField]:`, formData[countryField], "formData[stateField]:", formData[stateField]);
 
     // Initialize selectedCountry
     const countryValueInForm = formData[countryField]; // This should be an ISO code (e.g., 'IN', 'AU')
     const initialCountry = countries.find(c => c.isoCode === countryValueInForm);
-    if (initialCountry && initialCountry.isoCode !== selectedCountry?.isoCode) { // Only update if changed
+
+    // Only update if the value from formData is different from the current internal state
+    if (initialCountry && initialCountry.isoCode !== selectedCountry?.isoCode) {
         setSelectedCountry(initialCountry);
-    } else if (!countryValueInForm && selectedCountry) { // Clear if value removed
+        console.log(`DEBUG_CSC_EFFECT_INIT: ${labelPrefix} - Setting selectedCountry to: ${initialCountry.isoCode}`);
+    } else if (!countryValueInForm && selectedCountry) { // Clear internal state if formData value is removed/empty
         setSelectedCountry(null);
+        console.log(`DEBUG_CSC_EFFECT_INIT: ${labelPrefix} - Clearing selectedCountry.`);
     }
 
     // Initialize selectedState (depends on selectedCountry being resolved)
-    // We need a stable selectedCountry reference for this, or re-find it.
+    // Use the `initialCountry` found in this same effect if available, otherwise rely on `selectedCountry` state (from a previous render)
     const stateValueInForm = formData[stateField]; // This should be an ISO code (e.g., 'KA', 'QLD')
-    // Find states for the current country selected (either from prop or previous selection)
-    const currentCountryForState = initialCountry || selectedCountry;
+    const countryForStateLookup = initialCountry || selectedCountry; // Prefer the country resolved in this effect pass
 
-    if (stateValueInForm && currentCountryForState) {
-        const availableStatesForCurrentCountry = State.getStatesOfCountry(currentCountryForState.isoCode);
-        const initialState = availableStatesForCurrentCountry.find(s => s.isoCode === stateValueInForm);
-        if (initialState && initialState.isoCode !== selectedState?.isoCode) { // Only update if changed
+    if (stateValueInForm && countryForStateLookup) {
+        const availableStatesForCountry = State.getStatesOfCountry(countryForStateLookup.isoCode);
+        const initialState = availableStatesForCountry.find(s => s.isoCode === stateValueInForm);
+
+        // Only update if the value from formData is different from the current internal state
+        if (initialState && initialState.isoCode !== selectedState?.isoCode) {
             setSelectedState(initialState);
+            console.log(`DEBUG_CSC_EFFECT_INIT: ${labelPrefix} - Setting selectedState to: ${initialState.isoCode}`);
         } else if (!stateValueInForm && selectedState) { // Clear if value removed
             setSelectedState(null);
+            console.log(`DEBUG_CSC_EFFECT_INIT: ${labelPrefix} - Clearing selectedState.`);
         }
-    } else if (selectedState) { // Clear if stateValueInForm is empty or no country
+    } else if (selectedState) { // Clear if stateValueInForm is empty or no country for lookup
         setSelectedState(null);
+        console.log(`DEBUG_CSC_EFFECT_INIT: ${labelPrefix} - Clearing selectedState (no value or no country).`);
     }
 
-    // City is a string in formData and managed directly in value prop, no internal state for it.
-  }, [formData[countryField], formData[stateField], countries]); // Add countries as dep because find uses it
+    // City is a string in formData, directly use it for its input, no internal state for it in this component.
+  }, [formData[countryField], formData[stateField], countries, selectedCountry, selectedState]); // Ensure all states and props are dependencies to react to changes
 
-  // Effect to populate states options list based on selectedCountry internal state
+
+  // Effect to populate 'states' dropdown options based on the internal `selectedCountry`
   useEffect(() => {
     if (selectedCountry) {
       setStates(State.getStatesOfCountry(selectedCountry.isoCode));
     } else {
-      setStates([]);
+      setStates([]); // Clear states if no country is selected
     }
-    setCities([]); // Always clear cities when states list potentially changes
-  }, [selectedCountry]);
+    // Clear cities whenever states change (e.g., new country selected)
+    setCities([]);
+  }, [selectedCountry]); // Only re-run when selectedCountry changes
 
-  // Effect to populate cities options list based on selectedState internal state
+  // Effect to populate 'cities' dropdown options based on internal `selectedState` and `selectedCountry`
   useEffect(() => {
     if (selectedState && selectedCountry) {
       setCities(City.getCitiesOfState(selectedCountry.isoCode, selectedState.isoCode));
     } else {
-      setCities([]);
+      setCities([]); // Clear cities if no state or country is selected
     }
-  }, [selectedState, selectedCountry]);
+  }, [selectedState, selectedCountry]); // Only re-run when selectedState or selectedCountry changes
 
 
-  // Handlers for Select elements (these correctly send NAME to parent's formData)
-  // This means MyProfilePage will store names for Country/State after user interaction.
-  // We'll address this in handleUpdate of MyProfilePage to convert names back to ISO for backend.
+  // FIXED: Handlers for Select elements - create proper event objects
   const handleCountryChange = (e) => {
     const selectedIsoCode = e.target.value; // Value from select option is ISO code
     const countryName = countries.find(c => c.isoCode === selectedIsoCode)?.name || '';
-    handleChange({ target: { name: countryField, value: countryName } }); // Send NAME to formData
-    handleChange({ target: { name: stateField, value: '' } }); // Clear state in formData
-    handleChange({ target: { name: cityField, value: '' } });   // Clear city in formData
+    setSelectedCountry(countries.find(c => c.isoCode === selectedIsoCode) || null); // Update internal state
+    setSelectedState(null); // Clear internal state
+
+    // Create proper event objects for handleChange
+    handleChange({ target: { name: countryField, value: countryName } });
+    handleChange({ target: { name: stateField, value: '' } });
+    handleChange({ target: { name: cityField, value: '' } });
   };
 
   const handleStateChange = (e) => {
     const selectedIsoCode = e.target.value; // Value from select option is ISO code
     const stateName = states.find(s => s.isoCode === selectedIsoCode)?.name || '';
-    handleChange({ target: { name: stateField, value: stateName } }); // Send NAME to formData
-    handleChange({ target: { name: cityField, value: '' } });   // Clear city in formData
+    setSelectedState(states.find(s => s.isoCode === selectedIsoCode) || null); // Update internal state
+
+    // Create proper event objects for handleChange
+    handleChange({ target: { name: stateField, value: stateName } });
+    handleChange({ target: { name: cityField, value: '' } });
   };
 
   const handleCityChange = (e) => {
@@ -104,7 +119,8 @@ const CountryStateCitySelector = ({
   };
 
   return (
-    <>
+    <div className="space-y-4">
+      {/* Country */}
       <div>
         <Label>{labelPrefix} Country</Label>
         <select
@@ -122,6 +138,7 @@ const CountryStateCitySelector = ({
         </select>
       </div>
 
+      {/* State */}
       <div>
         <Label>{labelPrefix} State</Label>
         <select
@@ -129,7 +146,7 @@ const CountryStateCitySelector = ({
           value={selectedState?.isoCode || ''} // Bound to internal state (ISO code)
           onChange={handleStateChange}
           className="w-full border rounded px-2 py-1"
-          disabled={!states.length}
+          disabled={!states.length} // Disable if no states are available
         >
           <option value="">Select State</option>
           {states.map((s) => (
@@ -140,11 +157,26 @@ const CountryStateCitySelector = ({
         </select>
       </div>
 
+      {/* City */}
       <div>
         <Label>{labelPrefix} City</Label>
-        <select
+        {/*
+        <Input
+          id={`${cityField}`}
           name={cityField}
           value={formData[cityField] || ''} // City is bound to name from formData
+          onChange={handleCityChange}
+          placeholder={`Enter ${labelPrefix} city`}
+          className="w-full"
+          disabled={!cities.length} // Disable if no cities are available (implies no state/country selected)
+        />
+        */}
+        {/* If city is an Autocomplete, its value/inputValue binding would be different */}
+        {/* If using a select for cities: */}
+
+        <select
+          name={cityField}
+          value={formData[cityField] || ''}
           onChange={handleCityChange}
           className="w-full border rounded px-2 py-1"
           disabled={!cities.length}
@@ -156,8 +188,9 @@ const CountryStateCitySelector = ({
             </option>
           ))}
         </select>
+
       </div>
-    </>
+    </div>
   );
 };
 
