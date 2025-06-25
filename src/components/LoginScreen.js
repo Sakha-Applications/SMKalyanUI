@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import BackHomeButton from '../hooks/BackHomeButton'; // Ensure this import is correct
-// import config from '../config'; // Relative path to src/config.js
 import getBaseUrl from '../utils/GetUrl';
 
 function LoginScreen() {
@@ -18,30 +17,50 @@ function LoginScreen() {
 
     try {
       console.log('Login API URL:', `${getBaseUrl()}/api/login`);
-      const response = await fetch(`${getBaseUrl()}/api/login`, { // Corrected API endpoint
+      const response = await fetch(`${getBaseUrl()}/api/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ userId: username, password: password }), // Ensure backend expects 'userId'
+        body: JSON.stringify({ userId: username, password: password }),
       });
 
       const data = await response.json();
+      console.log("🔍 Full Login Response:", data);
 
       if (response.ok && data.token) {
         sessionStorage.setItem('token', data.token);
         sessionStorage.setItem('isLoggedIn', 'true');
-        //  ADD THIS BLOCK TO STORE USER EMAIL
+
         if (data.user && data.user.email) {
           localStorage.setItem('userEmail', data.user.email);
+          console.log("🔍 Full user object:", data.user);
+          console.log("Login Success: User Email stored:", data.user.email);
+
+          // Fetch profile ID from modifyProfile
+          try {
+            const token = data.token;
+            const response = await fetch(`${getBaseUrl()}/api/modifyProfile`, {
+              headers: { Authorization: `Bearer ${token}` }
+            });
+            const profileData = await response.json();
+
+            if (response.ok && profileData.profile_id) {
+              sessionStorage.setItem('profileId', profileData.profile_id);
+              console.log("✅ Fetched and stored profile ID:", profileData.profile_id);
+            } else {
+              console.warn("⚠️ Profile ID not found in modifyProfile response:", profileData);
+            }
+          } catch (fetchError) {
+            console.error("❌ Error fetching profile ID:", fetchError);
+          }
         } else {
-          console.warn("User email not found in login response."); //  Important:  Handle this case!
-          //  You might want to set a default or show an error to the user.
+          console.warn("User email not found in login response.");
         }
-        //  END OF ADDED BLOCK
-        navigate('/dashboard'); // Redirect to dashboard on successful login
+
+        navigate('/dashboard');
       } else {
-        setError(data.error || 'Invalid username or password.'); // Use 'data.error' to match backend response
+        setError(data.error || 'Invalid username or password.');
       }
     } catch (error) {
       setError('An error occurred during login.');
@@ -57,13 +76,13 @@ function LoginScreen() {
       <nav className="bg-white shadow-md py-4">
         <div className="container mx-auto flex justify-between items-center px-6">
           <Link to="/home" className="text-xl font-bold text-indigo-700">
-            ProfileConnect {/* Or your app name */}
+            ProfileConnect
           </Link>
           <div>
             <Link to="/profile-register" className="text-gray-700 hover:text-indigo-500 mr-4">
               Join Now
             </Link>
-            <BackHomeButton /> {/* Use the BackHomeButton */}
+            <BackHomeButton />
           </div>
         </div>
       </nav>
@@ -120,7 +139,7 @@ function LoginScreen() {
         </div>
       </section>
 
-      {/* Footer (Optional) */}
+      {/* Footer */}
       <footer className="bg-white shadow-inner py-6 text-center text-gray-700 text-sm">
         <div className="container mx-auto px-6">
           <p className="mt-2">&copy; {new Date().getFullYear()} ProfileConnect. All rights reserved.</p>

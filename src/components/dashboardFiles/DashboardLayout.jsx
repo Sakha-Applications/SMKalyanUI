@@ -1,12 +1,20 @@
-import SidebarMenu from './SidebarMenu';
+import React from 'react';
+import { SidebarMenu } from './index'; // Adjust import path as needed
 
-const DashboardLayout = ({ children }) => (
-  <div className="flex flex-col lg:flex-row gap-6">
-    <div className="w-full lg:w-1/4">
-      <SidebarMenu />
+const DashboardLayout = ({ children, profileId }) => {
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-[200px_1fr] gap-4">
+      {/* Sidebar */}
+      <div className="hidden lg:block">
+        <SidebarMenu profileId={profileId} />
+      </div>
+      
+      {/* Main Content */}
+      <div className="space-y-6">
+        {children}
+      </div>
     </div>
-    <div className="w-full lg:w-3/4">{children}</div>
-  </div>
-);
+  );
+};
 
 export default DashboardLayout;

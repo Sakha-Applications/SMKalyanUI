@@ -1,137 +1,164 @@
 // src/components/Search/SearchResults.js
 import React, { useState, useEffect } from "react";
-import { Typography, Box, Grid } from "@mui/material"; // Removed Paper, added Box, Grid
+import { Typography, Box, Grid } from "@mui/material";
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import getBaseUrl from '../../utils/GetUrl';
+import { fetchDefaultPhoto } from '../UploadProfilePhoto/photoUploadUtils'; // Import the utility
 
 const API_BASE_URL = `${getBaseUrl()}`;
-const BACKEND_DEFAULT_IMAGE_URL = '/ProfilePhotos/defaultImage.jpg';
+const FALLBACK_DEFAULT_IMAGE_PATH = '/ProfilePhotos/defaultImage.jpg';
 
 const SearchResults = ({ results }) => {
   const navigate = useNavigate();
   const [hoverMessage, setHoverMessage] = useState(null);
-  const [profilePhotos, setProfilePhotos] = useState({});
+  const [profilePhotoUrls, setProfilePhotoUrls] = useState({});
+  const [loadingPhotos, setLoadingPhotos] = useState(true);
 
   useEffect(() => {
+    console.log("[SearchResults] useEffect triggered. Results:", results);
     if (results && results.length > 0) {
-      // setHoverMessage('Click anywhere to go to the main page for more details.'); // Keep this if you want the message
-      fetchPhotos();
+      loadAllProfilePhotos(results);
     } else {
       setHoverMessage(null);
+      setProfilePhotoUrls({});
+      setLoadingPhotos(false);
     }
   }, [results]);
 
-  const fetchPhotos = async () => {
-    const photosByProfile = {};
-    for (const profile of results) {
-      try {
-        const response = await axios.get(`${API_BASE_URL}/api/get-photos?profileId=${profile.profile_id}`);
-        photosByProfile[profile.profile_id] = response.data.map(photo => {
-          // Extract just the filename from the full path
-          const parts = photo.photo_path.split("/"); // Split by both / and \
-          const filename = parts[parts.length - 1];
-          return {
-            path: `/ProfilePhotos/${filename}`, // Create a relative path
-            isDefault: photo.is_default === 1, // Ensure boolean conversion
-            filename: filename
-          };
-        });
-      } catch (error) {
-        console.error(`Error fetching photos for profile ${profile.profile_id}:`, error);
-        photosByProfile[profile.profile_id] = [];
-      }
-    }
-    setProfilePhotos(photosByProfile);
+  // HELPER FUNCTION TO PROMISIFY fetchDefaultPhoto
+  const promisifiedFetchDefaultPhoto = (profileId) => {
+    return new Promise((resolve) => {
+      fetchDefaultPhoto(
+        profileId,
+        (photoObject) => { // Success callback
+          if (photoObject && photoObject.fullUrl) {
+            resolve(photoObject.fullUrl); // Resolve with the URL
+          } else {
+            resolve(`${API_BASE_URL}${FALLBACK_DEFAULT_IMAGE_PATH}`); // Resolve with fallback if no photo
+          }
+        },
+        (error) => { // Error callback
+          console.error(`[SearchResults] Raw error from fetchDefaultPhoto for ${profileId}:`, error);
+          resolve(`${API_BASE_URL}${FALLBACK_DEFAULT_IMAGE_PATH}`); // Resolve with fallback on error
+        }
+      );
+    });
   };
 
-  const getDefaultPhotoUrl = (profileId) => {
-    const photos = profilePhotos[profileId];
-    if (photos && photos.length > 0) {
-      const defaultPhoto = photos.find(photo => photo.isDefault);
-      if (defaultPhoto) {
-        return `${API_BASE_URL}${defaultPhoto.path}`;
-      } else if (photos.length > 0) {
-        return `${API_BASE_URL}${photos[0].path}`;
-      }
-    }
-    return `${API_BASE_URL}${BACKEND_DEFAULT_IMAGE_URL}`;
+  const loadAllProfilePhotos = async (profiles) => {
+    setLoadingPhotos(true);
+    const urlsMap = {};
+
+    const fetchPromises = profiles.map(async (profile) => {
+      const photoUrl = await promisifiedFetchDefaultPhoto(profile.profile_id); // Await the promisified function
+      urlsMap[profile.profile_id] = photoUrl;
+      console.log(`[SearchResults] Storing URL for ${profile.profile_id}:`, photoUrl);
+    });
+
+    await Promise.all(fetchPromises); // Wait for all individual photo fetches to complete
+
+    setProfilePhotoUrls(urlsMap); // Update state only once all are done
+    setLoadingPhotos(false);
+    console.log("[SearchResults] All profile photos loaded:", urlsMap);
   };
 
-  const handlePaperClick = () => {
-    if (results && results.length > 0) {
-      alert('To see more details, please log in or register.');
-      navigate('/');
-    }
+  const getProfilePhotoUrl = (profileId) => {
+    return profilePhotoUrls[profileId] || `${API_BASE_URL}${FALLBACK_DEFAULT_IMAGE_PATH}`;
+  };
+
+  const handleCardClick = (profileId) => {
+    alert(`Clicked on profile: ${profileId}. To see more details, please log in or register.`);
+    navigate('/');
   };
 
   return (
-    // Replaced Paper with a div that mimics the styling of internal sections
-    <div
-      className="p-6 bg-gray-50 rounded-lg shadow-inner mt-4" // Adjusted styling for a more integrated look
-      style={{ cursor: results && results.length > 0 ? 'pointer' : 'default' }}
-      onClick={handlePaperClick}
-    >
-      <h2 className="text-xl font-semibold text-gray-800 mb-4">Search Results</h2> {/* Changed to h2 */}
+    <div className="p-6 bg-gray-50 rounded-lg shadow-inner mt-4">
+      <h2 className="text-xl font-semibold text-gray-800 mb-4">Search Results</h2>
       {hoverMessage && (
         <Typography variant="caption" color="textSecondary" sx={{ display: 'block', marginBottom: 1 }}>
           {hoverMessage}
         </Typography>
       )}
-      {results && results.length > 0 ? (
-        <div>
-          {results.map((result, index) => (
-            <Box key={index} sx={{ mb: 3, paddingBottom: 3, borderBottom: '1px solid #e0e0e0', '&:last-child': { borderBottom: 'none', mb: 0, paddingBottom: 0 } }}>
-              <Grid container spacing={2} alignItems="center">
-                {/* Profile Photo (Left Side) */}
-                <Grid item xs={3} sm={2}>
-                  <Box
-                    sx={{
-                      width: '100%',
-                      maxWidth: 80,
-                      height: 'auto',
-                      borderRadius: 1,
-                      overflow: 'hidden',
-                    }}
-                  >
+
+      {loadingPhotos && results && results.length > 0 ? (
+        <div className="flex items-center justify-center p-8 text-indigo-800">
+          <svg className="animate-spin h-8 w-8 mr-3 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          Loading profile photos...
+        </div>
+      ) : results && results.length > 0 ? (
+        <Grid container spacing={3}>
+          {results.map((result, index) => {
+            const imageUrl = getProfilePhotoUrl(result.profile_id);
+            console.log(`[SearchResults Render] Image URL for ${result.profile_id} (Name: ${result.name}):`, imageUrl);
+            return (
+              <Grid
+                key={result.profile_id || index}
+                sx={{
+                  width: {
+                    xs: '100%',
+                    sm: '50%',
+                    md: '33.33%',
+                    lg: '25%',
+                  },
+                  padding: (theme) => theme.spacing(1.5),
+                }}
+              >
+                <Box
+                  className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden"
+                  sx={{ cursor: 'pointer' }}
+                  onClick={() => handleCardClick(result.profile_id)}
+                >
+                  {/* Image Section */}
+                  <Box sx={{ width: '100%', height: 200, overflow: 'hidden', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                     <img
-                      src={getDefaultPhotoUrl(result.profile_id)}
+                      src={imageUrl}
                       alt={result.name || 'Profile Photo'}
                       style={{
-                        display: 'block',
                         width: '100%',
-                        height: 'auto',
+                        height: '100%',
                         objectFit: 'cover',
                       }}
                       onError={(e) => {
-                        e.target.src = `${API_BASE_URL}${BACKEND_DEFAULT_IMAGE_URL}`;
+                        e.target.onerror = null;
+                        e.target.src = `${API_BASE_URL}${FALLBACK_DEFAULT_IMAGE_PATH}`;
+                        console.error(`[SearchResults] Image element failed to load for ${result.profile_id}. Setting fallback. Error:`, e);
                       }}
                     />
                   </Box>
-                </Grid>
 
-                {/* Profile Details (Right Side) */}
-                <Grid item xs={9} sm={10}>
-                  <div className="font-medium text-gray-700">
-                    <strong>Profile ID:</strong> {result.profile_id}
-                  </div>
-                  <div className="text-gray-700">
-                    <strong>Name:</strong> {result.name}
-                  </div>
-                  <div className="text-gray-700">
-                    <strong>Profile For:</strong> {result.profile_for}
-                  </div>
-                  {result.hasOwnProperty('gotra') && (
-                    <div className="text-gray-700">
-                      <strong>Gotra:</strong> {result.gotra}
-                    </div>
-                  )}
-                </Grid>
+                  {/* Details Section */}
+                  <Box sx={{ p: 2 }}>
+                    <Typography variant="h6" component="div" className="font-semibold text-gray-900 mb-1">
+                      {result.name || 'N/A'}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" className="text-gray-700">
+                      <strong>Age:</strong> {result.current_age || 'N/A'}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" className="text-gray-700">
+                      <strong>Height:</strong> {result.height || 'N/A'}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" className="text-gray-700">
+                      <strong>Location:</strong> {result.current_location || 'N/A'}
+                    </Typography>
+                    {result.gotra && (
+                      <Typography variant="body2" color="text.secondary" className="text-gray-700">
+                        <strong>Gotra:</strong> {result.gotra}
+                      </Typography>
+                    )}
+                    {result.profile_id && (
+                      <Typography variant="caption" color="text.secondary" className="text-xs mt-2 block">
+                        Profile ID: {result.profile_id}
+                      </Typography>
+                    )}
+                  </Box>
+                </Box>
               </Grid>
-              {/* Removed the <hr> as border-bottom on Box handles it */}
-            </Box>
-          ))}
-        </div>
+            );
+          })}
+        </Grid>
       ) : (
         <Typography align="center" className="text-gray-700 mt-4">No results found</Typography>
       )}

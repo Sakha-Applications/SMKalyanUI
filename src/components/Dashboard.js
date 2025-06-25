@@ -13,6 +13,8 @@ import PreferredProfilesSection from "./preferredProfile/PreferredProfilesSectio
 
 const Dashboard = () => {
   const userProfileId = sessionStorage.getItem("profileId");
+  console.log("[Dashboard] Retrieved profileId from sessionStorage:", userProfileId);
+  console.log("[Dashboard] SessionStorage contents:", sessionStorage);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-100">
@@ -36,10 +38,10 @@ const Dashboard = () => {
             <div className="mb-2">
               <TopNavTabs />
               <SecondaryNavBar />
-             
             </div>
 
-            <DashboardLayout>
+            {/* Pass userProfileId to DashboardLayout */}
+            <DashboardLayout profileId={userProfileId}>
               <MissionBox />
 
               <TimelineStatsGrid />
