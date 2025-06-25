@@ -1,11 +1,12 @@
 // D:\1. Data\1. Personal DOcument\00.SM\NewProject\dev\SMKalyanUI\src\components\UploadProfilePhoto\ProfilePhotoUploadForm.js
 
-import React, { useState, useEffect, useRef } from 'react'; // Added useRef
-import { useNavigate } from 'react-router-dom';
-import { Paper, Typography, TextField, Button, Grid, CircularProgress, Checkbox, FormControlLabel } from '@mui/material';
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate, Link } from 'react-router-dom'; // Import Link
+import { Typography, TextField, Button, Grid, CircularProgress, Checkbox, FormControlLabel, Box } from '@mui/material'; // Removed Paper as it's replaced by divs
 import SearchIcon from '@mui/icons-material/Search';
+
 // Removed direct config import as getApiBaseUrl in utils handles it
-// import config from '../../config'; 
+// import config from '../../config';
 import getBaseUrl from '../../utils/GetUrl'; // Assuming this utility is for your frontend base URL
 
 import {
@@ -22,16 +23,15 @@ import {
 const DEFAULT_PLACEHOLDER = '/assets/placeholder-image.png'; // Assuming this path exists in your public folder
 const ERROR_PLACEHOLDER = '/assets/image-error.png'; // Assuming this path exists in your public folder
 
-
 const ProfilePhotoUploadForm = () => {
-    const navigate = useNavigate();
-    const [loggedInEmail, setLoggedInEmail] = useState('');
-    const [searchCriteria, setSearchCriteria] = useState({ profileId: '', email: loggedInEmail, phone: '' });
-    const [profileData, setProfileData] = useState(null);
+    const navigate = useNavigate(); //
+    const [loggedInEmail, setLoggedInEmail] = useState(''); //
+    const [searchCriteria, setSearchCriteria] = useState({ profileId: '', email: loggedInEmail, phone: '' }); //
+    const [profileData, setProfileData] = useState(null); //
     const [photos, setPhotos] = useState([]); // Files selected for upload
     const [photoPreviews, setPhotoPreviews] = useState([]); // URLs for local previews
-    const [uploading, setUploading] = useState(false);
-    const [uploadError, setUploadError] = useState(null);
+    const [uploading, setUploading] = useState(false); //
+    const [uploadError, setUploadError] = useState(null); //
     const [fetchError, setFetchError] = useState(null); // Error fetching profile or existing photos
     const [searching, setSearching] = useState(false); // When searching for a profile
     const [uploadedPhotos, setUploadedPhotos] = useState([]); // Photos already uploaded to Azure/DB
@@ -147,39 +147,39 @@ const ProfilePhotoUploadForm = () => {
     };
 
     // --- MODIFIED handleDeletePhoto function (from immersive above) ---
-    const handleDeletePhoto = async (photoId, blobName) => {
-        setDeletingPhoto(true);
-        setDeleteError(null);
+    const handleDeletePhoto = async (photoId, blobName) => { //
+        setDeletingPhoto(true); //
+        setDeleteError(null); //
 
         try {
-            await deletePhoto(
-                photoId,
+            await deletePhoto( //
+                photoId, //
                 blobName, // Pass the blobName to the utility function
-                setDeleteError,
-                setDeletingPhoto,
-                async () => {
-                    if (isMounted.current && profileData && profileData.id) {
-                        setFailedImages(new Set());
-                        await getUploadedPhotos(
-                            profileData.id,
-                            setUploadedPhotos,
-                            setFetchError,
-                            setGettingPhotos
+                setDeleteError, //
+                setDeletingPhoto, //
+                async () => { //
+                    if (isMounted.current && profileData && profileData.id) { //
+                        setFailedImages(new Set()); //
+                        await getUploadedPhotos( //
+                            profileData.id, //
+                            setUploadedPhotos, //
+                            setFetchError, //
+                            setGettingPhotos //
                         );
-                        await fetchDefaultPhoto(
-                            profileData.id,
-                            setDefaultPhoto,
-                            setFetchError
+                        await fetchDefaultPhoto( //
+                            profileData.id, //
+                            setDefaultPhoto, //
+                            setFetchError //
                         );
                     }
                 }
             );
         } catch (error) {
-            console.error("Error in handleDeletePhoto local function:", error);
+            console.error("Error in handleDeletePhoto local function:", error); //
         } finally {
-            if (isMounted.current) {
-                setDeletingPhoto(false);
-                console.log('Debug (Form): Delete process in form complete.');
+            if (isMounted.current) { //
+                setDeletingPhoto(false); //
+                console.log('Debug (Form): Delete process in form complete.'); //
             }
         }
     };
@@ -212,36 +212,36 @@ const ProfilePhotoUploadForm = () => {
     };
 
     // Custom Image component to handle load errors and display placeholders
-    const SafeImage = ({ src, alt, style, isDefault }) => {
-        const [imgSrc, setImgSrc] = useState(src || DEFAULT_PLACEHOLDER);
-        const [hasErrored, setHasErrored] = useState(false);
+    const SafeImage = ({ src, alt, style, isDefault }) => { //
+        const [imgSrc, setImgSrc] = useState(src || DEFAULT_PLACEHOLDER); //
+        const [hasErrored, setHasErrored] = useState(false); //
 
-        useEffect(() => {
+        useEffect(() => { //
             // Reset image source and error state when src prop changes
-            if (src && src !== imgSrc && !failedImages.has(src)) {
-                setImgSrc(src);
-                setHasErrored(false);
-            } else if (failedImages.has(src)) {
-                setImgSrc(ERROR_PLACEHOLDER);
-                setHasErrored(true);
+            if (src && src !== imgSrc && !failedImages.has(src)) { //
+                setImgSrc(src); //
+                setHasErrored(false); //
+            } else if (failedImages.has(src)) { //
+                setImgSrc(ERROR_PLACEHOLDER); //
+                setHasErrored(true); //
             }
         }, [src, failedImages]); // Depend on src and failedImages set
 
-        const handleError = () => {
-            if (isMounted.current && !hasErrored && src) {
-                console.warn(`Image failed to load: ${src}`);
+        const handleError = () => { //
+            if (isMounted.current && !hasErrored && src) { //
+                console.warn(`Image failed to load: ${src}`); //
                 setFailedImages(prev => new Set(prev).add(src)); // Add to global failed images set
-                setHasErrored(true);
+                setHasErrored(true); //
                 setImgSrc(ERROR_PLACEHOLDER); // Display error placeholder
             }
         };
 
-        return (
+        return ( //
             <img
-                src={imgSrc}
-                alt={alt}
-                style={style}
-                onError={handleError}
+                src={imgSrc} //
+                alt={alt} //
+                style={style} //
+                onError={handleError} //
             />
         );
     };
@@ -264,215 +264,252 @@ const ProfilePhotoUploadForm = () => {
 
 
     return (
-        <Paper elevation={3} sx={{ padding: 3, margin: 2, borderRadius: '12px' }}>
-            <Typography variant="h5" gutterBottom sx={{ color: '#3f51b5', fontWeight: 'bold' }}>
-                Upload Photos to Profile
-            </Typography>
+        // Outermost div for full page background
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-100 p-6">
 
-            <Grid container spacing={2} alignItems="center">
-                <Grid item xs={12} sm={6} md={4}>
-                    <TextField
-                        fullWidth
-                        label="Profile ID"
-                        name="profileId"
-                        value={searchCriteria.profileId}
-                        onChange={handleSearchCriteriaChangeLocal}
-                        variant="outlined"
-                        size="small"
-                        sx={{ borderRadius: '8px' }}
-                    />
-                </Grid>
-                <Grid item xs={12} sm={6} md={4}>
-                    <TextField
-                        fullWidth
-                        label="Email"
-                        name="email"
-                        value={searchCriteria.email}
-                        onChange={handleSearchCriteriaChangeLocal}
-                        variant="outlined"
-                        size="small"
-                        sx={{ borderRadius: '8px' }}
-                    />
-                </Grid>
-                <Grid item xs={12} sm={6} md={4}>
-                    <TextField
-                        fullWidth
-                        label="Phone Number"
-                        name="phone"
-                        value={searchCriteria.phone}
-                        onChange={handleSearchCriteriaChangeLocal}
-                        variant="outlined"
-                        size="small"
-                        sx={{ borderRadius: '8px' }}
-                    />
-                </Grid>
-                <Grid item xs={12}>
-                    <Button
-                        fullWidth
-                        variant="contained"
-                        color="primary"
-                        onClick={handleSearchProfileLocal}
-                        startIcon={<SearchIcon />}
-                        disabled={searching || (!searchCriteria.profileId && !searchCriteria.email && !searchCriteria.phone)}
-                        sx={{ mt: 2, borderRadius: '8px', padding: '10px 0' }}
-                    >
-                        {searching ? <CircularProgress size={20} color="inherit" sx={{ mr: 1 }} /> : 'Search Profile'}
-                    </Button>
-                </Grid>
-            </Grid>
+            {/* Navigation Bar - Reused from BasicSearchForm.jsx */}
+            <nav className="bg-white shadow-md py-4">
+                <div className="container mx-auto flex justify-between items-center px-6">
+                    <Link to="/" className="text-xl font-bold text-indigo-700">
+                        Photo Upload
+                    </Link>
+                    <div className="space-x-4">
+                        <Link to="/" className="text-gray-700 hover:text-indigo-500">Home</Link>
+                    </div>
+                </div>
+            </nav>
 
-            {fetchError && (
-                <Typography color="error" sx={{ mt: 2, textAlign: 'center', backgroundColor: '#ffebee', p: 1, borderRadius: '8px' }}>
-                    {fetchError}
-                </Typography>
-            )}
-
-            {profileData && (
-                <>
-                    <Typography variant="h6" sx={{ mt: 4, color: '#424242', borderBottom: '1px solid #eee', pb: 1 }}>Profile Details</Typography>
-                    <Typography variant="body1" sx={{ mt: 1 }}>Name: {profileData.name}</Typography>
-                    {profileData.current_age && <Typography variant="body1">Current Age: {profileData.current_age}</Typography>}
-                    {profileData.gotra && <Typography variant="body1">Gotra: {profileData.gotra}</Typography>}
-
-                    <div style={{ marginTop: 20 }}>
-                        <input
-                            type="file"
-                            name="photos"
-                            multiple
-                            accept="image/*"
-                            onChange={handlePhotoChangeLocal}
-                            disabled={isFileInputDisabled || uploading} // Disable during upload too
-                            style={{ display: 'block', width: '100%', padding: '10px', border: '1px solid #ddd', borderRadius: '8px', backgroundColor: isFileInputDisabled ? '#e0e0e0' : 'white' }}
-                        />
+            {/* Main Content Area - Reused structure and styling */}
+            <section className="py-8">
+                <div className="max-w-5xl mx-auto bg-white shadow-lg rounded-lg overflow-hidden">
+                    {/* Header for the content section */}
+                    <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-6">
+                        <h1 className="text-2xl font-bold">Upload Photos to Profile</h1>
                     </div>
 
-                    {uploadError && (
-                        <Typography color="error" sx={{ mt: 2, textAlign: 'center', backgroundColor: '#ffebee', p: 1, borderRadius: '8px' }}>
-                            {uploadError}
-                        </Typography>
-                    )}
-
-                    {photoPreviews.length > 0 && (
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginTop: 15, justifyContent: 'center' }}>
-                            {photoPreviews.map((preview, index) => (
-                                <div key={index} style={{ border: '1px solid #ccc', padding: 5, borderRadius: '8px', overflow: 'hidden' }}>
-                                    <SafeImage
-                                        src={preview}
-                                        alt={`preview-${index}`}
-                                        style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: '4px' }}
-                                    />
-                                </div>
-                            ))}
-                        </div>
-                    )}
-
-                    <FormControlLabel
-                        control={
-                            <Checkbox
-                                checked={isDefaultPhoto}
-                                onChange={(e) => setIsDefaultPhoto(e.target.checked)}
-                                name="isDefaultPhoto"
-                                color="primary"
-                                disabled={uploading} // Disable during upload
-                            />
-                        }
-                        label="Set as Default Photo (for the first photo in this batch)"
-                        sx={{ mt: 2 }}
-                    />
-
-                    <Button
-                        variant="contained"
-                        color="secondary"
-                        onClick={handleUploadPhotosLocal}
-                        disabled={photos.length === 0 || uploading || isFileInputDisabled}
-                        sx={{ mt: 2, borderRadius: '8px', padding: '10px 0', backgroundColor: '#f50057', '&:hover': { backgroundColor: '#c51162' } }}
-                    >
-                        {uploading ? <><CircularProgress size={20} color="inherit" sx={{ mr: 1 }} /> Uploading...</> : 'Upload Photos'}
-                    </Button>
-
-                    <Typography variant="h6" sx={{ mt: 4, color: '#424242', borderBottom: '1px solid #eee', pb: 1 }}>Uploaded Photos</Typography>
-
-                    {gettingPhotos ? (
-                        <CircularProgress sx={{ mt: 2, display: 'block', margin: 'auto' }} />
-                    ) : (
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '15px', marginTop: 15, justifyContent: 'center' }}>
-                            {uploadedPhotos.length > 0 ? (
-                                uploadedPhotos.map((photo, index) => (
-                                    <div key={photo.id} style={{ position: 'relative', border: '1px solid #ddd', padding: 5, borderRadius: '8px', overflow: 'hidden', width: '120px', textAlign: 'center' }}>
-                                        <SafeImage
-                                            src={getValidImageUrl(photo.fullUrl)}
-                                            alt={`uploaded-${index}`}
-                                            style={{ width: 100, height: 100, objectFit: 'cover', borderRadius: '4px', display: 'block', margin: 'auto' }}
-                                        />
-                                        {photo.isDefault && (
-                                            <div style={{
-                                                position: 'absolute',
-                                                top: 5,
-                                                right: 5,
-                                                background: 'rgba(76, 175, 80, 0.8)', // Green shade
-                                                color: 'white',
-                                                padding: '2px 8px',
-                                                borderRadius: '5px',
-                                                fontSize: '0.65rem',
-                                                fontWeight: 'bold'
-                                            }}>
-                                                Default
-                                            </div>
-                                        )}
-                                        {/* --- MODIFIED DELETE BUTTON --- */}
-                                        <Button
-                                            variant="contained"
-                                            color="error"
-                                            size="small"
-                                            // IMPORTANT: Pass both photo.id (for DB) and photo.blobName (for Azure)
-                                            onClick={() => handleDeletePhoto(photo.id, photo.blobName)}
-                                            disabled={deletingPhoto}
-                                            sx={{ mt: 1, fontSize: '0.65rem', p: '2px 8px', width: '100%', borderRadius: '6px', backgroundColor: '#f44336', '&:hover': { backgroundColor: '#d32f2f' } }}
-                                        >
-                                            {deletingPhoto ? <CircularProgress size={15} color="inherit" /> : 'Delete'}
-                                        </Button>
-                                        {/* --- END MODIFIED DELETE BUTTON --- */}
-                                    </div>
-                                ))
-                            ) : (
-                                <Typography sx={{ mt: 2, width: '100%', textAlign: 'center', color: '#666' }}>No photos uploaded yet for this profile.</Typography>
-                            )}
-                        </div>
-                    )}
-
-                    <div style={{ marginTop: 25, borderTop: '1px solid #eee', paddingTop: 20 }}>
-                        <Typography variant="h6" sx={{ color: '#424242' }}>Default Profile Photo</Typography>
-                        {defaultPhoto ? (
-                            <div style={{ marginTop: 10, textAlign: 'center' }}>
-                                <SafeImage
-                                    src={getValidImageUrl(defaultPhoto.fullUrl)}
-                                    alt="Default profile photo"
-                                    style={{ width: 180, height: 180, objectFit: 'cover', border: '3px solid #4CAF50', borderRadius: '12px', boxShadow: '0 4px 8px rgba(0,0,0,0.1)' }}
-                                    isDefault={true}
+                    {/* This div replaces your original <Paper> component. All its children go here. */}
+                    <div className="p-6">
+                        <Grid container spacing={2} alignItems="center">
+                            <Grid item xs={12} sm={6} md={4}>
+                                <TextField
+                                    fullWidth
+                                    label="Profile ID"
+                                    name="profileId"
+                                    value={searchCriteria.profileId}
+                                    onChange={handleSearchCriteriaChangeLocal}
+                                    variant="outlined"
+                                    size="small" //
+                                    sx={{ borderRadius: '8px' }} //
                                 />
-                                <Typography variant="caption" display="block" sx={{ mt: 1, color: '#666' }}>This is the primary photo displayed.</Typography>
-                            </div>
-                        ) : (
-                            <Typography sx={{ mt: 2, textAlign: 'center', color: '#666' }}>No default photo set for this profile.</Typography>
+                            </Grid>
+                            <Grid item xs={12} sm={6} md={4}>
+                                <TextField
+                                    fullWidth
+                                    label="Email"
+                                    name="email"
+                                    value={searchCriteria.email}
+                                    onChange={handleSearchCriteriaChangeLocal}
+                                    variant="outlined"
+                                    size="small" //
+                                    sx={{ borderRadius: '8px' }} //
+                                />
+                            </Grid>
+                            <Grid item xs={12} sm={6} md={4}>
+                                <TextField
+                                    fullWidth
+                                    label="Phone Number"
+                                    name="phone"
+                                    value={searchCriteria.phone}
+                                    onChange={handleSearchCriteriaChangeLocal}
+                                    variant="outlined"
+                                    size="small" //
+                                    sx={{ borderRadius: '8px' }} //
+                                />
+                            </Grid>
+                            <Grid item xs={12}>
+                                <Button
+                                    fullWidth
+                                    variant="contained"
+                                    color="primary"
+                                    onClick={handleSearchProfileLocal}
+                                    startIcon={<SearchIcon />}
+                                    disabled={searching || (!searchCriteria.profileId && !searchCriteria.email && !searchCriteria.phone)}
+                                    // Apply similar classes from BasicSearchForm
+                                    className="bg-indigo-500 hover:bg-indigo-600 text-white py-2 px-6 rounded-md text-lg font-semibold shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                                    sx={{ mt: 2, borderRadius: '8px', padding: '10px 0' }} // Keep existing Material-UI styles
+                                >
+                                    {searching ? <CircularProgress size={20} color="inherit" sx={{ mr: 1 }} /> : 'Search Profile'}
+                                </Button>
+                            </Grid>
+                        </Grid>
+
+                        {fetchError && ( //
+                            <Typography color="error" sx={{ mt: 2, textAlign: 'center', backgroundColor: '#ffebee', p: 1, borderRadius: '8px' }}>
+                                {fetchError}
+                            </Typography>
                         )}
-                    </div>
 
-                    {deleteError && (
-                        <Typography color="error" sx={{ mt: 2, textAlign: 'center', backgroundColor: '#ffebee', p: 1, borderRadius: '8px' }}>
-                            {deleteError}
-                        </Typography>
-                    )}
+                        {profileData && ( //
+                            <>
+                                <Typography variant="h6" sx={{ mt: 4, color: '#424242', borderBottom: '1px solid #eee', pb: 1 }}>Profile Details</Typography>
+                                <Typography variant="body1" sx={{ mt: 1 }}>Name: {profileData.name}</Typography>
+                                {profileData.current_age && <Typography variant="body1">Current Age: {profileData.current_age}</Typography>}
+                                {profileData.gotra && <Typography variant="body1">Gotra: {profileData.gotra}</Typography>}
 
-                    <Button
-                        variant="outlined"
-                        onClick={() => navigate('/dashboard')}
-                        sx={{ mt: 3, borderRadius: '8px', padding: '10px 0', borderColor: '#3f51b5', color: '#3f51b5', '&:hover': { borderColor: '#3f51b5', backgroundColor: '#e8eaf6' } }}
-                    >
-                        Back to Dashboard
-                    </Button>
-                </>
-            )}
-        </Paper>
+                                <Box sx={{ mt: 3, p: 2, border: '1px solid #e0e0e0', borderRadius: '8px', backgroundColor: '#fafafa' }}>
+                                    <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 'bold' }}>Select Photos for Upload</Typography>
+                                    <input
+                                        type="file"
+                                        name="photos"
+                                        multiple
+                                        accept="image/*"
+                                        onChange={handlePhotoChangeLocal}
+                                        disabled={isFileInputDisabled || uploading} // Disable during upload too
+                                        style={{ display: 'block', width: '100%', padding: '10px', border: '1px solid #ddd', borderRadius: '8px', backgroundColor: isFileInputDisabled ? '#e0e0e0' : 'white' }} //
+                                    />
+                                </Box>
+
+                                {uploadError && ( //
+                                    <Typography color="error" sx={{ mt: 2, textAlign: 'center', backgroundColor: '#ffebee', p: 1, borderRadius: '8px' }}>
+                                        {uploadError}
+                                    </Typography>
+                                )}
+
+                                {photoPreviews.length > 0 && ( //
+                                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: '10px', mt: 2, justifyContent: 'center', p: 2, border: '1px dashed #bdbdbd', borderRadius: '8px', backgroundColor: '#f5f5f5' }}>
+                                        <Typography variant="body2" sx={{ width: '100%', textAlign: 'center', mb: 1, color: '#555' }}>New Photos to Upload:</Typography>
+                                        {photoPreviews.map((preview, index) => (
+                                            <Box key={index} sx={{ border: '1px solid #ccc', padding: '5px', borderRadius: '8px', overflow: 'hidden', width: '90px', height: '90px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                <SafeImage
+                                                    src={preview}
+                                                    alt={`preview-${index}`}
+                                                    style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: '4px' }}
+                                                />
+                                            </Box>
+                                        ))}
+                                    </Box>
+                                )}
+
+                                <FormControlLabel //
+                                    control={
+                                        <Checkbox
+                                            checked={isDefaultPhoto} //
+                                            onChange={(e) => setIsDefaultPhoto(e.target.checked)} //
+                                            name="isDefaultPhoto" //
+                                            color="primary" //
+                                            disabled={uploading} // Disable during upload
+                                        />
+                                    }
+                                    label="Set as Default Photo (for the first photo in this batch)" //
+                                    sx={{ mt: 2 }} //
+                                />
+
+                                <Button
+                                    variant="contained"
+                                    color="secondary"
+                                    onClick={handleUploadPhotosLocal}
+                                    disabled={photos.length === 0 || uploading || isFileInputDisabled} //
+                                    // Apply similar classes from BasicSearchForm
+                                    className="bg-indigo-500 hover:bg-indigo-600 text-white py-2 px-6 rounded-md text-lg font-semibold shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                                    sx={{ mt: 2, borderRadius: '8px', padding: '10px 0', backgroundColor: '#f50057', '&:hover': { backgroundColor: '#c51162' } }} // Keep existing Material-UI styles
+                                >
+                                    {uploading ? <><CircularProgress size={20} color="inherit" sx={{ mr: 1 }} /> Uploading...</> : 'Upload Photos'}
+                                </Button>
+
+                                <Typography variant="h6" sx={{ mt: 4, color: '#424242', borderBottom: '1px solid #eee', pb: 1 }}>Uploaded Photos</Typography>
+
+                                {gettingPhotos ? ( //
+                                    <CircularProgress sx={{ mt: 2, display: 'block', margin: 'auto' }} /> //
+                                ) : (
+                                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: '15px', mt: 2, justifyContent: 'center', p: 2, border: '1px solid #e0e0e0', borderRadius: '8px', backgroundColor: '#fafafa' }}>
+                                        {uploadedPhotos.length > 0 ? ( //
+                                            uploadedPhotos.map((photo, index) => ( //
+                                                <Box key={photo.id} sx={{ position: 'relative', border: '1px solid #ddd', padding: '5px', borderRadius: '8px', overflow: 'hidden', width: '120px', textAlign: 'center', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
+                                                    <SafeImage
+                                                        src={getValidImageUrl(photo.fullUrl)} //
+                                                        alt={`uploaded-${index}`} //
+                                                        style={{ width: 100, height: 100, objectFit: 'cover', borderRadius: '4px', display: 'block', margin: 'auto' }} //
+                                                    />
+                                                    {photo.isDefault && ( //
+                                                        <Box sx={{
+                                                            position: 'absolute',
+                                                            top: 5,
+                                                            right: 5,
+                                                            background: 'rgba(76, 175, 80, 0.8)', // Green shade
+                                                            color: 'white',
+                                                            padding: '2px 8px',
+                                                            borderRadius: '5px',
+                                                            fontSize: '0.65rem',
+                                                            fontWeight: 'bold'
+                                                        }}>
+                                                            Default
+                                                        </Box>
+                                                    )}
+                                                    <Button //
+                                                        variant="contained"
+                                                        color="error"
+                                                        size="small"
+                                                        onClick={() => handleDeletePhoto(photo.id, photo.blobName)} //
+                                                        disabled={deletingPhoto} //
+                                                        sx={{ mt: 1, fontSize: '0.65rem', p: '2px 8px', width: '100%', borderRadius: '6px', backgroundColor: '#f44336', '&:hover': { backgroundColor: '#d32f2f' } }} //
+                                                    >
+                                                        {deletingPhoto ? <CircularProgress size={15} color="inherit" /> : 'Delete'}
+                                                    </Button>
+                                                </Box>
+                                            ))
+                                        ) : (
+                                            <Typography sx={{ mt: 2, width: '100%', textAlign: 'center', color: '#666' }}>No photos uploaded yet for this profile.</Typography> //
+                                        )}
+                                    </Box>
+                                )}
+
+                                <Box sx={{ mt: 4, borderTop: '1px solid #eee', pt: 3, pb: 2, textAlign: 'center', backgroundColor: '#fff' }}>
+                                    <Typography variant="h6" sx={{ color: '#424242', mb: 2 }}>Default Profile Photo</Typography>
+                                    {defaultPhoto ? ( //
+                                        <Box sx={{ mt: 1, display: 'inline-block', border: '3px solid #4CAF50', borderRadius: '12px', boxShadow: '0 4px 8px rgba(0,0,0,0.1)', overflow: 'hidden' }}>
+                                            <SafeImage
+                                                src={getValidImageUrl(defaultPhoto.fullUrl)} //
+                                                alt="Default profile photo"
+                                                style={{ width: 180, height: 180, objectFit: 'cover', display: 'block' }} // Adjusted styles for Box container
+                                                isDefault={true} //
+                                            />
+                                            <Typography variant="caption" display="block" sx={{ mt: 1, color: '#666', p: 1, backgroundColor: '#f0f0f0', borderTopLeftRadius: '0', borderTopRightRadius: '0', borderBottomLeftRadius: '8px', borderBottomRightRadius: '8px' }}>This is the primary photo displayed.</Typography>
+                                        </Box>
+                                    ) : (
+                                        <Typography sx={{ mt: 2, textAlign: 'center', color: '#666' }}>No default photo set for this profile.</Typography> //
+                                    )}
+                                </Box>
+
+                                {deleteError && ( //
+                                    <Typography color="error" sx={{ mt: 2, textAlign: 'center', backgroundColor: '#ffebee', p: 1, borderRadius: '8px' }}>
+                                        {deleteError}
+                                    </Typography>
+                                )}
+
+                                <Box sx={{ display: "flex", justifyContent: "center", mt: 4, gap: 2 }}>
+                                    <Button
+                                        variant="outlined" //
+                                        onClick={() => navigate('/dashboard')} //
+                                        // Apply similar classes from BasicSearchForm
+                                        className="bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 px-6 rounded-md text-lg font-semibold shadow-md focus:outline-none focus:ring-2 focus:ring-gray-400"
+                                        sx={{ mt: 3, borderRadius: '8px', padding: '10px 0', borderColor: '#3f51b5', color: '#3f51b5', '&:hover': { borderColor: '#3f51b5', backgroundColor: '#e8eaf6' } }} //
+                                    >
+                                        Back to Dashboard
+                                    </Button>
+                                </Box>
+                            </>
+                        )}
+                    </div> {/* End of p-6 div */}
+                </div> {/* End of max-w-5xl div */}
+            </section> {/* End of section */}
+
+            {/* Footer - Reused from BasicSearchForm.jsx */}
+            <footer className="bg-white shadow-inner py-6 text-center text-gray-700 text-sm mt-8">
+                <div className="container mx-auto px-6">
+                    <p className="mt-2">&copy; {new Date().getFullYear()} ProfileConnect. All rights reserved.</p>
+                </div>
+            </footer>
+        </div> // End of min-h-screen div
     );
 };
 

@@ -60,4 +60,16 @@ Do not make assumptions about cloud functions, Firebase, MongoDB, or Next.js unl
 
 Just guide me to identify the gap or logic flaw. Do not assume or replace code structure.
 
+currently we are working on advanced search module, 
+
+First let us clearly understand the sccope before getting in to code, use the search as starting point map all required fileds and identify what type of fields are there and how we are collecting these fieled during captruing the data. what all attributed we need to use, what functions, and how we are going to strcture it. please let us have plan first before getting in to code. once this is clear I will upload the required files for reference. photo upload module
+
+
+
+"I have successfully implemented and verified the photo upload to Azure Blob Storage. The backend and frontend communication is working perfectly, and the deployment process is smooth.
+
+The next step is to implement the actual MySQL database integration for the photo module. Currently, my uploadPhotosRoutes.js and uploadPhotosController.js use placeholder database logic. I need to replace these placeholder sections ([PLACEHOLDER DB INSERT], [PLACEHOLDER DB RETRIEVAL], etc.) with actual MySQL database operations for saving, retrieving, and deleting photo details (including the Azure URLs).
+
+Please guide me step-by-step through replacing these placeholder database operations with real MySQL queries in my SMKalyanBE project." do not jump for coding one step at at time once i give confirmation of step completion then move to 2nd step
+
 currently we are working on midifcations for profile data which is registered from regitration module. we have set up like MyProfilePage will ack as key code which is availble in D:\1. Data\1. Personal DOcument\00.SM\NewProject\dev\SMKalyanUI\src\components\ModifyProfile directory and we have EditModeProfile and ViewModeProfile files in D:\1. Data\1. Personal DOcument\00.SM\NewProject\dev\SMKalyanUI\src\components\ModifyProfile\PartnerPreferences. then we all sections files in D:\1. Data\1. Personal DOcument\00.SM\NewProject\dev\SMKalyanUI\src\components\ModifyProfile\PartnerPreferences\sections. these files like horoscope,education,basic few more other section files will render the fileds for both view and edit mode. currently Basic Profile, hosroscope and education sections are working perfectly fine. we need to ensure all other section should work seemlessly as desired. in this conext we need to work. some time I will provide you the code files which are used for profile registration module so that you can refer and it should work like registration module when we are editing the fileds. i have different type of fields like autocomplete, select, text etc. now please review the file my current challenge is Residence City populating with existing value. It is coming in viewmode
