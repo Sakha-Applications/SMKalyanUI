@@ -3,7 +3,9 @@ import { Link } from "react-router-dom";
 const navItems = [
   { to: "/my-profile", label: "Edit Your Profile" },
   { to: "/partner-preferences", label: "Edit Your Preferences" },
-  { to: "/contact-details", label: "Search Profiles" }
+  { to: "/basic-search", label: "Search" },  // Link to your new Basic Search Form
+//  { to: "/contact-details", label: "Search Profiles" }, // Existing Search Profiles link
+  { to: "/advanced-search", label: "Advanced Search" } // NEW: Advanced Search link
 ];
 
 const SidebarMenu = () => (

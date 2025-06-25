@@ -1,75 +1,66 @@
+// src/components/common/renderAutocomplete.jsx
 import React, { useState, useEffect, useRef } from 'react';
-import StyledFormField from './StyledFormField';
+import StyledFormField from './StyledFormField'; // Ensure this path is correct
 
 const AutocompleteInput = ({
   label,
   name,
   inputValue,
   inputSetter,
-  options,
-  setOptions,
+  options, // Array of options
+  setOptions, // Setter for the options array (crucial for clearing)
   show,
   setShow,
   loading,
-  searchFn,
-  onSelect,
+  searchFn, // Function to call for search (e.g., searchMotherTongues)
+  onSelect, // Callback when an option is selected
   error,
   helperText,
-  delay = 300
+  delay = 300 // Debounce delay
 }) => {
   const [justSelected, setJustSelected] = useState(false);
   const dropdownRef = useRef(null);
-  const debounceTimer = useRef(null);
 
-  const safeSetShow = typeof setShow === 'function' ? setShow : () => {};
-  const safeShow = typeof show === 'boolean' ? show : false;
-
+  // Handle clicks outside the dropdown to close it
   useEffect(() => {
     const handleOutsideClick = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
-        safeSetShow(false);
+        setShow(false);
       }
     };
     document.addEventListener("mousedown", handleOutsideClick);
     return () => {
       document.removeEventListener("mousedown", handleOutsideClick);
     };
-  }, [safeSetShow]);
+  }, [setShow]);
 
+  // Debounce effect for search input
   useEffect(() => {
-    if (justSelected) {
+    if (justSelected) { // If an item was just selected, prevent immediate re-search
       setJustSelected(false);
       return;
     }
 
-    if (debounceTimer.current) {
-      clearTimeout(debounceTimer.current);
-    }
-
-    debounceTimer.current = setTimeout(async () => {
+    const timer = setTimeout(async () => {
       if (inputValue && inputValue.length >= 2) {
-        try {
-          const results = await searchFn(inputValue);
-          setOptions(results || []);
-          safeSetShow(true);
-        } catch (err) {
-          console.error(`Error fetching ${label} options:`, err);
-        }
+        const results = await searchFn(inputValue);
+        setOptions(results || []); // Use setter to update options state
+        setShow(true); // Show dropdown after results are fetched
       } else {
-        setOptions([]);
-        safeSetShow(false);
+        setOptions([]); // Clear options when input is too short
+        setShow(false); // Hide dropdown
       }
     }, delay);
 
-    return () => clearTimeout(debounceTimer.current);
-  }, [inputValue]); // only re-run when inputValue changes
+    return () => clearTimeout(timer);
+  }, [inputValue, delay, searchFn, setOptions, justSelected, setShow]);
 
   const handleOptionSelect = (option) => {
     setJustSelected(true);
-    inputSetter(option.label);
-    setOptions([]);
-    safeSetShow(false);
-    onSelect(name, option.label, option.id);
+    inputSetter(option.label); // Update the input field with selected label
+    setOptions([]); // <-- Crucial: Clear options array immediately after selection
+    setShow(false); // Hide the dropdown
+    onSelect(name, option.label, option.id); // Call parent's onSelect callback
   };
 
   const isError = !!error;
@@ -93,21 +84,23 @@ const AutocompleteInput = ({
         error={isError}
         helperText={currentHelperText}
         onFocus={() => {
-          if (inputValue && inputValue.length >= 2) {
-            safeSetShow(true);
-          } else if (options.length > 0 && !justSelected) {
-            safeSetShow(true);
-          }
+            // Only show dropdown on focus if input has enough characters
+            // or if there are already options loaded (e.g. from initial load if not empty)
+            if (inputValue && inputValue.length >= 2) {
+                setShow(true);
+            } else if (options.length > 0 && !justSelected) { // Show if pre-populated and not just selected
+                setShow(true);
+            }
         }}
       />
       {loading && <p className="text-sm text-gray-500 mt-1">Loading...</p>}
-      {safeShow && options.length > 0 && (
+      {show && options.length > 0 && (
         <ul className="absolute bg-white border border-gray-300 w-full max-h-48 overflow-y-auto z-10 mt-1 shadow-md rounded-md">
           {options.map((opt, i) => (
             <li
-              key={opt.id || opt.label || i}
+              key={opt.id || opt.label || i} // Use ID if available, else label/index
               className="p-2 hover:bg-gray-100 cursor-pointer"
-              onMouseDown={() => handleOptionSelect(opt)}
+              onMouseDown={() => handleOptionSelect(opt)} // Use onMouseDown to prevent blur before click
             >
               {opt.label}
             </li>

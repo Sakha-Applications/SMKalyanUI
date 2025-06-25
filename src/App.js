@@ -6,7 +6,9 @@ import LoginScreen from './components/LoginScreen';
 import ProfileRegisterForm from './components/profileRegistration/ProfileRegisterForm';
 import ProfileSearchForm from './components/ProfileSearchForm';
 
+
 import BasicSearchForm from './components/Search/BasicSearchForm'; 
+import AdvancedSearchForm from './components/Search/AdvancedSearchForm';
 
 import ResetPasswordScreen from './components/ResetPasswordScreen';
 import Dashboard from './components/Dashboard';
@@ -128,6 +130,16 @@ function App() {
                         </ProtectedRoute>
                     }
                 />
+
+<Route
+    path="/advanced-search"
+    element={
+        <ProtectedRoute>
+            <AdvancedSearchForm />
+        </ProtectedRoute>
+    }
+/>
+
 
             
             </Routes>

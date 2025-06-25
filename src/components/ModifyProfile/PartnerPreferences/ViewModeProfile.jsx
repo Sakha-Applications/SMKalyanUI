@@ -63,7 +63,7 @@ const ViewModeProfile = ({ profileData, formatDisplayValue, cmToFeetInches, setI
           className="px-8 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
           onClick={() => setIsEditing(true)}
         >
-          ✏️ Edit Preferences
+          ✏️ Edit Your Profile
         </button>
 
         <button
