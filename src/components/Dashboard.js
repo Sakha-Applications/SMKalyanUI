@@ -46,11 +46,7 @@ const Dashboard = () => {
 
               <TimelineStatsGrid />
 
-              <h3 className="text-xl font-semibold mb-4 text-indigo-800">Suggested Matches</h3>
-              <MatchGrid />
-
-              <h3 className="text-xl font-semibold mt-8 mb-4 text-indigo-800">Invitations</h3>
-              <MatchGrid />
+           
             </DashboardLayout>
           </div>
 

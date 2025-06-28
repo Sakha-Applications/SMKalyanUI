@@ -7,7 +7,6 @@ import getBaseUrl from '../../utils/GetUrl'; // Assuming this utility correctly 
 // Function to get the API base URL. This should point to your SMKalyanBE server.
 function getApiBaseUrl() {
   let url = config.apiUrl;
-  // Fallback to localhost:3001/api if config.apiUrl is invalid or empty
   if (!url || url.includes('${') || url === '') {
     console.warn('⚠️ Detected invalid API base URL in config, falling back to localhost:3001/api.');
     return `${getBaseUrl()}/api`; // Default to http://localhost:3001/api
@@ -76,7 +75,6 @@ export const handleSearchProfile = async (searchCriteria, setProfileData, setFet
                 
                 // Fetch photos from the backend (which now gets them from DB storing Azure URLs)
                 await getUploadedPhotosFn(profileId, setUploadedPhotos, setFetchError, null);
-                // Directly await fetchDefaultPhotoFn as it is now an async function
                 await fetchDefaultPhotoFn(profileId, setDefaultPhoto, setFetchError);
             } else {
                 console.log('Debug (Utils): handleSearchProfile - No valid profile ID found in search response.');
@@ -164,7 +162,6 @@ export const handleUploadPhotos = async (profileData, photos, isDefaultPhoto, se
 
         // Refresh the uploaded photos list and default photo from the backend
         await getUploadedPhotosFn(profileData.id, setUploadedPhotos, setFetchError, setGettingPhotosFn);
-        // Directly await fetchDefaultPhotoFn as it is now an async function
         await fetchDefaultPhotoFn(profileData.id, setDefaultPhoto, setFetchError);
         
         console.log('Debug (Utils): handleUploadPhotos - Upload successful, fetched updated photos and default photo from backend.');
@@ -225,23 +222,21 @@ export const getUploadedPhotos = async (profileId, setUploadedPhotos, setFetchEr
     }
 };
 
-// MODIFIED: This function now uses async/await internally and handles its own state updates via passed setters.
-// It no longer takes successCallback and errorCallback.
 export const fetchDefaultPhoto = async (profileId, setDefaultPhoto, setFetchError) => {
     if (!profileId) {
         setDefaultPhoto(null);
         console.log('Debug (Utils): fetchDefaultPhoto - No profile ID provided.');
         return;
     }
-    setFetchError(null); // Clear any previous fetch error
-    console.log(`Debug (Utils): fetchDefaultPhoto - Fetching default photo for profile ID: ${profileId}`);
+    setFetchError(null);
+    console.log('Debug (Utils): fetchDefaultPhoto - Fetching default photo for profile ID:', profileId);
 
     const apiBaseUrl = getApiBaseUrl();
-    console.log(`Debug (Utils): fetchDefaultPhoto - Calling get default photo API at: ${apiBaseUrl}/get-default-photo?profileId=${profileId}`);
+    console.log('Debug (Utils): fetchDefaultPhoto - Calling get default photo API at:', `${apiBaseUrl}/get-default-photo?profileId=${profileId}`);
 
     try {
         const response = await axios.get(`${apiBaseUrl}/get-default-photo?profileId=${profileId}`);
-        console.log('Debug (Utils): fetchDefaultPhoto - API response (SUCCESS):', response.data);
+        console.log('Debug (Utils): fetchDefaultPhoto - API response:', response.data);
 
         // Assume backend provides 'id', 'fullUrl' (full Azure URL), and 'blobName' if a default photo exists
         if (response.data && response.data.id && response.data.fullUrl && response.data.blobName) {
@@ -250,32 +245,15 @@ export const fetchDefaultPhoto = async (profileId, setDefaultPhoto, setFetchErro
                 fullUrl: response.data.fullUrl, // This is the full Azure Blob URL
                 blobName: response.data.blobName // Needed for deletion from Azure
             });
-            console.log('Debug (Utils): fetchDefaultPhoto - Default photo state updated (SUCCESS):', response.data);
+            console.log('Debug (Utils): fetchDefaultPhoto - Default photo state updated:', response.data);
         } else {
-            // This path means a 200 OK was received, but the data payload indicates no photo
-            setDefaultPhoto(null); // Explicitly set to null if no photo data
-            console.log('Debug (Utils): fetchDefaultPhoto - No default photo found or incomplete data received (API returned 200 OK but no valid photo).');
+            setDefaultPhoto(null);
+            console.log('Debug (Utils): fetchDefaultPhoto - No default photo found or incomplete data received.');
         }
     } catch (error) {
-        console.error('Debug (Utils): fetchDefaultPhoto - Error fetching default photo (CATCH BLOCK):', error);
-        // This 'catch' block explicitly handles non-2xx HTTP responses (like 404)
-        if (axios.isAxiosError(error) && error.response) {
-            console.error(`Debug (Utils): fetchDefaultPhoto - Axios Error Response Status: ${error.response.status}, Data: ${JSON.stringify(error.response.data)}`);
-            if (error.response.status === 404) {
-                // Specific handling for 404: "No default photo found"
-                setFetchError("No default photo found for this profile.");
-                console.log('Debug (Utils): fetchDefaultPhoto - Handled 404: No default photo found for profile.');
-            } else {
-                // General HTTP error
-                setFetchError(error.response.data?.message || `Error: ${error.response.status} ${error.response.statusText}`);
-                console.log(`Debug (Utils): fetchDefaultPhoto - Handled other HTTP error: ${error.response.status}`);
-            }
-        } else {
-            // Network error or other unexpected error
-            setFetchError(error.message || 'Error fetching default photo. Please try again.');
-            console.log('Debug (Utils): fetchDefaultPhoto - Handled non-Axios or network error.');
-        }
-        setDefaultPhoto(null); // Ensure photo is cleared on any error
+        console.error('Debug (Utils): fetchDefaultPhoto - Error fetching default photo:', error);
+        setFetchError(error.response?.data?.message || 'Error fetching default photo. Please try again.');
+        setDefaultPhoto(null);
     }
 };
 

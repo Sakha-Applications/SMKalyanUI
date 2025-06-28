@@ -67,11 +67,13 @@ const AdvancedSearchForm = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
-    // RESTORED: Local states for Autocomplete `show` flags, as your current AutocompleteInput expects them
+    // Local states for Autocomplete `show` flags, as your current AutocompleteInput expects them
     const [motherTongueShow, setMotherTongueShow] = useState(false);
     const [guruMathaShow, setGuruMathaShow] = useState(false);
-    const [educationShow, setEducationShow] = useState(false);
-    const [professionShow, setProfessionShow] = useState(false);
+    // Education and Profession might not need 'show' state if their options are static and not dynamically searched
+    const [educationShow, setEducationShow] = useState(false); // Kept for consistency if renderAutocomplete uses it
+    const [professionShow, setProfessionShow] = useState(false); // Kept for consistency if renderAutocomplete uses it
+
 
     const {
         isLoading: apiDataLoading,
@@ -79,71 +81,45 @@ const AdvancedSearchForm = () => {
         gotraOptions,
         rashiOptions,
         nakshatraOptions,
+        // These are functions to fetch dynamic autocomplete options
         searchMotherTongues,
         searchGuruMatha,
-        searchProfessions, // This is a function
-        professionOptions: apiProfessionOptions, // This might be an array or null
-        searchEducations, // This is a function
-        educationOptions: apiEducationOptions, // This might be an array or null
+        searchProfessions, // This is a function that returns professions based on query
+        professionOptions: allProfessionOptions, // This is the full list from useApiData initial fetch
+        searchEducation, // This is a function that returns educations based on query
+        educationOptions: allEducationOptions, // This is the full list from useApiData initial fetch
         searchPlaces,
     } = useApiData();
 
 
-    // RESTORED: States to control the text input for Autocomplete components
+    // States to control the text input for Autocomplete components
     const [motherTongueInput, setMotherTongueInput] = useState(searchQuery.motherTongue || "");
     const [guruMathaInput, setGuruMathaInput] = useState(searchQuery.guruMatha || "");
-    const [fatherProfessionInput, setFatherProfessionInput] = useState(searchQuery.fatherProfession || "");
-    const [motherProfessionInput, setMotherProfessionInput] = useState(searchQuery.motherProfession || "");
     const [educationInput, setEducationInput] = useState(searchQuery.education || "");
     const [professionInput, setProfessionInput] = useState(searchQuery.profession || "");
+    // Father/Mother profession were not autocompletes, removed their input states here for clarity.
+    // If they were, they'd need similar setup.
 
-    // RESTORED: States to hold the options (suggestions) for Autocomplete components
+    // States to hold the options (suggestions) for Autocomplete components
+    // These will be dynamically updated by the AutocompleteInput component via `setOptions` prop and `searchFn`.
     const [motherTongueAutocompleteOptions, setMotherTongueAutocompleteOptions] = useState([]);
     const [guruMathaAutocompleteOptions, setGuruMathaAutocompleteOptions] = useState([]);
     const [professionAutocompleteOptions, setProfessionAutocompleteOptions] = useState([]);
     const [educationAutocompleteOptions, setEducationAutocompleteOptions] = useState([]);
 
 
-    // RESTORED: Effect to initialize autocomplete input fields when searchQuery changes
+    // Effect to initialize autocomplete input fields when searchQuery changes
+    // This makes sure if you programmatically set searchQuery.motherTongue, the input updates.
     useEffect(() => {
-        if (searchQuery.motherTongue !== motherTongueInput) {
-            setMotherTongueInput(searchQuery.motherTongue || "");
-        }
-        if (searchQuery.guruMatha !== guruMathaInput) {
-            setGuruMathaInput(searchQuery.guruMatha || "");
-        }
-        if (searchQuery.fatherProfession !== fatherProfessionInput) {
-            setFatherProfessionInput(searchQuery.fatherProfession || "");
-        }
-        if (searchQuery.motherProfession !== motherProfessionInput) {
-            setMotherProfessionInput(searchQuery.motherProfession || "");
-        }
-        if (searchQuery.education !== educationInput) {
-            setEducationInput(searchQuery.education || "");
-        }
-        if (searchQuery.profession !== professionInput) {
-            setProfessionInput(searchQuery.profession || "");
-        }
+        setMotherTongueInput(searchQuery.motherTongue || "");
+        setGuruMathaInput(searchQuery.guruMatha || "");
+        setEducationInput(searchQuery.education || "");
+        setProfessionInput(searchQuery.profession || "");
+        // Only update if current input differs from searchQuery value
     }, [
         searchQuery.motherTongue, searchQuery.guruMatha,
-        searchQuery.fatherProfession, searchQuery.motherProfession,
         searchQuery.education, searchQuery.profession,
-        motherTongueInput, guruMathaInput, fatherProfessionInput, motherProfessionInput, educationInput, professionInput
     ]);
-
-    // RESTORED & CORRECTED: Effect to populate autocomplete options from useApiData.
-    // The previous error `searchProfessions.map is not a function` happened because `searchProfessions` is a function.
-    // We should use `apiProfessionOptions` and `apiEducationOptions` which are arrays.
-    useEffect(() => {
-        if (Array.isArray(apiProfessionOptions) && apiProfessionOptions.length > 0) {
-            setProfessionAutocompleteOptions(apiProfessionOptions.map(prof => ({ label: prof.name, value: prof.name })));
-        }
-        if (Array.isArray(apiEducationOptions) && apiEducationOptions.length > 0) {
-            setEducationAutocompleteOptions(apiEducationOptions.map(edu => ({ label: edu.name, value: edu.name })));
-        }
-        // Note: For dynamically searched autocompletes like MotherTongue, GuruMatha,
-        // their options are updated via `searchFn` prop and internal logic of AutocompleteInput.
-    }, [apiProfessionOptions, apiEducationOptions]);
 
 
     // Define static options for Select fields (unchanged)
@@ -265,6 +241,17 @@ const AdvancedSearchForm = () => {
         console.log(`handleChange called: ${name}: ${value}`);
     }, []);
 
+    // NEW: Generic handler for AutocompleteInput's text change
+    const handleAutocompleteInputChange = useCallback((name, value) => {
+        if (name === "motherTongue") setMotherTongueInput(value);
+        else if (name === "guruMatha") setGuruMathaInput(value);
+        else if (name === "education") setEducationInput(value);
+        else if (name === "profession") setProfessionInput(value);
+        // Important: Also update the searchQuery for the actual search
+        setSearchQuery((prev) => ({ ...prev, [name]: value }));
+    }, []);
+
+
     const handleAutocompleteSelect = useCallback((name, value) => {
         // This handler is used by AutocompleteInput (src/components/common/renderAutocomplete.jsx)
         // It's passed as `onSelect` prop to AutocompleteInput.
@@ -272,6 +259,11 @@ const AdvancedSearchForm = () => {
             ? value.value || value.label || ''
             : value;
         setSearchQuery((prev) => ({ ...prev, [name]: selectedValue }));
+        // Also update the input state to reflect the selected value
+        if (name === "motherTongue") setMotherTongueInput(selectedValue);
+        else if (name === "guruMatha") setGuruMathaInput(selectedValue);
+        else if (name === "education") setEducationInput(selectedValue);
+        else if (name === "profession") setProfessionInput(selectedValue);
     }, []);
 
     const handleMultiSelectChange = useCallback((name, selectedOptions) => {
@@ -405,17 +397,17 @@ const AdvancedSearchForm = () => {
                                 <AutocompleteInput
                                     label="Mother Tongue"
                                     name="motherTongue"
-                                    inputValue={motherTongueInput} // This prop is used by your AutocompleteInput
-                                    inputSetter={setMotherTongueInput} // This prop is used by your AutocompleteInput
-                                    options={motherTongueAutocompleteOptions} // This prop is used by your AutocompleteInput
-                                    setOptions={setMotherTongueAutocompleteOptions} // This prop is used by your AutocompleteInput
+                                    inputValue={motherTongueInput}
+                                    inputSetter={(val) => handleAutocompleteInputChange("motherTongue", val)} // Pass custom setter
+                                    options={motherTongueAutocompleteOptions} // These will be dynamically set by AutocompleteInput's searchFn
+                                    setOptions={setMotherTongueAutocompleteOptions} // Pass AutocompleteInput's internal option setter
                                     loading={apiDataLoading} // Or specific loading state for this autocomplete
-                                    searchFn={searchMotherTongues} // This prop is used by your AutocompleteInput
-                                    onSelect={handleAutocompleteSelect} // This prop is used by your AutocompleteInput
-                                    show={motherTongueShow} // This prop is used by your AutocompleteInput
-                                    setShow={setMotherTongueShow} // This prop is used by your AutocompleteInput
+                                    searchFn={searchMotherTongues} // Function to fetch suggestions
+                                    onSelect={handleAutocompleteSelect}
+                                    show={motherTongueShow}
+                                    setShow={setMotherTongueShow}
                                 />
-                                <div>   </div>
+                                <div>   </div> {/* Placeholder for grid alignment */}
                                 
                                 <StyledFormField
                                     label="Min Age"
@@ -528,7 +520,7 @@ const AdvancedSearchForm = () => {
                                     label="Guru-maTtha"
                                     name="guruMatha"
                                     inputValue={guruMathaInput}
-                                    inputSetter={setGuruMathaInput}
+                                    inputSetter={(val) => handleAutocompleteInputChange("guruMatha", val)} // Pass custom setter
                                     options={guruMathaAutocompleteOptions}
                                     setOptions={setGuruMathaAutocompleteOptions}
                                     loading={apiDataLoading}
@@ -597,11 +589,11 @@ const AdvancedSearchForm = () => {
                                     label="Education"
                                     name="education"
                                     inputValue={educationInput}
-                                    inputSetter={setEducationInput}
+                                    inputSetter={(val) => handleAutocompleteInputChange("education", val)} // Pass custom setter
                                     options={educationAutocompleteOptions}
                                     setOptions={setEducationAutocompleteOptions}
                                     loading={apiDataLoading}
-                                    searchFn={searchEducations}
+                                    searchFn={searchEducation} // This will dynamically update options
                                     onSelect={handleAutocompleteSelect}
                                     show={educationShow}
                                     setShow={setEducationShow}
@@ -611,11 +603,11 @@ const AdvancedSearchForm = () => {
                                     label="Profession"
                                     name="profession"
                                     inputValue={professionInput}
-                                    inputSetter={setProfessionInput}
+                                    inputSetter={(val) => handleAutocompleteInputChange("profession", val)} // Pass custom setter
                                     options={professionAutocompleteOptions}
                                     setOptions={setProfessionAutocompleteOptions}
                                     loading={apiDataLoading}
-                                    searchFn={searchProfessions}
+                                    searchFn={searchProfessions} // This will dynamically update options
                                     onSelect={handleAutocompleteSelect}
                                     show={professionShow}
                                     setShow={setProfessionShow}

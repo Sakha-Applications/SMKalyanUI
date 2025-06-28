@@ -1,0 +1,115 @@
+/* src/components/ProfileCard/ProfileCard.module.css */
+
+.card {
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 15px;
+  background-color: #fff;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  
+  /* --- REVISED WIDTH FOR "2.5 CARDS" ON SCREEN --- */
+  width: 240px; /* Set a specific width for each card */
+  flex-shrink: 0; /* Prevents cards from shrinking in flex container */
+  /* ----------------------------------------------- */
+
+  cursor: pointer;
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.photoContainer {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  overflow: hidden;
+  margin-bottom: 10px;
+  border: 3px solid #6a1b9a;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #f0f0f0;
+}
+
+.profilePhoto {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.details {
+  text-align: center;
+  width: 100%;
+}
+
+.details p {
+  margin: 2px 0;
+  font-size: 0.95em;
+  color: #333;
+}
+
+.details strong {
+  color: #555;
+}
+
+.name {
+  font-size: 1.2em;
+  font-weight: 600;
+  color: #1a237e;
+  margin-bottom: 5px;
+}
+
+.viewProfileButton {
+  display: inline-block;
+  margin-top: 10px;
+  padding: 8px 14px;
+  background-color: #6a1b9a;
+  color: #fff;
+  text-decoration: none;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1em;
+  font-weight: 500;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.viewProfileButton:hover {
+  background-color: #4a148c;
+  transform: translateY(-2px);
+}
+
+.viewProfileButton:active {
+  transform: translateY(0);
+}
+
+/* --- RESPONSIVENESS FOR SMALL SCREENS: VERTICAL STACKING --- */
+@media (max-width: 768px) { /* Common breakpoint for tablets and smaller */
+  .card {
+    width: 90%; /* On smaller screens, card takes 90% of container width */
+    max-width: 300px; /* Cap its max width even if screen is wider than 350px */
+    margin: 0 auto; /* Center individual cards horizontally */
+    margin-bottom: 15px; /* Add vertical space when stacking */
+  }
+  .photoContainer {
+    width: 80px;
+    height: 80px;
+  }
+  .name {
+    font-size: 1.1em;
+  }
+}
+
+/* For very very small screens, make cards slightly smaller if necessary */
+@media (max-width: 480px) {
+  .card {
+    width: 95%; /* Make it take almost full width on very small screens */
+    max-width: 260px; /* Keep a reasonable max width */
+  }
+}

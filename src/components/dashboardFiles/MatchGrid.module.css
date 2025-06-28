@@ -1,0 +1,43 @@
+/* src/components/dashboard/MatchGrid.module.css */
+
+.cardsContainer {
+  display: flex; /* Arrange cards in a row */
+  overflow-x: auto; /* Enables horizontal scrolling */
+  padding: 15px 0; /* Vertical padding inside the scroll area */
+  gap: 20px; /* Consistent space between cards */
+  -webkit-overflow-scrolling: touch; /* Improves scrolling performance on iOS */
+  scroll-behavior: smooth; /* Smooth scrolling when using arrow buttons (if implemented) */
+
+  /* Custom Scrollbar Styling for Webkit (Chrome, Safari, Edge) */
+  scrollbar-width: thin; /* Firefox */
+  scrollbar-color: #888 #f1f1f1; /* Firefox scrollbar color */
+}
+
+.cardsContainer::-webkit-scrollbar {
+  height: 10px; /* Height of the horizontal scrollbar */
+}
+
+.cardsContainer::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.cardsContainer::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 10px;
+}
+
+.cardsContainer::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* --- RESPONSIVENESS FOR CONTAINER: VERTICAL STACKING --- */
+@media (max-width: 768px) {
+  .cardsContainer {
+    flex-wrap: wrap; /* Allow cards to wrap to the next line */
+    justify-content: center; /* Center cards horizontally when they wrap */
+    overflow-x: hidden; /* Disable horizontal scroll when wrapping */
+    padding: 10px 0;
+    gap: 15px; /* Adjust gap when stacking vertically */
+  }
+}

@@ -1,6 +1,8 @@
-import React from 'react';
-import { SidebarMenu } from './index'; // Adjust import path as needed
+// src/components/dashboard/DashboardLayout.jsx
 
+import React from 'react';
+import { SidebarMenu, MatchGrid } from './index';
+ 
 const DashboardLayout = ({ children, profileId }) => {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[200px_1fr] gap-4">
@@ -8,11 +10,20 @@ const DashboardLayout = ({ children, profileId }) => {
       <div className="hidden lg:block">
         <SidebarMenu profileId={profileId} />
       </div>
-      
+
+
       {/* Main Content */}
-      <div className="space-y-6">
-        {children}
-      </div>
+<div className="overflow-x-hidden">
+  {children}
+  
+  
+  <h3 className="text-xl font-semibold text-indigo-800 mb-2">Suggested Matches</h3>
+  <MatchGrid profileId={profileId} />
+
+  <h3 className="text-xl font-semibold mt-4 mb-2 text-indigo-800">Invitations</h3>
+  <MatchGrid profileId={profileId} />
+  
+</div>
     </div>
   );
 };

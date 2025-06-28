@@ -3,72 +3,109 @@ import React, { useState, useEffect } from "react";
 import { Typography, Box, Grid } from "@mui/material";
 import { useNavigate } from 'react-router-dom';
 import getBaseUrl from '../../utils/GetUrl';
-import { fetchDefaultPhoto } from '../UploadProfilePhoto/photoUploadUtils'; // Import the utility
+// Import only the specific functions needed
+import { fetchDefaultPhoto } from '../UploadProfilePhoto/photoUploadUtils'; //
 
-const API_BASE_URL = `${getBaseUrl()}`;
-const FALLBACK_DEFAULT_IMAGE_PATH = '/ProfilePhotos/defaultImage.jpg';
+// Ensure API_BASE_URL is correctly set based on your environment
+const API_BASE_URL = `${getBaseUrl()}`; //
+const FALLBACK_DEFAULT_IMAGE_PATH = '/ProfilePhotos/defaultImage.jpg'; // Path relative to your client's public folder or API_BASE_URL
 
 const SearchResults = ({ results }) => {
   const navigate = useNavigate();
-  const [hoverMessage, setHoverMessage] = useState(null);
-  const [profilePhotoUrls, setProfilePhotoUrls] = useState({});
-  const [loadingPhotos, setLoadingPhotos] = useState(true);
+  const [hoverMessage, setHoverMessage] = useState(null); //
+  const [profilePhotoUrls, setProfilePhotoUrls] = useState({}); //
+  const [loadingPhotos, setLoadingPhotos] = useState(true); //
 
   useEffect(() => {
-    console.log("[SearchResults] useEffect triggered. Results:", results);
+    console.log("[SearchResults][useEffect] Triggered with results:", results); //
     if (results && results.length > 0) {
-      loadAllProfilePhotos(results);
+      loadAllProfilePhotos(results); //
     } else {
-      setHoverMessage(null);
-      setProfilePhotoUrls({});
-      setLoadingPhotos(false);
+      // Clear state when no results
+      console.log("[SearchResults][useEffect] No results, clearing photo state."); //
+      setHoverMessage(null); //
+      setProfilePhotoUrls({}); //
+      setLoadingPhotos(false); //
     }
-  }, [results]);
+  }, [results]); // Dependency array: re-run when results change
 
-  // HELPER FUNCTION TO PROMISIFY fetchDefaultPhoto
-  const promisifiedFetchDefaultPhoto = (profileId) => {
-    return new Promise((resolve) => {
-      fetchDefaultPhoto(
-        profileId,
-        (photoObject) => { // Success callback
-          if (photoObject && photoObject.fullUrl) {
-            resolve(photoObject.fullUrl); // Resolve with the URL
-          } else {
-            resolve(`${API_BASE_URL}${FALLBACK_DEFAULT_IMAGE_PATH}`); // Resolve with fallback if no photo
-          }
-        },
-        (error) => { // Error callback
-          console.error(`[SearchResults] Raw error from fetchDefaultPhoto for ${profileId}:`, error);
-          resolve(`${API_BASE_URL}${FALLBACK_DEFAULT_IMAGE_PATH}`); // Resolve with fallback on error
+  const loadAllProfilePhotos = async (resultsData) => {
+    console.log('[SearchResults][loadAllProfilePhotos] Starting photo loading process.');
+    setLoadingPhotos(true); //
+
+    const photoPromises = resultsData.map(async (result) => {
+      const profileId = result.profile_id || result.profileId; // Use profile_id or profileId
+      if (!profileId) {
+        console.warn("[SearchResults][loadAllProfilePhotos] Profile missing profile_id/profileId. Skipping photo fetch and using fallback.");
+        return { profileId: 'unknown', photoUrl: `${API_BASE_URL}${FALLBACK_DEFAULT_IMAGE_PATH}` }; //
+      }
+      console.log(`[SearchResults][loadAllProfilePhotos][${profileId}] Calling fetchDefaultPhoto...`);
+
+      // Variables to hold the fetched photo URL and potential error
+      let photoUrl = `${API_BASE_URL}${FALLBACK_DEFAULT_IMAGE_PATH}`; // Default to fallback
+      let currentFetchError = null; // To capture errors from fetchDefaultPhoto
+
+      // Pass temporary state setters to fetchDefaultPhoto
+      // fetchDefaultPhoto will now directly update its own local state (defaultPhoto, fetchError)
+      // We then read from those updated states or handle the logic here.
+      // A more direct way is to make fetchDefaultPhoto RETURN the photoObject or null/error.
+      // But given its current callback signature in photoUploadUtils.js, we'll adapt.
+      const tempDefaultPhoto = (photoObj) => {
+        if (photoObj && photoObj.fullUrl) {
+          photoUrl = photoObj.fullUrl; // Set the photoUrl if successful
         }
-      );
+      };
+      const tempSetFetchError = (errorMsg) => {
+        currentFetchError = errorMsg; // Capture the error message
+      };
+
+      try {
+        // Await the fetchDefaultPhoto call which internally handles its Axios call and success/error logic
+        await fetchDefaultPhoto(profileId, tempDefaultPhoto, tempSetFetchError); //
+
+        if (currentFetchError) {
+          console.warn(`[SearchResults][loadAllProfilePhotos][${profileId}] fetchDefaultPhoto reported an error: ${currentFetchError}. Using fallback.`);
+          photoUrl = `${API_BASE_URL}${FALLBACK_DEFAULT_IMAGE_PATH}`; // Ensure fallback on error
+        }
+
+      } catch (err) {
+        // This catch block would only be hit if fetchDefaultPhoto itself throws an unhandled error,
+        // which it shouldn't if its internal try/catch is robust.
+        console.error(`[SearchResults][loadAllProfilePhotos][${profileId}] Unexpected error from fetchDefaultPhoto:`, err, '');
+        photoUrl = `${API_BASE_URL}${FALLBACK_DEFAULT_IMAGE_PATH}`; // Ensure fallback on unexpected error
+      }
+
+      console.log(`[SearchResults][loadAllProfilePhotos][${profileId}] Final URL after fetchDefaultPhoto:`, photoUrl, '');
+      return { profileId, photoUrl }; //
     });
+
+    const photoResults = await Promise.all(photoPromises); //
+    const photoMap = {}; //
+
+    photoResults.forEach(({ profileId, photoUrl }) => {
+      photoMap[profileId] = photoUrl; //
+      console.log(`[SearchResults][loadAllProfilePhotos] Storing final URL for ${profileId} in photoMap: ${photoUrl}`, '');
+    });
+
+    console.log('[SearchResults][loadAllProfilePhotos] All photo promises resolved. Final photoMap before setting state:', photoMap, '');
+    setProfilePhotoUrls(photoMap); // Update state once all promises are resolved
+    console.log('[SearchResults][loadAllProfilePhotos] profilePhotoUrls state updated. Done loading photos.');
+    setLoadingPhotos(false); //
   };
 
-  const loadAllProfilePhotos = async (profiles) => {
-    setLoadingPhotos(true);
-    const urlsMap = {};
-
-    const fetchPromises = profiles.map(async (profile) => {
-      const photoUrl = await promisifiedFetchDefaultPhoto(profile.profile_id); // Await the promisified function
-      urlsMap[profile.profile_id] = photoUrl;
-      console.log(`[SearchResults] Storing URL for ${profile.profile_id}:`, photoUrl);
-    });
-
-    await Promise.all(fetchPromises); // Wait for all individual photo fetches to complete
-
-    setProfilePhotoUrls(urlsMap); // Update state only once all are done
-    setLoadingPhotos(false);
-    console.log("[SearchResults] All profile photos loaded:", urlsMap);
-  };
-
+  // Helper function to get profile photo URL
   const getProfilePhotoUrl = (profileId) => {
-    return profilePhotoUrls[profileId] || `${API_BASE_URL}${FALLBACK_DEFAULT_IMAGE_PATH}`;
+    const url = profilePhotoUrls[profileId]; //
+    if (url) {
+        return url; //
+    }
+    console.log(`[getProfilePhotoUrl][${profileId}] No URL found in state or state not yet updated, returning initial fallback.`);
+    return `${API_BASE_URL}${FALLBACK_DEFAULT_IMAGE_PATH}`; //
   };
 
   const handleCardClick = (profileId) => {
-    alert(`Clicked on profile: ${profileId}. To see more details, please log in or register.`);
-    navigate('/');
+    alert(`Clicked on profile: ${profileId}. To see more details, please log in or register.`); //
+    navigate('/'); //
   };
 
   return (
@@ -91,11 +128,12 @@ const SearchResults = ({ results }) => {
       ) : results && results.length > 0 ? (
         <Grid container spacing={3}>
           {results.map((result, index) => {
-            const imageUrl = getProfilePhotoUrl(result.profile_id);
-            console.log(`[SearchResults Render] Image URL for ${result.profile_id} (Name: ${result.name}):`, imageUrl);
+            const currentProfileId = result.profile_id || result.profileId; //
+            const imageUrl = getProfilePhotoUrl(currentProfileId); //
+            console.log(`[SearchResults Render Loop][${currentProfileId}] Final image URL for render:`, imageUrl, '');
             return (
               <Grid
-                key={result.profile_id || index}
+                key={currentProfileId || index}
                 sx={{
                   width: {
                     xs: '100%',
@@ -109,7 +147,7 @@ const SearchResults = ({ results }) => {
                 <Box
                   className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden"
                   sx={{ cursor: 'pointer' }}
-                  onClick={() => handleCardClick(result.profile_id)}
+                  onClick={() => handleCardClick(currentProfileId)} //
                 >
                   {/* Image Section */}
                   <Box sx={{ width: '100%', height: 200, overflow: 'hidden', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
@@ -122,9 +160,17 @@ const SearchResults = ({ results }) => {
                         objectFit: 'cover',
                       }}
                       onError={(e) => {
-                        e.target.onerror = null;
-                        e.target.src = `${API_BASE_URL}${FALLBACK_DEFAULT_IMAGE_PATH}`;
-                        console.error(`[SearchResults] Image element failed to load for ${result.profile_id}. Setting fallback. Error:`, e);
+                        e.target.onerror = null; // Prevent infinite loop on error
+                        // Only set fallback if the current src is not already the fallback
+                        if (e.target.src !== `${API_BASE_URL}${FALLBACK_DEFAULT_IMAGE_PATH}`) { //
+                            e.target.src = `${API_BASE_URL}${FALLBACK_DEFAULT_IMAGE_PATH}`; //
+                            console.error(`[SearchResults][${currentProfileId}] Image element failed to load its src. Setting fallback. Error:`, e, '');
+                        } else {
+                            console.warn(`[SearchResults][${currentProfileId}] Image element already showing fallback. No further action needed.`);
+                        }
+                      }}
+                      onLoad={() => {
+                        console.log(`[SearchResults][${currentProfileId}] Image element successfully loaded URL:`, imageUrl, '');
                       }}
                     />
                   </Box>
@@ -148,9 +194,9 @@ const SearchResults = ({ results }) => {
                         <strong>Gotra:</strong> {result.gotra}
                       </Typography>
                     )}
-                    {result.profile_id && (
+                    {currentProfileId && (
                       <Typography variant="caption" color="text.secondary" className="text-xs mt-2 block">
-                        Profile ID: {result.profile_id}
+                        Profile ID: {currentProfileId}
                       </Typography>
                     )}
                   </Box>
