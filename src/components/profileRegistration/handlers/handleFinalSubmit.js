@@ -51,7 +51,7 @@ const handleFinalSubmit = async ({ formData, setIsProcessing, setShowDonationDia
       setIsProcessing(false);
       return;
     }
-
+console.log("📤 Final formData sent to backend for profile creation:", JSON.stringify(formData, null, 2)); // <--- ADD THIS LINE HERE
     const response = await axios.put(
       `${getBaseUrl()}/api/direct/updateProfile/${formData.profileId}`,
       { profileData: payload }

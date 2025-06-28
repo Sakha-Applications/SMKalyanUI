@@ -253,9 +253,19 @@ const Matches = ({ profileId }) => {
   }, [profilePhotoUrls]);
 
   // Card click handler
+  // --- Card click handler - MODIFIED ---
   const handleCardClick = useCallback((id) => {
-    alert(`Clicked on profile: ${id}. To see more details, please log in or register.`);
-    navigate('/');
+    const authToken = sessionStorage.getItem('token'); // Check authentication status
+
+    if (authToken) {
+      // User is logged in, navigate to the specific profile details page
+      console.log(`Navigating to profile details for ID: ${id}`);
+      navigate(`/view-profile/${id}`); // <-- Navigate to the new view page
+    } else {
+      // User is not logged in, prompt them to log in
+      alert('Please log in to view profile details.'); // Or use a Material-UI Dialog
+      navigate('/login'); // Redirect to login page
+    }
   }, [navigate]);
 
   // --- Render Logic ---

@@ -8,16 +8,32 @@ const tabs = [
   { to: "/inbox", label: "Inbox" }           // Assuming an /inbox route exists
 ];
 
-const TopNavTabs = () => (
+const TopNavTabs = ({ onMatchesClick }) => ( // <--- ADDED { onMatchesClick } here
   <div className="bg-indigo-600 text-white py-2 px-4 rounded-lg shadow mb-2 flex justify-around flex-wrap items-center text-sm font-medium">
-    {tabs.map((item) => ( // Changed 'tab' to 'item' for consistency with secondaryLinks
-      <Link
-        key={item.to} // Use item.to as the key
-        to={item.to} // Use item.to for the Link's 'to' prop
-        className="px-4 py-1 rounded hover:bg-indigo-500 transition cursor-pointer"
-      >
-        {item.label} {/* Use item.label for the displayed text */}
-      </Link>
+    {tabs.map((item) => (
+      // CORRECTED: Conditionally apply onClick for the 'Matches' tab
+      item.label === "Matches" ? (
+        <Link
+          key={item.to}
+          to="#" // Prevent default navigation for the Matches link
+          onClick={(e) => {
+            e.preventDefault(); // Stop default Link behavior
+            onMatchesClick();   // Call the handler passed from Dashboard
+          }}
+          className="px-4 py-1 rounded hover:bg-indigo-500 transition cursor-pointer"
+        >
+          {item.label}
+        </Link>
+      ) : (
+        // For other tabs, behave as a regular Link
+        <Link
+          key={item.to}
+          to={item.to}
+          className="px-4 py-1 rounded hover:bg-indigo-500 transition cursor-pointer"
+        >
+          {item.label}
+        </Link>
+      )
     ))}
   </div>
 );

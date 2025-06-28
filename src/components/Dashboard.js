@@ -10,11 +10,44 @@ import {
   ThirdNavBar
 } from "./dashboardFiles";
 import PreferredProfilesSection from "./preferredProfile/PreferredProfilesSection";
+import React, { useState } from 'react'; // ADD this import or ensure useState is included
+import { useNavigate } from 'react-router-dom'; // ADD this import
+import PreferencesReminderDialog from '../components/common/PreferencesReminderDialog'; // ADD this import
+
+
 
 const Dashboard = () => {
+  const navigate = useNavigate(); // ADD this line
+
+  // State to manage the visibility of the preferences reminder dialog
+  const [showPreferencesReminder, setShowPreferencesReminder] = useState(false); // ADD this line
+
+  // Handler to open the dialog
+  const handleOpenPreferencesReminder = () => { // ADD this function
+    setShowPreferencesReminder(true);
+  };
+
+  // Handler to close the dialog
+  const handleClosePreferencesReminder = () => { // ADD this function
+    setShowPreferencesReminder(false);
+  };
+
+  // Handler for 'Set Preferences' button click in the dialog
+  const handleSetPreferencesClick = () => { // ADD this function
+    handleClosePreferencesReminder(); // Close the dialog
+    navigate('/partner-preferences'); // Navigate to the PartnerPreferencesPage route
+  };
+
+  // Handler for 'Find Matches Anyway' button click in the dialog
+  const handleFindMatchesClick = () => { // ADD this function
+    handleClosePreferencesReminder(); // Close the dialog
+    navigate('/all-matches'); // Navigate to the new dedicated matches page
+  };
+
   const userProfileId = sessionStorage.getItem("profileId");
   console.log("[Dashboard] Retrieved profileId from sessionStorage:", userProfileId);
   console.log("[Dashboard] SessionStorage contents:", sessionStorage);
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-100">
@@ -36,7 +69,10 @@ const Dashboard = () => {
           {/* Center Main Dashboard */}
           <div className="w-full">
             <div className="mb-2">
-              <TopNavTabs />
+              <TopNavTabs onMatchesClick={handleOpenPreferencesReminder} />
+              {/* NOTE: You have a duplicate <TopNavTabs /> here.
+                 Please remove the one without the onMatchesClick prop. */}
+  
               <SecondaryNavBar />
             </div>
 
@@ -46,7 +82,6 @@ const Dashboard = () => {
 
               <TimelineStatsGrid />
 
-           
             </DashboardLayout>
           </div>
 
@@ -58,6 +93,14 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
+
+      {/* PASTE THE DIALOG COMPONENT HERE, right before this div's closing tag */}
+      <PreferencesReminderDialog
+        open={showPreferencesReminder}
+        onClose={handleClosePreferencesReminder}
+        onSetPreferences={handleSetPreferencesClick}
+        onFindMatches={handleFindMatchesClick}
+      />
     </div>
   );
 };

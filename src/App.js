@@ -5,9 +5,11 @@ import LoginScreen from './components/LoginScreen';
 // import ProfileRegisterForm from './components/ProfileRegisterForm';
 import ProfileRegisterForm from './components/profileRegistration/ProfileRegisterForm';
 import ProfileSearchForm from './components/ProfileSearchForm';
-
+import ViewOtherProfilePage from './components/ProfileModule/ViewOtherProfilePage'; // Adjust path if different
 
 import BasicSearchForm from './components/Search/BasicSearchForm'; 
+import AllMatchesPage from './components/dashboardFiles/AllMatchesPage';
+import InboxPage from './components/dashboardFiles/InboxPage';
 import AdvancedSearchForm from './components/Search/AdvancedSearchForm';
 
 import ResetPasswordScreen from './components/ResetPasswordScreen';
@@ -95,6 +97,7 @@ function App() {
                         </ProtectedRoute>
                     }
                 />
+                <Route path="/all-matches" element={<AllMatchesPage />} />
                 <Route
                     path="/renew-profile"
                     element={
@@ -103,6 +106,17 @@ function App() {
                         </ProtectedRoute>
                     }
                 />
+
+                  {/* NEW: Protected Route for Inbox Page */}
+                <Route
+                    path="/inbox" // This is the route path for the Inbox tab
+                    element={
+                        <ProtectedRoute>
+                            <InboxPage />
+                        </ProtectedRoute>
+                    }
+                />
+                
                 <Route
                     path="/donate"
                     element={
@@ -122,6 +136,14 @@ function App() {
                 
                 <Route path="/make-preferred" element={<MakePreferred />} />
 <Route path="/preferred-payment" element={<PreferredPayment />} />
+<Route
+                    path="/view-profile/:profileId" // Define the dynamic route parameter
+                    element={
+                        <ProtectedRoute>
+                            <ViewOtherProfilePage />
+                        </ProtectedRoute>
+                    }
+                />
             <Route
                     path="/basic-search"
                     element={
