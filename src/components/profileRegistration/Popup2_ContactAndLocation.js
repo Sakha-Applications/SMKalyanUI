@@ -205,7 +205,7 @@ const Popup2_ContactAndLocation = ({
       <div className="flex justify-between pt-6">
         <Button onClick={onPrevious} variant="outline">Previous</Button>
         <Button onClick={validateAndProceed} disabled={isProcessing} variant="primary">
-          {isProcessing ? "Processing Profile Registration..." : "Sing Up"}
+          {isProcessing ? "Processing Profile Registration..." : "Sign Up"}
         </Button>
       </div>
     </div>
