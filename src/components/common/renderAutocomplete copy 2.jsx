@@ -18,11 +18,8 @@ const AutocompleteInput = ({
   delay = 300
 }) => {
   const [justSelected, setJustSelected] = useState(false);
-  const [isFocused, setIsFocused] = useState(false);
   const dropdownRef = useRef(null);
   const debounceTimer = useRef(null);
-  // --- CHANGE (1/3): Add a ref to track the previous input value ---
-  const prevInputValueRef = useRef(inputValue);
 
   const safeSetShow = typeof setShow === 'function' ? setShow : () => {};
   const safeShow = typeof show === 'boolean' ? show : false;
@@ -40,42 +37,32 @@ const AutocompleteInput = ({
   }, [safeSetShow]);
 
   useEffect(() => {
-    // --- CHANGE (2/3): Add a check to see if the input value has actually changed ---
-    // This prevents the search from running on focus alone when returning to the screen.
-    const hasInputValueChanged = inputValue !== prevInputValueRef.current;
-
-    if (isFocused && hasInputValueChanged) {
-      if (justSelected) {
-        setJustSelected(false);
-        return;
-      }
-
-      if (debounceTimer.current) {
-        clearTimeout(debounceTimer.current);
-      }
-
-      debounceTimer.current = setTimeout(async () => {
-        if (inputValue && inputValue.length >= 2) {
-          try {
-            const results = await searchFn(inputValue);
-            setOptions(results || []);
-            safeSetShow(true);
-          } catch (err) {
-            console.error(`Error fetching ${label} options:`, err);
-          }
-        } else {
-          setOptions([]);
-          safeSetShow(false);
-        }
-      }, delay);
-
-      return () => clearTimeout(debounceTimer.current);
+    if (justSelected) {
+      setJustSelected(false);
+      return;
     }
-    
-    // --- CHANGE (3/3): Update the ref with the current value for the next render ---
-    prevInputValueRef.current = inputValue;
 
-  }, [inputValue, isFocused, searchFn, setOptions, safeSetShow, justSelected, label, delay]);
+    if (debounceTimer.current) {
+      clearTimeout(debounceTimer.current);
+    }
+
+    debounceTimer.current = setTimeout(async () => {
+      if (inputValue && inputValue.length >= 2) {
+        try {
+          const results = await searchFn(inputValue);
+          setOptions(results || []);
+          safeSetShow(true);
+        } catch (err) {
+          console.error(`Error fetching ${label} options:`, err);
+        }
+      } else {
+        setOptions([]);
+        safeSetShow(false);
+      }
+    }, delay);
+
+    return () => clearTimeout(debounceTimer.current);
+  }, [inputValue]); // only re-run when inputValue changes
 
   const handleOptionSelect = (option) => {
     setJustSelected(true);
@@ -106,12 +93,11 @@ const AutocompleteInput = ({
         error={isError}
         helperText={currentHelperText}
         onFocus={() => {
-          setIsFocused(true);
-        }}
-        onBlur={() => {
-          setIsFocused(false);
-          // A small delay allows the onMouseDown in the list to fire before hiding
-          setTimeout(() => safeSetShow(false), 200);
+          if (inputValue && inputValue.length >= 2) {
+            safeSetShow(true);
+          } else if (options.length > 0 && !justSelected) {
+            safeSetShow(true);
+          }
         }}
       />
       {loading && <p className="text-sm text-gray-500 mt-1">Loading...</p>}

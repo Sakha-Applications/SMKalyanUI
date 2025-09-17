@@ -40,11 +40,13 @@ const Popup2_ContactAndLocation = ({
   const { checkProfileExists } = useApiData();
 
   const validateAndProceed = async () => {
-  const requiredFields = [
-    { name: "phoneNumber", label: "Phone Number" },
-    { name: "email", label: "Email" },
-    { name: "dob", label: "Date of Birth" }
-  ];
+  const requiredFields = 
+  {
+    email: 'Email ID', // Correctly passing a string
+    phoneNumber: 'Phone Number',
+    dob: 'Date of Birth'
+  };
+  
 
   const newErrors = validateRequiredFields(formData, requiredFields);
 
@@ -84,8 +86,6 @@ const Popup2_ContactAndLocation = ({
   }
 };
 
-
-
  const getEmailHelperText = () => {
   if (errors.email) return errors.email;
   if (!formData.email) return "e.g., user@example.com";
@@ -98,115 +98,129 @@ const Popup2_ContactAndLocation = ({
   };
 
   return (
-    <div className="space-y-6">
-      <ValidationErrorDialog 
-        errors={errors}
-        isOpen={showErrorDialog}
-        onClose={() => setShowErrorDialog(false)}
-      />
-      
-      {/* Show ProfileId for debugging - remove in production */}
-      {formData.profileId && (
-        <div className="bg-green-50 p-2 rounded text-sm">
-          <strong>Profile ID:</strong> {formData.profileId}
-        </div>
-      )}
+    // Apply the same layout structure as Popup1
+    <div className="h-full flex flex-col">
+      {/* Sticky Header */}
+      <header className="flex-shrink-0 bg-gradient-to-r from-rose-500 to-pink-500 p-5 rounded-t-xl">
+        <h1 className="text-2xl font-bold text-white text-center">
+          We need your active email and phone to set up your profile.
+        </h1>
+      </header>
 
-      {/* Email - Row 1 */}
-      <div>
-        <Label>Email ID <span className="text-red-500">*</span></Label>
-        <Input
-          type="email"
-          name="email"
-          value={formData.email || ''}
-          onChange={handleChange}
-          required
-          error={!!errors.email}
-          placeholder="yourname@example.com"
-          helperText={getEmailHelperText()}
-        />
-      </div>
-
-      {/* Phone Number - Row 2 */}
-      <div>
-        <Label>Phone Number <span className="text-red-500">*</span></Label>
-        <div className="flex space-x-2">
-          <TextField
-            select
-            name="phoneCountryCode"
-            value={formData.phoneCountryCode ?? "+91"}
-            onChange={handleChange}
-            sx={{
-              minWidth: 140,
-              maxWidth: 200,
-              backgroundColor: "#fff",
-              borderRadius: 1,
-              '& .MuiInputBase-root': {
-                height: '40px',
-              },
-              '& .MuiInputBase-input': {
-                padding: '8px 14px',
-              }
-            }}
-            required
-          >
-            {countryCodes.map((option) => (
-              <MenuItem key={option.iso2 + option.code} value={option.code}>
-                {option.label}
-              </MenuItem>
-            ))}
-          </TextField>
-
-          <Input
-            type="tel"
-            name="phoneNumber"
-            value={formData.phoneNumber || ''}
-            onChange={handleChange}
-            required
-            placeholder="1234567890"
-            error={!!errors.phoneNumber}
-            helperText={getPhoneHelperText()}
-            className="flex-1"
+      {/* Scrollable Content */}
+      <div className="flex-1 overflow-y-auto p-6">
+        <div className="space-y-6">
+          <ValidationErrorDialog 
+            errors={errors}
+            isOpen={showErrorDialog}
+            onClose={() => setShowErrorDialog(false)}
           />
-        </div>
-      </div>
+          
+          {/* Show ProfileId for debugging - remove in production 
+          {formData.profileId && (
+            <div className="bg-green-50 p-2 rounded text-sm">
+              <strong>Profile ID:</strong> {formData.profileId}
+            </div>
+          )}
+            */}
 
-      {/* DOB - Row 3 */}
-      <div>
-        <Label>Date of Birth <span className="text-red-500">*</span></Label>
-        <LocalizationProvider dateAdapter={AdapterDayjs}>
-          <DatePicker
-            views={["year", "month", "day"]}
-            value={formData.dob ? dayjs(formData.dob) : null}
-            onChange={(newValue) => {
-              const formattedDOB = newValue ? newValue.format("YYYY-MM-DD") : null;
-              handleDOBChange(formattedDOB);
-            }}
-            slotProps={{
-              textField: {
-                fullWidth: true,
-                required: true,
-                error: !!errors.dob,
-                helperText: errors.dob || (!formData.dob ? "Date of Birth is required" : ""),
-                sx: { 
-                  backgroundColor: "#fff", 
+          {/* Email - Row 1 */}
+          <div>
+            <Label>Email ID <span className="text-red-500">*</span></Label>
+            <Input
+              type="email"
+              name="email"
+              value={formData.email || ''}
+              onChange={handleChange}
+              required
+              error={!!errors.email}
+              placeholder="yourname@example.com"
+              helperText={getEmailHelperText()}
+            />
+          </div>
+
+          {/* Phone Number - Row 2 */}
+          <div>
+            <Label>Phone Number <span className="text-red-500">*</span></Label>
+            <div className="flex space-x-2">
+              <TextField
+                select
+                name="phoneCountryCode"
+                value={formData.phoneCountryCode ?? "+91"}
+                onChange={handleChange}
+                sx={{
+                  minWidth: 140,
+                  maxWidth: 200,
+                  backgroundColor: "#fff",
                   borderRadius: 1,
                   '& .MuiInputBase-root': {
                     height: '40px',
+                  },
+                  '& .MuiInputBase-input': {
+                    padding: '8px 14px',
                   }
-                },
-              },
-            }}
-          />
-        </LocalizationProvider>
-      </div>
+                }}
+                required
+              >
+                {countryCodes.map((option) => (
+                  <MenuItem key={option.iso2 + option.code} value={option.code}>
+                    {option.label}
+                  </MenuItem>
+                ))}
+              </TextField>
 
-      {/* Navigation Buttons */}
-      <div className="flex justify-between pt-6">
-        <Button onClick={onPrevious} variant="outline">Previous</Button>
-        <Button onClick={validateAndProceed} disabled={isProcessing} variant="primary">
-          {isProcessing ? "Processing Profile Registration..." : "Sign Up"}
-        </Button>
+              <Input
+                type="tel"
+                name="phoneNumber"
+                value={formData.phoneNumber || ''}
+                onChange={handleChange}
+                required
+                placeholder="1234567890"
+                error={!!errors.phoneNumber}
+                helperText={getPhoneHelperText()}
+                className="flex-1"
+              />
+            </div>
+          </div>
+
+          {/* DOB - Row 3 */}
+          <div>
+            <Label>Date of Birth <span className="text-red-500">*</span></Label>
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+              <DatePicker
+                views={["year", "month", "day"]}
+                value={formData.dob ? dayjs(formData.dob) : null}
+                onChange={(newValue) => {
+                  const formattedDOB = newValue ? newValue.format("YYYY-MM-DD") : null;
+                  handleDOBChange(formattedDOB);
+                }}
+                slotProps={{
+                  textField: {
+                    fullWidth: true,
+                    required: true,
+                    error: !!errors.dob,
+                    helperText: errors.dob || (!formData.dob ? "Date of Birth is required" : ""),
+                    sx: { 
+                      backgroundColor: "#fff", 
+                      borderRadius: 1,
+                      '& .MuiInputBase-root': {
+                        height: '40px',
+                      }
+                    },
+                  },
+                }}
+              />
+            </LocalizationProvider>
+          </div>
+
+          {/* Navigation Buttons */}
+          <div className="flex justify-between pt-6">
+            <Button onClick={onPrevious} variant="outline">Previous</Button>
+            <Button onClick={validateAndProceed} disabled={isProcessing} variant="primary">
+              {isProcessing ? "Processing Profile Registration..." : "Sign Up"}
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
   );

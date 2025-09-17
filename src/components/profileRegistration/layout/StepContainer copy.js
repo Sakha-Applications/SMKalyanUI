@@ -12,9 +12,9 @@ const StepContainer = ({
 }) => {
   return (
     <div className="fixed inset-0 bg-slate-800 bg-opacity-75 flex items-center justify-center p-4 z-50 transition-opacity duration-300 ease-in-out">
-      <div className="bg-white shadow-2xl rounded-xl w-full max-w-lg md:max-w-xl lg:max-w-2xl mx-auto overflow-hidden transform transition-all duration-300 ease-in-out scale-100 h-[80vh] flex flex-col">
+      <div className="bg-white shadow-2xl rounded-xl w-full max-w-lg md:max-w-xl lg:max-w-2xl mx-auto overflow-hidden transform transition-all duration-300 ease-in-out scale-100">
 
-        {/* Header - commented out since each popup will have its own header
+        {/* Header 
         <header className="bg-gradient-to-r from-rose-500 to-pink-500 p-5">
           <h1 className="text-2xl font-bold text-white text-center">
             {popups[currentStep].name} (Step {currentStep + 1} of {popups.length})
@@ -26,10 +26,11 @@ const StepContainer = ({
             </p>
           )}
         </header>
-        */}
+*/}
+       
 
-        {/* Popup Content - removed padding and scrolling, let child components handle it */}
-        <div className="flex-1 overflow-hidden">
+        {/* Popup Content */}
+        <div className="p-6 sm:p-8 max-h-[80vh] overflow-y-auto">
           {children}
         </div>
       </div>

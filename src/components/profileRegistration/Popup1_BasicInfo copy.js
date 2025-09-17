@@ -1,32 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import { Label, Input, Select, RadioGroup, Button } from '../common/FormElements';
 import useApiData from '../../hooks/useApiData';
-import validateRequiredFields from '../common/validateRequiredFields';
+import validateRequiredFields from '../common/validateRequiredFields_1';
 import ValidationErrorDialog from '../common/ValidationErrorDialog';
-import { Country } from 'country-state-city';
+import CountryStateCitySelector from '../common/CountryStateCitySelector';
 
 const Popup1_BasicInfo = ({ formData, handleChange, onNext }) => {
   const [errors, setErrors] = useState({});
   const [showErrorDialog, setShowErrorDialog] = useState(false);
 
-  const { searchMotherTongues, getMotherTongueById, getPlaceById } = useApiData();
+  const { searchMotherTongues, getMotherTongueById, searchPlaces, getPlaceById } = useApiData();
 
   const [motherTongueInput, setMotherTongueInput] = useState(formData.motherTongue || '');
   const [residingCityInput, setResidingCityInput] = useState(formData.currentLocation || '');
-  const [countries, setCountries] = useState([]);
+
   const [mtOptions, setMtOptions] = useState([]);
   const [rcOptions, setRcOptions] = useState([]);
+
   const [mtShow, setMtShow] = useState(false);
   const [rcShow, setRcShow] = useState(false);
+
   const [loadingMT, setLoadingMT] = useState(false);
   const [loadingRC, setLoadingRC] = useState(false);
+
   const [justSelectedMT, setJustSelectedMT] = useState(false);
   const [justSelectedRC, setJustSelectedRC] = useState(false);
-  const [isInitialLoad, setIsInitialLoad] = useState(true); // Fix for problem 2
-
-  useEffect(() => {
-    setCountries(Country.getAllCountries());
-  }, []);
 
   useEffect(() => {
     document.addEventListener("mousedown", handleOutsideClick(setMtShow));
@@ -69,7 +67,6 @@ const Popup1_BasicInfo = ({ formData, handleChange, onNext }) => {
           type="text"
           value={inputVal}
           onChange={(e) => setInputVal(e.target.value)}
-          onFocus={() => { if (inputVal.length >= 2) showSetter(true); }}
           placeholder={`Start typing ${label.toLowerCase()}...`}
           required
           error={isError}
@@ -98,11 +95,6 @@ const Popup1_BasicInfo = ({ formData, handleChange, onNext }) => {
       setJustSelectedMT(false);
       return;
     }
-    // Fix for problem 2: Don't trigger search on initial load when value is pre-populated
-    if (isInitialLoad && formData.motherTongue && motherTongueInput === formData.motherTongue) {
-      return;
-    }
-    
     const timer = setTimeout(async () => {
       if (motherTongueInput.length >= 2) {
         setLoadingMT(true);
@@ -117,12 +109,25 @@ const Popup1_BasicInfo = ({ formData, handleChange, onNext }) => {
     }, 300);
     return () => clearTimeout(timer);
   }, [motherTongueInput]);
-  
+
   useEffect(() => {
     if (justSelectedRC) {
       setJustSelectedRC(false);
       return;
     }
+    const timer = setTimeout(async () => {
+      if (residingCityInput.length >= 2) {
+        setLoadingRC(true);
+        const result = await searchPlaces(residingCityInput);
+        setRcOptions(result);
+        setRcShow(true);
+        setLoadingRC(false);
+      } else {
+        setRcShow(false);
+        setRcOptions([]);
+      }
+    }, 300);
+    return () => clearTimeout(timer);
   }, [residingCityInput]);
 
   useEffect(() => {
@@ -139,18 +144,16 @@ const Popup1_BasicInfo = ({ formData, handleChange, onNext }) => {
         }
       });
     }
-    // Mark initial load as complete after data is loaded
-    setIsInitialLoad(false);
   }, []);
 
   const validateAndProceed = () => {
-    const requiredFields = {
-      name: "Name",
-      profileCreatedFor: "Profile Created For",
-      gender: "Gender",
-      motherTongue: "Mother Tongue",
-      currentLocationCountry: 'Residing Country',
-    };
+    const requiredFields = [
+      { name: "name", label: "Name" },
+      { name: "profileCreatedFor", label: "Profile Created For" },
+      { name: "gender", label: "Gender" },
+      { name: "motherTongue", label: "Mother Tongue" },
+      { name: "currentLocation", label: "Residing City" }
+    ];
 
     const newErrors = validateRequiredFields(formData, requiredFields);
     setErrors(newErrors);
@@ -163,101 +166,81 @@ const Popup1_BasicInfo = ({ formData, handleChange, onNext }) => {
   };
 
   return (
-    // Clean version with full control over layout and scrolling
-    <div className="h-full flex flex-col">
-      {/* Sticky Header */}
-      <header className="flex-shrink-0 bg-gradient-to-r from-rose-500 to-pink-500 p-5 rounded-t-xl">
-        <h1 className="text-2xl font-bold text-white text-center">
-          Ready to create your profile? Let's get started!
-        </h1>
-      </header>
+    <div className="space-y-6">
+      <ValidationErrorDialog 
+        errors={errors}
+        isOpen={showErrorDialog}
+        onClose={() => setShowErrorDialog(false)}
+      />
 
-      {/* Scrollable Content */}
-      <div className="flex-1 overflow-y-auto p-6">
-        <div className="space-y-6">
-          <ValidationErrorDialog 
-            errors={errors}
-            isOpen={showErrorDialog}
-            onClose={() => setShowErrorDialog(false)}
-          />
+      <div>
+        <Label htmlFor="profileCreatedFor">This Profile is For <span className="text-red-500">*</span></Label>
+        <Select
+          name="profileCreatedFor"
+          value={formData.profileCreatedFor}
+          onChange={handleChange}
+          required
+          error={!!errors.profileCreatedFor}
+          helperText={errors.profileCreatedFor}
+        >
+          <option value="">-- Select --</option>
+          <option value="Self">MySelf</option>
+          <option value="Son">My Son</option>
+          <option value="Daughter">My Daughter</option>
+          <option value="Sibling">My Sibling (Brother/Sister)</option>
+          <option value="Relatives">My Relative</option>
+          <option value="Friends">My Friend</option>
+        </Select>
+      </div>
 
-          <div>
-            <Label htmlFor="profileCreatedFor">This Profile is For <span className="text-red-500">*</span></Label>
-            <Select
-              name="profileCreatedFor"
-              value={formData.profileCreatedFor}
-              onChange={handleChange}
-              required
-              error={!!errors.profileCreatedFor}
-              helperText={errors.profileCreatedFor}
-            >
-              <option value="">-- Select --</option>
-              <option value="Self">MySelf</option>
-              <option value="Son">My Son</option>
-              <option value="Daughter">My Daughter</option>
-              <option value="Sibling">My Sibling (Brother/Sister)</option>
-              <option value="Relatives">My Relative</option>
-              <option value="Friends">My Friend</option>
-            </Select>
-          </div>
+      <div>
+        <Label htmlFor="name">Full Name (as per records) <span className="text-red-500">*</span></Label>
+        <Input
+          name="name"
+          value={formData.name || ''}
+          onChange={handleChange}
+          required
+          error={!!errors.name}
+          helperText={errors.name}
+        />
+      </div>
 
-          <div>
-            <Label htmlFor="name">Full Name (as per records) <span className="text-red-500">*</span></Label>
-            <Input
-              name="name"
-              value={formData.name || ''}
-              onChange={handleChange}
-              required
-              error={!!errors.name}
-              helperText={errors.name}
-            />
-          </div>
+      
+      {renderAutocomplete("Mother Tongue", motherTongueInput, setMotherTongueInput, mtOptions, mtShow, loadingMT, setMtShow, "motherTongue", setJustSelectedMT)}
 
-          {renderAutocomplete("Mother Tongue", motherTongueInput, setMotherTongueInput, mtOptions, mtShow, loadingMT, setMtShow, "motherTongue", setJustSelectedMT)}
-          
-          <div>
-            <Label>Residing Country</Label>
-            <select
-              name="currentLocationCountry"
-              value={formData.currentLocationCountry || ''}
-              onChange={handleChange}
-              className="w-full border rounded px-2 py-1"
-            >
-              <option value="">Select Country</option>
-              {countries.map((c) => (
-                <option key={c.isoCode} value={c.isoCode}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-            {errors.currentLocationCountry && <p className="mt-1 text-xs text-red-600">{errors.currentLocationCountry}</p>}
-          </div>
+      <CountryStateCitySelector
+  formData={formData}
+  handleChange={handleChange}
+  countryField="currentLocationCountry"
+  stateField="currentLocationState"
+  cityField="currentLocation"
+  labelPrefix="Residing"
+/>
 
-          <div>
-            <RadioGroup
-              name="gender"
-              legend="Gender"
-              options={[{ label: 'Male', value: 'Male' }, { label: 'Female', value: 'Female' }]}
-              selectedValue={formData.gender || ''}
-              onChange={handleChange}
-              required
-            />
-            {errors.gender && <p className="mt-1 text-xs text-red-600">{errors.gender}</p>}
-          </div>
 
-          {formData.gender && (
-            <div>
-              <Label>You are Registering for :</Label>
-              <Input value={formData.gender === "Male" ? "Bridegroom (Groom)" : "Bride"} readOnly />
-              <Label className="mt-2">Searching for Registered :</Label>
-              <Input value={formData.gender === "Male" ? "Bride" : "Bridegroom (Groom)"} readOnly />
-            </div>
-          )}
+<div>
+        <RadioGroup
+          name="gender"
+          legend="Gender"
+          options={[{ label: 'Male', value: 'Male' }, { label: 'Female', value: 'Female' }]}
+          selectedValue={formData.gender || ''}
+          onChange={handleChange}
+          required
+        />
+        {errors.gender && <p className="mt-1 text-xs text-red-600">{errors.gender}</p>}
+      </div>
 
-          <div className="flex justify-end pt-4">
-            <Button onClick={validateAndProceed} variant="primary">Next</Button>
-          </div>
+      {formData.gender && (
+        <div>
+          <Label>You are Registering for :</Label>
+          <Input value={formData.gender === "Male" ? "Bridegroom (Groom)" : "Bride"} readOnly />
+          <Label className="mt-2">Searching for Registered :</Label>
+          <Input value={formData.gender === "Male" ? "Bride" : "Bridegroom (Groom)"} readOnly />
         </div>
+      )}
+
+      <div className="flex justify-end pt-4">
+        <Button onClick={validateAndProceed} variant="primary">Next</Button>
       </div>
     </div>
   );
