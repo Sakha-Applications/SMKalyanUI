@@ -1,3 +1,5 @@
+// src/components/profileRegistration/Popup3_PersonalDetails.js
+
 import React, { useState, useEffect } from 'react';
 import { Label as L, Input as I, Select as S, TextArea, Button as B } from '../common/FormElements';
 import { LocalizationProvider, TimePicker } from '@mui/x-date-pickers';
@@ -44,27 +46,39 @@ const Popup3_PersonalDetails = ({
     return () => document.removeEventListener('mousedown', listener);
   }, []);
 
+  // 🔧 FIX #1: Stop relisting after selection; hide when input matches selected value or < 2 chars
   useEffect(() => {
     if (justSelectedGuruMatha) {
       setJustSelectedGuruMatha(false);
       return;
     }
+
+    const input = (guruMathaInput || '').trim();
+    const selected = (formData.guruMatha || '').trim();
+
+    // If input is short OR exactly equals the selected value, hide & clear the list
+    if (input.length < 2 || input === selected) {
+      setShowGuruMatha(false);
+      setGuruMathaOptions([]);
+      return;
+    }
+
     const timer = setTimeout(async () => {
-      if ((guruMathaInput || '').length >= 2) {
-        setLoadingGuruMatha(true);
-        const results = await searchGuruMatha(guruMathaInput);
-        setGuruMathaOptions(results || []);
-        setShowGuruMatha(true);
-        setLoadingGuruMatha(false);
-      }
+      setLoadingGuruMatha(true);
+      const results = await searchGuruMatha(input);
+      setGuruMathaOptions(results || []);
+      setShowGuruMatha((results || []).length > 0);
+      setLoadingGuruMatha(false);
     }, 300);
+
     return () => clearTimeout(timer);
-  }, [guruMathaInput, justSelectedGuruMatha, searchGuruMatha]);
+  }, [guruMathaInput, justSelectedGuruMatha, formData.guruMatha, searchGuruMatha]);
 
   const handleSelectGuruMatha = (value) => {
     setJustSelectedGuruMatha(true);
     setGuruMathaInput(value.label);
-    setShowGuruMatha(false);
+    setGuruMathaOptions([]);        // ✅ clear options after selection
+    setShowGuruMatha(false);        // ✅ keep list hidden
     handleChange({ target: { name: 'guruMatha', value: value.label } });
   };
 
@@ -100,12 +114,8 @@ const Popup3_PersonalDetails = ({
     if (!formData.marriedStatus) newErrors.marriedStatus = "Married Status is required";
     if (!formData.heightFeet || !formData.heightInches) newErrors.height = "Height is required";
     if (!formData.profileCategory) newErrors.profileCategory = "Bride/Groom category is required";
-//    if (!formData.nativePlace) newErrors.nativePlace = "Native place is required";
-  //  if (!formData.placeOfBirth) newErrors.placeOfBirth = "Place of birth is required";
-    // if (!formData.timeOfBirth) newErrors.timeOfBirth = "Time of birth is required";
-  //  if (!formData.aboutBrideGroom) newErrors.aboutBrideGroom = "About Yourself is required";
 
-    // --- horoscope required validations (added) ---
+    // --- horoscope required validations ---
     if (!formData.gotra) newErrors.gotra = "Gotra is required";
     if (!formData.rashi) newErrors.rashi = "Rashi is required";
     if (!formData.nakshatra) newErrors.nakshatra = "Nakshatra is required";
@@ -188,7 +198,7 @@ const Popup3_PersonalDetails = ({
             </div>
 
             <div>
-              <L htmlFor="timeOfBirth">Time of Birth <span className="text-red-500"></span></L>
+              <L htmlFor="timeOfBirth">Time of Birth</L>
               <LocalizationProvider dateAdapter={AdapterDayjs}>
                 <TimePicker
                   value={formData.timeOfBirth ? dayjs(formData.timeOfBirth, 'HH:mm:ss') : null}
@@ -200,7 +210,6 @@ const Popup3_PersonalDetails = ({
                     <I
                       {...params}
                       name="timeOfBirth"
-                      required
                       error={!!errors.timeOfBirth}
                       helperText={errors.timeOfBirth}
                       className="w-full"
@@ -213,17 +222,7 @@ const Popup3_PersonalDetails = ({
               </div>
             </div>
 
-            <MultiSelectCheckbox
-              label="Hobbies"
-              name="hobbies"
-              options={hobbyOptions}
-              selectedValues={(formData.hobbies || []).map(item => ({ label: item, value: item }))}
-              onChange={(name, values) =>
-                handleChange({ target: { name, value: values.map(v => v.label || v.value || v) } })
-              }
-            />
-
-            {/* --- Horoscope fields (merged) --- */}
+            {/* --- Horoscope fields --- */}
             <div>
               <L>Gotra <span className="text-red-500">*</span></L>
               <S
@@ -293,6 +292,7 @@ const Popup3_PersonalDetails = ({
               {errors.charanaPada && <small className="text-red-500">{errors.charanaPada}</small>}
             </div>
 
+            {/* Row: Sub Caste + Guru Matha */}
             <div>
               <L>Sub Caste <span className="text-red-500">*</span></L>
               <S
@@ -311,7 +311,7 @@ const Popup3_PersonalDetails = ({
               {errors.subCaste && <small className="text-red-500">{errors.subCaste}</small>}
             </div>
 
-            <div className="autocomplete-dropdown md:col-span-2">
+            <div className="relative autocomplete-dropdown">
               <L>Guru Matha <span className="text-red-500">*</span></L>
               <I
                 type="text"
@@ -319,12 +319,22 @@ const Popup3_PersonalDetails = ({
                 onChange={(e) => setGuruMathaInput(e.target.value)}
                 placeholder="Start typing..."
                 error={!!errors.guruMatha}
-                helperText={errors.guruMatha || 'Start typing to search'}
+                className="w-full min-h-[40px]"
+                onFocus={() => {
+                  const input = (guruMathaInput || '').trim();
+                  const selected = (formData.guruMatha || '').trim();
+                  setShowGuruMatha(input.length >= 2 && input !== selected && (guruMathaOptions || []).length > 0);
+                }}
                 onBlur={() => setTimeout(() => setShowGuruMatha(false), 200)}
               />
+              {!errors.guruMatha && (
+                <small className="text-gray-400">Start typing to search</small>
+              )}
+              {errors.guruMatha && <small className="text-red-500">{errors.guruMatha}</small>}
+
               {loadingGuruMatha && <p className="text-sm text-gray-500 mt-1">Loading...</p>}
               {showGuruMatha && (guruMathaOptions || []).length > 0 && (
-                <ul className="border rounded-md bg-white shadow-md max-h-40 overflow-y-auto mt-1 z-50 relative">
+                <ul className="absolute left-0 right-0 border rounded-md bg-white shadow-md max-h-40 overflow-y-auto mt-1 z-50">
                   {guruMathaOptions.map((opt, i) => (
                     <li
                       key={i}
@@ -337,11 +347,32 @@ const Popup3_PersonalDetails = ({
                 </ul>
               )}
             </div>
-            {/* --- /Horoscope fields --- */}
+
+            {/* Hobbies full width */}
+            <div className="md:col-span-2">
+              <MultiSelectCheckbox
+                label="Hobbies"
+                name="hobbies"
+                options={hobbyOptions}
+                selectedValues={
+                  // ensure we don't render duplicates from formData either
+                  Array.from(new Set((formData.hobbies || []).map(h => String(h).trim())))
+                    .map(h => ({ label: h, value: h }))
+                }
+                onChange={(name, values) => {
+                  // 🔧 FIX #2: dedupe (trim + case-insensitive) before saving
+                  const norm = (x) => String(x?.label ?? x?.value ?? x).trim().toLowerCase();
+                  const pick = (x) => String(x?.label ?? x?.value ?? x).trim();
+                  const uniqueValues = [...new Map(values.map(v => [norm(v), pick(v)])).values()];
+                  handleChange({ target: { name, value: uniqueValues } });
+                }}
+              />
+            </div>
           </div>
 
+          {/* Navigation */}
           <div className="flex justify-between pt-6">
-           {/* Previous button hidden intentionally 
+            {/* Previous button hidden intentionally 
             <B variant="outline" onClick={onPrevious}>Previous</B>*/}
             <B onClick={validateAndProceed}>Save & Next</B>
           </div>

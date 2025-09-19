@@ -81,7 +81,7 @@ const Popup4_CareerEducation = ({
           {/* Fields Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {renderAutocomplete({
-              label: 'Education *',
+              label: 'Your Highest Qualification',
               name: 'education',
               inputValue: educationInput,
               inputSetter: setEducationInput,
@@ -95,7 +95,7 @@ const Popup4_CareerEducation = ({
             })}
 
             {renderAutocomplete({
-              label: 'Profession *',
+              label: 'Profession ',
               name: 'profession',
               inputValue: professionInput,
               inputSetter: setProfessionInput,
@@ -174,7 +174,7 @@ const Popup4_CareerEducation = ({
             */}
 
             <div>
-              <L>Annual Income in INR</L>
+              <L>Annual Income in INR<span className="text-red-500">*</span></L>
               <S name="annualIncome" value={formData.annualIncome || ''} onChange={handleChange}>
                 <option value="">Select Income Range</option>
                 <option value="Below ₹2 Lakh">Below ₹2 Lakh</option>

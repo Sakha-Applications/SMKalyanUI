@@ -13,45 +13,25 @@ const Popup9_PartnerPreferences_Page3 = ({ formData, handleChange, onNext, onPre
 
   const [originInput, setOriginInput] = useState('');
   const [cityInput, setCityInput] = useState('');
-
   const [originOptions, setOriginOptions] = useState([]);
   const [cityOptions, setCityOptions] = useState([]);
-
   const [originLoading, setOriginLoading] = useState(false);
   const [cityLoading, setCityLoading] = useState(false);
 
   const [professionInput, setProfessionInput] = useState('');
-const [professionOptions, setProfessionOptions] = useState([]);
-const [professionLoading, setProfessionLoading] = useState(false);
+  const [professionOptions, setProfessionOptions] = useState([]);
+  const [professionLoading, setProfessionLoading] = useState(false);
 
-const hobbyOptions = [
-  { label: 'Reading' },
-  { label: 'Traveling' },
-  { label: 'Music' },
-  { label: 'Sports' },
-  { label: 'Art & Craft' },
-  { label: 'Cooking' },
-  { label: 'Meditation' },
-  { label: 'Gardening' },
-  { label: 'Photography' }
-];
-  const countryOptions = [
-    { label: 'India' },
-    { label: 'USA' },
-    { label: 'UK' },
-    { label: 'Canada' },
-    { label: 'Australia' },
-    { label: 'Germany' },
-    { label: 'Singapore' },
-    { label: 'UAE' }
-  ];
-
-  const dietOptions = [
-    { label: 'Vegetarian' },
-    { label: 'Eggetarian' },
-    { label: 'Non-Vegetarian' },
-    { label: 'Vegan' },
-    { label: 'Doesn\'t Matter' }
+  const hobbyOptions = [
+    { label: 'Reading' },
+    { label: 'Traveling' },
+    { label: 'Music' },
+    { label: 'Sports' },
+    { label: 'Art & Craft' },
+    { label: 'Cooking' },
+    { label: 'Meditation' },
+    { label: 'Gardening' },
+    { label: 'Photography' }
   ];
 
   const formatSelectedValues = (field) =>
@@ -75,22 +55,18 @@ const hobbyOptions = [
   }, [originInput, searchPlaces]);
 
   useEffect(() => {
-  const delay = setTimeout(async () => {
-    if (professionInput.length >= 2) {
-      setProfessionLoading(true);
-      const res = await searchProfessions(professionInput);
-      setProfessionOptions(Array.isArray(res) ? res.map(item => ({ label: item.label || item })) : []);
-      setProfessionLoading(false);
-    } else {
-      setProfessionOptions([]);
-    }
-  }, 300);
-  return () => clearTimeout(delay);
-}, [professionInput, searchProfessions
-
-
-
-]);
+    const delay = setTimeout(async () => {
+      if (professionInput.length >= 2) {
+        setProfessionLoading(true);
+        const res = await searchProfessions(professionInput);
+        setProfessionOptions(Array.isArray(res) ? res.map(item => ({ label: item.label || item })) : []);
+        setProfessionLoading(false);
+      } else {
+        setProfessionOptions([]);
+      }
+    }, 300);
+    return () => clearTimeout(delay);
+  }, [professionInput, searchProfessions]);
 
   useEffect(() => {
     const delay = setTimeout(async () => {
@@ -107,79 +83,78 @@ const hobbyOptions = [
   }, [cityInput, searchPlaces]);
 
   return (
-    <div className="space-y-6">
-      <div className="bg-slate-100 border border-slate-300 rounded-md p-3 text-sm flex flex-col sm:flex-row sm:items-center sm:justify-between shadow-sm">
-        <div><strong>Profile ID:</strong> {formData.profileId || 'N/A'}</div>
-        <div><strong>Name:</strong> {formData.name || 'N/A'}</div>
-        <div><strong>Login ID:</strong> {formData.userId || 'N/A'}</div>
-      </div>
+    <div className="h-full flex flex-col">
+      {/* Sticky Header (Popup6 style) */}
+      <header className="flex-shrink-0 bg-gradient-to-r from-rose-500 to-pink-500 p-5 rounded-t-xl">
+        <h1 className="text-2xl font-bold text-white text-center">
+          Partner Preferences – Location & Lifestyle
+        </h1>
+      </header>
 
-      <h2 className="text-lg font-semibold">Geographic Preferences</h2>
+      {/* Scrollable Content (Popup6 style) */}
+      <div className="flex-1 overflow-y-auto p-6">
+        <div className="space-y-6">
+          {/* Profile summary header (Popup6 style) */}
+          <div className="bg-slate-100 border border-slate-300 rounded-md p-3 text-sm flex flex-col sm:flex-row sm:items-center sm:justify-between shadow-sm">
+            <div><strong>Profile ID:</strong> {formData.profileId || 'N/A'}</div>
+            <div><strong>Name:</strong> {formData.name || 'N/A'}</div>
+            <div><strong>Login ID:</strong> {formData.userId || 'N/A'}</div>
+          </div>
 
-      
-      <div>
+          <h2 className="text-lg font-semibold">Geographic Preferences</h2>
 
-<MultiCountryStateCitySelector
-  labelPrefix="Origin of Native"
-  name="preferredNativeOrigins"
-  selectedValues={formData.preferredNativeOrigins || []}
-  onChange={(name, values) =>
-    handleChange({ target: { name, value: values } })
-  }
-/>
+          <MultiCountryStateCitySelector
+            labelPrefix="Origin of Native"
+            name="preferredNativeOrigins"
+            selectedValues={formData.preferredNativeOrigins || []}
+            onChange={(name, values) =>
+              handleChange({ target: { name, value: values } })
+            }
+          />
 
-<MultiCountryStateCitySelector
-  labelPrefix="City Living In"
-  name="preferredCities"
-  selectedValues={formData.preferredCities || []}
-  onChange={(name, values) =>
-    handleChange({ target: { name, value: values } })
-  }
-/>
+          <MultiCountryStateCitySelector
+            labelPrefix="City Living In"
+            name="preferredCities"
+            selectedValues={formData.preferredCities || []}
+            onChange={(name, values) =>
+              handleChange({ target: { name, value: values } })
+            }
+          />
 
+          <h2 className="text-lg font-semibold">Lifestyle Preferences</h2>
 
-      </div>
+          <MultiSelectCheckbox
+            label="Profession Preference"
+            name="preferredProfessions"
+            options={professionOptions}
+            selectedValues={formatSelectedValues('preferredProfessions')}
+            onSearch={setProfessionInput}
+            searchInput={professionInput}
+            loading={professionLoading}
+            onChange={(name, values) => {
+              handleChange({
+                target: { name, value: values.map(v => v.label || v.value || v) }
+              });
+              setProfessionInput('');
+            }}
+          />
 
-      <h2 className="text-lg font-semibold">Lifestyle Preferences</h2>
+          <MultiSelectCheckbox
+            label="Hobbies"
+            name="preferredHobbies"
+            options={hobbyOptions}
+            selectedValues={formatSelectedValues('preferredHobbies')}
+            onChange={(name, values) =>
+              handleChange({ target: { name, value: values.map(v => v.label || v.value || v) } })
+            }
+          />
 
-  
-      <div>
-<MultiSelectCheckbox
-  label="Profession Preference"
-  name="preferredProfessions"
-  options={professionOptions}
-  selectedValues={formatSelectedValues('preferredProfessions')}
-  onSearch={setProfessionInput}
-  searchInput={professionInput}
-  loading={professionLoading}
-  onChange={(name, values) => {
-    handleChange({
-      target: {
-        name,
-        value: values.map(v => v.label || v.value || v)
-      }
-    });
-    setProfessionInput(''); // Clear input after selection
-  }}
-/>
-
-     </div>
-
-      <div>
-  <MultiSelectCheckbox
-  label="Hobbies"
-  name="preferredHobbies"
-  options={hobbyOptions}
-  selectedValues={formatSelectedValues('preferredHobbies')}
-  onChange={(name, values) =>
-    handleChange({ target: { name, value: values.map(v => v.label || v.value || v) } })
-  }
-/>
-      </div>
-
-      <div className="flex justify-between pt-6">
-        <B variant="outline" onClick={onPrevious}>⬅️ Previous</B>
-        <B onClick={onNext}>Save & Finish ✅</B>
+          {/* Navigation (Popup6 style) */}
+          <div className="flex justify-between pt-6">
+            <B variant="outline" onClick={onPrevious}>⬅️ Previous</B>
+            <B onClick={onNext}>Save & Finish ✅</B>
+          </div>
+        </div>
       </div>
     </div>
   );
