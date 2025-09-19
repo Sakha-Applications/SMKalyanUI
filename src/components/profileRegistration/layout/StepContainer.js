@@ -29,7 +29,7 @@ const StepContainer = ({
         */}
 
         {/* Popup Content - removed padding and scrolling, let child components handle it */}
-        <div className="flex-1 overflow-hidden">
+         <div className="flex-1 overflow-hidden">
           {children}
         </div>
       </div>

@@ -168,7 +168,7 @@ const Popup1_BasicInfo = ({ formData, handleChange, onNext }) => {
       {/* Sticky Header */}
       <header className="flex-shrink-0 bg-gradient-to-r from-rose-500 to-pink-500 p-5 rounded-t-xl">
         <h1 className="text-2xl font-bold text-white text-center">
-          Ready to create your profile? Let's get started!
+          Ready to register your profile? Let's get started!
         </h1>
       </header>
 

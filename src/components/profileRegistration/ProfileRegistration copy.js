@@ -24,9 +24,6 @@ const ProfileRegistration = () => {
   const [userCreationData, setUserCreationData] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // 🔹 NEW: Popup4 confirmation dialog state (mirrors Popup2 confirmation pattern)
-  const [showPopup4ConfirmDialog, setShowPopup4ConfirmDialog] = useState(false);
-
   const { formData, setFormData, handleChange, handleDOBChange, handleTimeBlur } = useFormData();
   const navigate = useNavigate();
 
@@ -74,16 +71,6 @@ const ProfileRegistration = () => {
       setCurrentStep(currentStep + 1);
     } else {
       alert(`Please save your login credentials:\nUser ID: ${userCreationData?.userId}\nPassword: ${userCreationData?.password}`);
-      navigate("/");
-    }
-  };
-
-  // 🔹 NEW: Popup4 confirmation handler (Continue → next step, Later → exit)
-  const handlePopup4Confirmation = (proceedNow) => {
-    setShowPopup4ConfirmDialog(false);
-    if (proceedNow) {
-      setCurrentStep(currentStep + 1);
-    } else {
       navigate("/");
     }
   };
@@ -165,8 +152,6 @@ const ProfileRegistration = () => {
           navigate={navigate}
           isLastStep={currentStep === popups.length - 1}
           handleIntermediateProfileUpdate={handleIntermediateProfileUpdate}
-          // 🔹 NEW: give Popup4 a way to open its confirmation dialog after save
-          setShowPopup4ConfirmDialog={setShowPopup4ConfirmDialog}
         />
       </StepContainer>
 
@@ -190,27 +175,6 @@ const ProfileRegistration = () => {
             Complete Later
           </Button>
           <Button onClick={() => handleUserCreationConfirmation(true)} variant="contained" color="success">
-            Continue Now
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* 🔹 NEW: Popup4 Confirmation Dialog (mirrors Popup2 UX) */}
-      <Dialog open={showPopup4ConfirmDialog} maxWidth="sm" fullWidth>
-        <DialogTitle>Your Profile is created Successfully! ✅</DialogTitle>
-        <DialogContent>
-          <Typography variant="body1">
-            Your Career &amp; Education details have been saved.
-          </Typography>
-          <Typography sx={{ mt: 2 }}>
-            We need to capture more details for your profile Would you like to continue now or complete the rest later?
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => handlePopup4Confirmation(false)} variant="outlined" color="warning">
-            Complete Later
-          </Button>
-          <Button onClick={() => handlePopup4Confirmation(true)} variant="contained" color="success">
             Continue Now
           </Button>
         </DialogActions>
