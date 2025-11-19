@@ -139,20 +139,31 @@ const AdvancedSearchForm = () => {
         { label: "Select Category", value: "" },
         { label: "Domestic", value: "Domestic" },
         { label: "International", value: "International" },
-        { label: "Vaidhik", value: "Vaidhik" },
+        { label: "Vaidik", value: "Vaidhik" },
         { label: "Anyone", value: "Anyone" },
     ];
 
     const hobbyOptions = [
-        { label: "Reading", value: "Reading" },
-        { label: "Traveling", value: "Traveling" },
-        { label: "Photography", value: "Photography" },
-        { label: "Cooking", value: "Cooking" },
-        { label: "Sports", value: "Sports" },
-        { label: "Music", value: "Music" },
-        { label: "Movies", value: "Movies" },
-        { label: "Gardening", value: "Gardening" },
-        { label: "Writing", value: "Writing" },
+{ label: 'Reading' },
+      { label: 'Traveling' },
+      { label: 'Music' },
+      { label: 'Sports' },
+      { label: 'Art & Craft' },
+      { label: 'Cooking' },
+      { label: 'Meditation' },
+      { label: 'Gardening' },
+      { label: 'Photography' },
+      { label: 'Contributing to Social Activities' },
+      { label: 'Participating in Aradhana' },
+      { label: 'Participating in Patha' },
+      { label: 'Participating in Pravachana' },
+      { label: 'Participating in Bhajane' },
+      { label: 'Practicing Puja' },
+      { label: 'Practicing Sandhyavandane' },
+      { label: 'Practicing Tulasi Puje' },
+      { label: 'Observing Rajamanta' },
+      { label: 'Observing Chaturmasya' },
+      { label: 'Daily Rituals' }
     ];
 
     const workingStatusOptions = [
@@ -462,15 +473,108 @@ const AdvancedSearchForm = () => {
                                         selectOptions={[...Array(12).keys()].map(i => ({ label: `${i} in`, value: String(i) }))}
                                     />
                                 </div>
-                                <div className="md:col-span-2">
-                                    <MultiSelectCheckbox
-                                        label="Hobbies"
-                                        name="hobbies"
-                                        options={hobbyOptions}
-                                        selectedValues={searchQuery.hobbies.map(h => ({ label: h, value: h }))}
-                                        onChange={handleMultiSelectChange}
-                                    />
-                                </div>
+
+
+{/* Hobbies full width */}
+<div className="md:col-span-2">
+  {/* Replaced <L> with a standard styled div/label to avoid reference errors */}
+  <label className="mb-2 block text-sm font-medium text-gray-700">Hobbies</label>
+
+  <div className="border rounded-lg p-3 bg-white max-h-64 overflow-y-auto">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+      {/* ---------- COLUMN 1 (General) ---------- */}
+      <div>
+        <div className="font-semibold text-gray-700 mb-2">General Hobbies</div>
+        <div className="space-y-1">
+          {hobbyOptions.slice(0, Math.ceil(hobbyOptions.length / 2)).map((opt, idx) => {
+            // Handle both string array or object array options
+            const label = opt.label || opt;
+            const value = opt.value || opt;
+            
+            // Check against searchQuery.hobbies
+            const isChecked = searchQuery.hobbies.includes(value);
+
+            return (
+              <label
+                key={idx}
+                className="flex items-start space-x-2 text-sm cursor-pointer rounded-md px-2 py-1 hover:bg-pink-50"
+              >
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 rounded border-gray-300 text-pink-600 focus:ring-pink-500"
+                  checked={isChecked}
+                  onChange={() => {
+                    const current = searchQuery.hobbies || [];
+                    let nextValues;
+                    
+                    if (isChecked) {
+                      // Remove if already checked
+                      nextValues = current.filter((h) => h !== value);
+                    } else {
+                      // Add if not checked
+                      nextValues = [...current, value];
+                    }
+
+                    // Call your existing handler
+                    // NOTE: Depending on how handleMultiSelectChange is written, 
+                    // you might need to pass just 'nextValues' or a synthetic event.
+                    // Assuming it acts like a standard input handler:
+                    handleMultiSelectChange({ target: { name: 'hobbies', value: nextValues } });
+                  }}
+                />
+                <span className="whitespace-normal break-words text-gray-700">{label}</span>
+              </label>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ---------- COLUMN 2 (Spiritual/Activities) ---------- */}
+      <div>
+        <div className="font-semibold text-gray-700 mb-2">Spiritual & Activities</div>
+        <div className="space-y-1">
+          {hobbyOptions.slice(Math.ceil(hobbyOptions.length / 2)).map((opt, idx) => {
+            const label = opt.label || opt;
+            const value = opt.value || opt;
+            const isChecked = searchQuery.hobbies.includes(value);
+
+            return (
+              <label
+                key={idx}
+                className="flex items-start space-x-2 text-sm cursor-pointer rounded-md px-2 py-1 hover:bg-pink-50"
+              >
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 rounded border-gray-300 text-pink-600 focus:ring-pink-500"
+                  checked={isChecked}
+                  onChange={() => {
+                    const current = searchQuery.hobbies || [];
+                    let nextValues;
+                    
+                    if (isChecked) {
+                      nextValues = current.filter((h) => h !== value);
+                    } else {
+                      nextValues = [...current, value];
+                    }
+
+                    handleMultiSelectChange({ target: { name: 'hobbies', value: nextValues } });
+                  }}
+                />
+                <span className="whitespace-normal break-words text-gray-700">{label}</span>
+              </label>
+            );
+          })}
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+                            
+                            
                             </Box>
                         </div>
 

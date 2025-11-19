@@ -104,9 +104,25 @@ const SearchResults = ({ results }) => {
   };
 
   const handleCardClick = (profileId) => {
-    alert(`Clicked on profile: ${profileId}. To see more details, please log in or register.`); //
-    navigate('/'); //
-  };
+  if (!profileId) {
+    console.warn("[SearchResults] handleCardClick called without profileId");
+    return;
+  }
+
+  const token = sessionStorage.getItem('token');
+
+  if (!token) {
+    alert(`To see the details for profile ${profileId}, please log in or register.`);
+    // If your login page is '/', keep '/', otherwise point to '/login'
+    navigate('/login'); 
+    return;
+  }
+
+  console.log(`[SearchResults] Navigating to view-profile for profileId: ${profileId}`);
+  navigate(`/view-profile/${profileId}`);
+};
+
+
 
   return (
     <div className="p-6 bg-gray-50 rounded-lg shadow-inner mt-4">

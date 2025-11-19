@@ -83,15 +83,26 @@ const Popup3_PersonalDetails = ({
   };
 
   const hobbyOptions = [
-    { label: 'Reading' },
-    { label: 'Traveling' },
-    { label: 'Music' },
-    { label: 'Sports' },
-    { label: 'Art & Craft' },
-    { label: 'Cooking' },
-    { label: 'Meditation' },
-    { label: 'Gardening' },
-    { label: 'Photography' }
+ { label: 'Reading' },
+      { label: 'Traveling' },
+      { label: 'Music' },
+      { label: 'Sports' },
+      { label: 'Art & Craft' },
+      { label: 'Cooking' },
+      { label: 'Meditation' },
+      { label: 'Gardening' },
+      { label: 'Photography' },
+      { label: 'Contributing to Social Activities' },
+      { label: 'Participating in Aradhana' },
+      { label: 'Participating in Patha' },
+      { label: 'Participating in Pravachana' },
+      { label: 'Participating in Bhajane' },
+      { label: 'Practicing Puja' },
+      { label: 'Practicing Sandhyavandane' },
+      { label: 'Practicing Tulasi Puje' },
+      { label: 'Observing Rajamanta' },
+      { label: 'Observing Chaturmasya' },
+      { label: 'Daily Rituals' }
   ];
 
   const getAgeWithMonths = (dob) => {
@@ -192,7 +203,7 @@ const Popup3_PersonalDetails = ({
                 <option value="">Select Category</option>
                 <option value="Domestic">Domestic</option>
                 <option value="International">International</option>
-                <option value="Vaidhik">Vaidhik</option>
+                <option value="Vaidik">Vaidhik</option>
                 <option value="Anyone">Anyone</option>
               </S>
             </div>
@@ -221,6 +232,20 @@ const Popup3_PersonalDetails = ({
                 <small>Select time of birth in hh:mm AM/PM format (e.g. 08:30 AM)</small>
               </div>
             </div>
+
+<div className="col-span-2 w-full">
+  <CountryStateCitySelector
+    formData={formData}
+    handleChange={handleChange}
+    countryField="placeOfBirthCountry"
+    stateField="placeOfBirthState"
+    cityField="placeOfBirth"
+    labelPrefix="Place of Birth"
+  />
+</div>
+
+
+
 
             {/* --- Horoscope fields --- */}
             <div>
@@ -348,27 +373,114 @@ const Popup3_PersonalDetails = ({
               )}
             </div>
 
-            {/* Hobbies full width */}
-            <div className="md:col-span-2">
-              <MultiSelectCheckbox
-                label="Hobbies"
-                name="hobbies"
-                options={hobbyOptions}
-                selectedValues={
-                  // ensure we don't render duplicates from formData either
-                  Array.from(new Set((formData.hobbies || []).map(h => String(h).trim())))
-                    .map(h => ({ label: h, value: h }))
-                }
-                onChange={(name, values) => {
-                  // 🔧 FIX #2: dedupe (trim + case-insensitive) before saving
-                  const norm = (x) => String(x?.label ?? x?.value ?? x).trim().toLowerCase();
-                  const pick = (x) => String(x?.label ?? x?.value ?? x).trim();
-                  const uniqueValues = [...new Map(values.map(v => [norm(v), pick(v)])).values()];
-                  handleChange({ target: { name, value: uniqueValues } });
-                }}
-              />
-            </div>
-          </div>
+{/* Hobbies full width */}
+<div className="md:col-span-2">
+  <L className="mb-2 block">Hobbies</L>
+
+  <div className="border rounded-lg p-3 bg-white max-h-64 overflow-y-auto">
+    <div className="grid grid-cols-2 gap-6">
+
+      {/* ---------- COLUMN 1 ---------- */}
+      <div>
+        <div className="font-semibold text-gray-700 mb-2">General Hobbies</div>
+
+        <div className="space-y-1">
+          {hobbyOptions.slice(0, Math.ceil(hobbyOptions.length / 2)).map((opt, idx) => {
+            const label = String(opt.label ?? opt).trim();
+            const current = Array.isArray(formData.hobbies) ? formData.hobbies : [];
+            const isChecked = current
+              .map((h) => String(h).trim().toLowerCase())
+              .includes(label.toLowerCase());
+
+            const handleToggle = () => {
+              let next = isChecked
+                ? current.filter((h) => String(h).trim().toLowerCase() !== label.toLowerCase())
+                : [...current, label];
+
+              const norm = (x) => String(x).trim().toLowerCase();
+              const pick = (x) => String(x).trim();
+              const uniqueValues = [
+                ...new Map(next.map((v) => [norm(v), pick(v)])).values(),
+              ];
+
+              handleChange({
+                target: { name: 'hobbies', value: uniqueValues },
+              });
+            };
+
+            return (
+              <label
+                key={idx}
+                className="flex items-start space-x-2 text-sm cursor-pointer rounded-md px-2 py-1 hover:bg-pink-50"
+              >
+                <input
+                  type="checkbox"
+                  className="h-4 w-4"
+                  checked={isChecked}
+                  onChange={handleToggle}
+                />
+                <span className="whitespace-normal break-words">{label}</span>
+              </label>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ---------- COLUMN 2 ---------- */}
+      <div>
+        <div className="font-semibold text-gray-700 mb-2">Spiritual & Activities</div>
+
+        <div className="space-y-1">
+          {hobbyOptions.slice(Math.ceil(hobbyOptions.length / 2)).map((opt, idx) => {
+            const label = String(opt.label ?? opt).trim();
+            const current = Array.isArray(formData.hobbies) ? formData.hobbies : [];
+            const isChecked = current
+              .map((h) => String(h).trim().toLowerCase())
+              .includes(label.toLowerCase());
+
+            const handleToggle = () => {
+              let next = isChecked
+                ? current.filter((h) => String(h).trim().toLowerCase() !== label.toLowerCase())
+                : [...current, label];
+
+              const norm = (x) => String(x).trim().toLowerCase();
+              const pick = (x) => String(x).trim();
+              const uniqueValues = [
+                ...new Map(next.map((v) => [norm(v), pick(v)])).values(),
+              ];
+
+              handleChange({
+                target: { name: 'hobbies', value: uniqueValues },
+              });
+            };
+
+            return (
+              <label
+                key={idx}
+                className="flex items-start space-x-2 text-sm cursor-pointer rounded-md px-2 py-1 hover:bg-pink-50"
+              >
+                <input
+                  type="checkbox"
+                  className="h-4 w-4"
+                  checked={isChecked}
+                  onChange={handleToggle}
+                />
+                <span className="whitespace-normal break-words">{label}</span>
+              </label>
+            );
+          })}
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+            
+            
+            
+                      </div>
 
           {/* Navigation */}
           <div className="flex justify-between pt-6">

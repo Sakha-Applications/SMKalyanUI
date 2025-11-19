@@ -4,9 +4,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import getBaseUrl from '../../utils/GetUrl';
 
-// ⬇️ NEW: photo helper import
-import { fetchDefaultPhoto } from '../UploadProfilePhoto/photoUploadUtils';
-
 // Material-UI Accordion imports
 import Accordion from '@mui/material/Accordion';
 import AccordionSummary from '@mui/material/AccordionSummary';
@@ -30,9 +27,6 @@ import HoroscopeDetails from '../ModifyProfile/PartnerPreferences/sections/Horos
 import AddressDetails from '../ModifyProfile/PartnerPreferences/sections/AddressDetails';
 import ReferencesSection from '../ModifyProfile/PartnerPreferences/sections/ReferencesSection';
 
-// ⬇️ NEW: reuse same pattern as SearchResults
-const API_BASE_URL = `${getBaseUrl()}`;
-const FALLBACK_DEFAULT_IMAGE_PATH = '/ProfilePhotos/defaultImage.jpg';
 
 const ViewOtherProfilePage = () => {
   const { profileId } = useParams();
@@ -46,12 +40,6 @@ const ViewOtherProfilePage = () => {
   const [snackbarOpen, setSnackbarOpen] = useState(false); // State for Snackbar feedback
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState('success');
-
-  // ⬇️ NEW: photo-specific state
-  const [photoUrl, setPhotoUrl] = useState(
-    `${API_BASE_URL}${FALLBACK_DEFAULT_IMAGE_PATH}`
-  );
-  const [photoLoading, setPhotoLoading] = useState(false);
 
   // Handler for accordion expansion change
   const handleChange = (panel) => (event, isExpanded) => {
@@ -107,55 +95,6 @@ const ViewOtherProfilePage = () => {
 
     fetchProfile();
   }, [profileId, navigate]);
-
-    // ⬇️ NEW: load profile photo once profileData is available
-  useEffect(() => {
-    if (!profileData) return;
-
-    const pid = profileData.profile_id || profileData.profileId;
-    if (!pid) {
-      console.warn("[ViewOtherProfilePage] profileData missing profile_id/profileId, using fallback photo.");
-      setPhotoUrl(`${API_BASE_URL}${FALLBACK_DEFAULT_IMAGE_PATH}`);
-      return;
-    }
-
-    const loadPhoto = async () => {
-      console.log(`[ViewOtherProfilePage] Loading photo for profileId: ${pid}`);
-      setPhotoLoading(true);
-
-      let finalUrl = `${API_BASE_URL}${FALLBACK_DEFAULT_IMAGE_PATH}`;
-      let currentError = null;
-
-      const tempDefaultPhoto = (photoObj) => {
-        if (photoObj && photoObj.fullUrl) {
-          finalUrl = photoObj.fullUrl;
-        }
-      };
-
-      const tempSetFetchError = (msg) => {
-        currentError = msg;
-      };
-
-      try {
-        await fetchDefaultPhoto(pid, tempDefaultPhoto, tempSetFetchError);
-
-        if (currentError) {
-          console.warn(`[ViewOtherProfilePage] fetchDefaultPhoto error for ${pid}: ${currentError}. Using fallback.`);
-          finalUrl = `${API_BASE_URL}${FALLBACK_DEFAULT_IMAGE_PATH}`;
-        }
-      } catch (err) {
-        console.error(`[ViewOtherProfilePage] Unexpected error loading photo for ${pid}:`, err);
-        finalUrl = `${API_BASE_URL}${FALLBACK_DEFAULT_IMAGE_PATH}`;
-      }
-
-      console.log(`[ViewOtherProfilePage] Final photo URL for ${pid}:`, finalUrl);
-      setPhotoUrl(finalUrl);
-      setPhotoLoading(false);
-    };
-
-    loadPhoto();
-  }, [profileData]);
-
 
   // Handler for sending invitation
   const handleSendInvitation = async () => {
@@ -228,84 +167,13 @@ const ViewOtherProfilePage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-100 p-6">
       <div className="max-w-5xl mx-auto bg-white shadow-lg rounded-lg overflow-hidden">
-
-<div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-6">
-  <div className="flex flex-col md:flex-row items-center gap-4">
-    {/* ⬇️ Profile photo */}
-    <div className="relative">
-      <img
-        src={photoUrl}
-        alt={profileData.name || 'Profile Photo'}
-        className="w-28 h-28 md:w-32 md:h-32 rounded-full border-4 border-white object-cover shadow-md bg-gray-100"
-        onError={(e) => {
-          e.target.onerror = null;
-          if (e.target.src !== `${API_BASE_URL}${FALLBACK_DEFAULT_IMAGE_PATH}`) {
-            e.target.src = `${API_BASE_URL}${FALLBACK_DEFAULT_IMAGE_PATH}`;
-            console.warn('[ViewOtherProfilePage] Photo failed to load, using fallback.');
-          }
-        }}
-      />
-      {photoLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30 rounded-full">
-          <svg
-            className="animate-spin h-6 w-6 text-white"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-          >
-            <circle
-              className="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              strokeWidth="4"
-            ></circle>
-            <path
-              className="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-            ></path>
-          </svg>
+        <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-6">
+          <h1 className="text-2xl font-bold">Profile Details: {profileData.name} ({profileData.profile_id})</h1>
+          <div className="mt-2 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+            <div><strong>Profile ID:</strong> {profileData.profile_id || profileData.profileId}</div>
+            <div><strong>Name:</strong> {profileData.name}</div>
+          </div>
         </div>
-      )}
-    </div>
-
-    {/* ⬇️ Basic info */}
-    <div className="flex-1 text-center md:text-left">
-      <h1 className="text-2xl md:text-3xl font-bold">
-        {profileData.name || 'Profile Details'}
-      </h1>
-      <p className="mt-1 text-sm md:text-base text-indigo-100">
-        Profile ID:&nbsp;
-        <span className="font-semibold">
-          {profileData.profile_id || profileData.profileId}
-        </span>
-      </p>
-      <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-2 text-xs md:text-sm text-indigo-100">
-        {profileData.current_age && (
-          <div>
-            <span className="font-semibold">Age:&nbsp;</span>
-            {profileData.current_age}
-          </div>
-        )}
-        {profileData.height && (
-          <div>
-            <span className="font-semibold">Height:&nbsp;</span>
-            {profileData.height}
-          </div>
-        )}
-        {profileData.current_location && (
-          <div>
-            <span className="font-semibold">Location:&nbsp;</span>
-            {profileData.current_location}
-          </div>
-        )}
-      </div>
-    </div>
-  </div>
-</div>
-
 
         <div className="p-6 space-y-4">
           {/* Invitation Section */}
@@ -344,7 +212,6 @@ const ViewOtherProfilePage = () => {
           </Accordion>
 
           {/* Accordion for Contact & Address Details */}
-          {/* Accordion for Contact & Address Details removed 
           <Accordion expanded={expanded === 'panel2'} onChange={handleChange('panel2')}>
             <AccordionSummary expandIcon={<ExpandMoreIcon />} aria-controls="panel2a-content" id="panel2a-header">
               <Typography variant="h6">Contact & Address Details</Typography>
@@ -354,7 +221,7 @@ const ViewOtherProfilePage = () => {
               <ContactDetails profileData={profileData} />
             </AccordionDetails>
           </Accordion>
-*/}
+
           {/* Accordion for Education & Job Details */}
           <Accordion expanded={expanded === 'panel3'} onChange={handleChange('panel3')}>
             <AccordionSummary expandIcon={<ExpandMoreIcon />} aria-controls="panel3a-content" id="panel3a-header">

@@ -102,10 +102,29 @@ const AdvancedSearchResults = ({ results }) => {
     return `${API_BASE_URL}${FALLBACK_DEFAULT_IMAGE_PATH}`;
   };
 
-  const handleCardClick = (profileId) => {
+  /*const handleCardClick = (profileId) => {
     alert(`Clicked on profile: ${profileId}. To see more details, please log in or register.`);
     navigate('/');
   };
+*/
+const handleCardClick = (profileId) => {
+  if (!profileId) {
+    console.warn("[AdvancedSearchResults] handleCardClick called without profileId");
+    return;
+  }
+
+  const token = sessionStorage.getItem('token');
+
+  if (!token) {
+    alert(`To see the details for profile ${profileId}, please log in or register.`);
+    // If your login page is '/', change '/login' to '/' here
+    navigate('/login');
+    return;
+  }
+
+  console.log(`[AdvancedSearchResults] Navigating to view-profile for profileId: ${profileId}`);
+  navigate(`/view-profile/${profileId}`);
+};
 
   return (
     <div className="p-6 bg-gray-50 rounded-lg shadow-inner mt-4">

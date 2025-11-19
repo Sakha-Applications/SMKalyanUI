@@ -69,7 +69,10 @@ const Popup5A_PhotoUpload = ({
         {/* Info banner */}
         <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded">
           <p className="text-sm text-yellow-800 font-medium">
-            Optional Step: You can upload <strong>one photo</strong> now, or skip and do it later from your Dashboard.
+           Optional Step: You can upload as many as 5 photos (max size 100 KB each).
+Once uploaded, you can choose which photo you want as your main profile picture.
+
+Upload one now—or skip and add photos later from your Dashboard.
           </p>
         </div>
 

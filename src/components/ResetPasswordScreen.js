@@ -109,7 +109,7 @@ function ResetPasswordScreen() {
                         disabled={isLoading}
                         className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-md transition duration-300 disabled:bg-indigo-400"
                     >
-                        {isLoading ? 'Processing...' : 'Reset Password'}
+                        {isLoading ? 'Processing...' : 'Change Password'}
                     </button>
                     
                     <div className="text-center mt-4">

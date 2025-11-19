@@ -474,6 +474,27 @@ const Popup2_ContactAndLocation = ({
                 onChange={(newValue) => {
                   const formattedDOB = newValue ? newValue.format('YYYY-MM-DD') : null;
                   handleDOBChange(formattedDOB);
+
+                    // ---- Immediate DOB validation ----
+  if (formattedDOB) {
+    const dob = new Date(formattedDOB);
+    const today = new Date();
+    let age = today.getFullYear() - dob.getFullYear();
+    const m = today.getMonth() - dob.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
+      age--;
+    }
+
+    if (age < 18) {
+      setErrors(prev => ({ ...prev, dob: 'Minimum age must be 18 years.' }));
+    } else {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors.dob;
+        return newErrors;
+      });
+    }
+  }
                 }}
                 slotProps={{
                   textField: {
@@ -497,10 +518,6 @@ const Popup2_ContactAndLocation = ({
             <div className="flex space-x-2">
               <Button onClick={onPrevious} variant="outline" disabled={isProcessing}>
                 Previous
-              </Button>
-              {/* Temporary test button - remove after testing */}
-              <Button onClick={testPhoneAvailability} variant="secondary" style={{fontSize: '12px', padding: '4px 8px'}}>
-                Test Phone
               </Button>
             </div>
             

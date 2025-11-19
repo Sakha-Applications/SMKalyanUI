@@ -176,6 +176,7 @@ const Popup6_FamilyDetails = ({
                 <option value="">Select</option>
                 <option value="Traditional">Traditional</option>
                 <option value="Moderate">Moderate</option>
+                <option value="Modern">Modern</option>
                 <option value="Liberal">Liberal</option>
               </S>
               {errors.familyValues && <p className="text-red-600 text-sm mt-1">{errors.familyValues}</p>}

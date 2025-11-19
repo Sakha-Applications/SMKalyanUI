@@ -245,14 +245,29 @@ const Popup1_BasicInfo = ({ formData, handleChange, onNext }) => {
             {errors.gender && <p className="mt-1 text-xs text-red-600">{errors.gender}</p>}
           </div>
 
-          {formData.gender && (
-            <div>
-              <Label>You are Registering for :</Label>
-              <Input value={formData.gender === "Male" ? "Bridegroom (Groom)" : "Bride"} readOnly />
-              <Label className="mt-2">Searching for Registered :</Label>
-              <Input value={formData.gender === "Male" ? "Bride" : "Bridegroom (Groom)"} readOnly />
-            </div>
-          )}
+{formData.gender && (
+  <div>
+    {/* You are Registering for */}
+    <div className="flex items-center gap-2 mt-2">
+      <Label className="font-semibold whitespace-nowrap">
+        You are Registering for :
+      </Label>
+      <span className="font-bold">
+        {formData.gender === "Male" ? "Bridegroom (Groom)" : "Bride"}
+      </span>
+    </div>
+
+    {/* Searching for Registered */}
+    <div className="flex items-center gap-2 mt-3">
+      <Label className="font-semibold whitespace-nowrap">
+        Searching for Registered :
+      </Label>
+      <span className="font-bold">
+        {formData.gender === "Male" ? "Bride" : "Bridegroom (Groom)"}
+      </span>
+    </div>
+  </div>
+)}
 
           <div className="flex justify-end pt-4">
             <Button onClick={validateAndProceed} variant="primary">Next</Button>

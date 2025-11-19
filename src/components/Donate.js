@@ -424,10 +424,15 @@ useEffect(() => {
           
           <Box component="form" onSubmit={handleSubmitDonation} sx={{ mt: 4 }}>
             <Typography variant="h6" sx={{ color: "#333", fontWeight: "bold", mb: 2 }}>
-              Offline Donation Details
+              Your Donation Details for our received payment reconcilation
             </Typography>
             <Typography variant="body2" sx={{ color: "#555", mb: 3 }}>
-              Please provide your donation details below. Our team will process your contribution and send you a confirmation.
+             <p>
+  Please provide your Payment details below. Our team will process your
+  contribution and send you a confirmation.
+  <br />
+  After Verification your profile will be listed.
+</p>
             </Typography>
             
             <Box
@@ -586,7 +591,7 @@ useEffect(() => {
                         size="small"
                         fullWidth
                         required
-                        placeholder="Enter a unique reference number"
+                          placeholder="Enter a unique reference number"
                         sx={{ bgcolor: "white", borderRadius: 1 }}
                       />
                     </>

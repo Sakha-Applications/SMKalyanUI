@@ -20,20 +20,67 @@ const maritalStatusOptions = [
 const brideGroomCategoryOptions = [
   { label: "Domestic" },
   { label: "International" },
-  { label: "Vaidhik" },
+  { label: "Vaidik" },
   { label: "Anyone" },
 ];
 
+const locationOptions = [
+  { label: "North Karnataka – Belagavi, Bagalkot, Vijayapura, Dharwad, Gadag, Haveri, Koppal, Ballari, Bidar, Kalaburagi, Raichur, Yadgir" },
+
+  { label: "Kalyana Karnataka (Hyderabad-Karnataka) – Kalaburagi, Bidar, Raichur, Yadgir, Ballari, Koppal" },
+
+  { label: "Hoysala Karnataka – Hassan, Chikkamagaluru, parts of Mandya & Tumakuru" },
+
+  { label: "Malnad (Hill Region) – Shivamogga, Chikkamagaluru, Kodagu, parts of Uttara Kannada" },
+
+  { label: "Old Mysore / Mysore Region – Mysuru, Mandya, Hassan, Tumakuru, Chamarajanagar, Ramanagara, Bengaluru Rural, Bengaluru Urban, Kolar, Chikkaballapur" },
+
+  { label: "Coastal Karnataka (Karavali) – Dakshina Kannada, Udupi, Uttara Kannada" },
+
+  { label: "Shivalli / Tulu Nadu – Udupi & Mangalore (Dakshina Kannada)" },
+
+  { label: "Gulbarga / Kalyana Region – Kalaburagi & surroundings" },
+
+  // --- Other Indian Regions where Kannada Brahmins stay ---
+  { label: "Bengaluru & Surroundings – Bengaluru Urban, Bengaluru Rural, Anekal" },
+  { label: "Mumbai Region – Dombivli, Thane, Mulund, Borivali, Navi Mumbai (Kannada-speaking hubs)" },
+  { label: "Pune Region – Pimpri-Chinchwad, Kothrud, Hinjawadi, Nigdi" },
+  { label: "Hyderabad Region – Kukatpally, Miyapur, Gachibowli, Lingampally" },
+  { label: "Chennai Region – K.K. Nagar, Ashok Nagar, T. Nagar (Kannada community areas)" },
+  { label: "Delhi NCR – Gurugram, Noida, South Delhi" },
+
+  // --- NRI Regions ---
+  { label: "United States (USA) – major Kannada-speaking hubs" },
+  { label: "Australia – Sydney, Melbourne, Brisbane (Kannada community pockets)" },
+  { label: "Middle East – Dubai, Abu Dhabi, Qatar, Kuwait, Oman" },
+  { label: "Europe – Germany, UK, Netherlands" },
+  { label: "Rest of India" },
+  { label: "Rest of World" }
+];
+
+
+
 const hobbyOptions = [
-  { label: "Reading" },
-  { label: "Traveling" },
-  { label: "Music" },
-  { label: "Sports" },
-  { label: "Art & Craft" },
-  { label: "Cooking" },
-  { label: "Meditation" },
-  { label: "Gardening" },
-  { label: "Photography" },
+ { label: 'Reading' },
+      { label: 'Traveling' },
+      { label: 'Music' },
+      { label: 'Sports' },
+      { label: 'Art & Craft' },
+      { label: 'Cooking' },
+      { label: 'Meditation' },
+      { label: 'Gardening' },
+      { label: 'Photography' },
+      { label: 'Contributing to Social Activities' },
+      { label: 'Participating in Aradhana' },
+      { label: 'Participating in Patha' },
+      { label: 'Participating in Pravachana' },
+      { label: 'Participating in Bhajane' },
+      { label: 'Practicing Puja' },
+      { label: 'Practicing Sandhyavandane' },
+      { label: 'Practicing Tulasi Puje' },
+      { label: 'Observing Rajamanta' },
+      { label: 'Observing Chaturmasya' },
+      { label: 'Daily Rituals' }
 ];
 
 const subCasteOptions = [
@@ -238,6 +285,13 @@ const Popup9_PartnerPreferences = ({
     if (ok) onNext();
   };
 
+  const midHobbyIndex = Math.ceil(hobbyOptions.length / 2);
+  const generalHobbies = hobbyOptions.slice(0, midHobbyIndex);
+  const spiritualHobbies = hobbyOptions.slice(midHobbyIndex);
+
+
+
+
   return (
     <div className="h-full flex flex-col">
       {/* Sticky Header */}
@@ -268,15 +322,19 @@ const Popup9_PartnerPreferences = ({
             {openBasic && (
               <div className="p-4 space-y-6">
                 <div>
-                  <L>Expectations</L>
-                  <TA
-                    name="expectations"
-                    value={formData.expectations || ""}
-                    onChange={handleChange}
-                    placeholder="Write something about your preferred match..."
-                    rows={3}
-                  />
-                </div>
+  <L>Expectations</L>
+  <TA
+    name="expectations"
+    value={
+      formData.expectations ||
+      "Tip: You can personalize the pre-filled text with more details (e.g., specific interests, city, or goals).\n Seeking a life partner with a positive attitude and strong emotional maturity, respects individuality and encourages personal growth. Looking for a relationship built on trust, honesty, and shared responsibilities."
+    }
+    onChange={handleChange}
+    placeholder="Write something about your preferred match..."
+    rows={3}
+  />
+</div>
+
 
                 <div>
                   <div className="flex items-center justify-between">
@@ -368,17 +426,6 @@ const Popup9_PartnerPreferences = ({
                   </S>
                 </div>
 
-                <MultiSelectCheckbox
-                  label="Gotra"
-                  name="preferredGotras"
-                  options={gotraOptions}
-                  selectedValues={toUniqueSelectedObjects(formData.preferredGotras)}
-                  onChange={(name, values) =>
-                    handleChange({
-                      target: { name, value: dedupeToLabels(values) },
-                    })
-                  }
-                />
               </div>
             )}
           </section>
@@ -393,27 +440,37 @@ const Popup9_PartnerPreferences = ({
               <span>Location</span>
               <Chevron open={openLocation} />
             </button>
-            {openLocation && (
-              <div className="p-4 space-y-6">
-                <MultiCountryStateCitySelector
-                  labelPrefix="Origin of Native"
-                  name="preferredNativeOrigins"
-                  selectedValues={formData.preferredNativeOrigins || []}
-                  onChange={(name, values) =>
-                    handleChange({ target: { name, value: values } })
-                  }
-                />
 
-                <MultiCountryStateCitySelector
-                  labelPrefix="City Living In"
-                  name="preferredCities"
-                  selectedValues={formData.preferredCities || []}
-                  onChange={(name, values) =>
-                    handleChange({ target: { name, value: values } })
-                  }
-                />
-              </div>
-            )}
+{openLocation && (
+  <div className="p-4 space-y-6">
+    <MultiSelectCheckbox
+      label="Origin of Native Location"
+      name="preferredNativeOrigins"
+      options={locationOptions}
+      selectedValues={toUniqueSelectedObjects(formData.preferredNativeOrigins)}
+      onChange={(name, values) =>
+        handleChange({
+          target: { name, value: dedupeToLabels(values) },
+        })
+      }
+    />
+
+    <MultiSelectCheckbox
+      label="Preferred City / Region Living In"
+      name="preferredCities"
+      options={locationOptions}
+      selectedValues={toUniqueSelectedObjects(formData.preferredCities)}
+      onChange={(name, values) =>
+        handleChange({
+          target: { name, value: dedupeToLabels(values) },
+        })
+      }
+    />
+  </div>
+)}
+
+
+
           </section>
 
           {/* ========== 3) Education & Career ========== */}
@@ -562,21 +619,24 @@ const Popup9_PartnerPreferences = ({
               <span>Lifestyle</span>
               <Chevron open={openLifestyle} />
             </button>
-            {openLifestyle && (
-              <div className="p-4">
-                <MultiSelectCheckbox
-                  label="Hobbies"
-                  name="preferredHobbies"
-                  options={hobbyOptions}
-                  selectedValues={toUniqueSelectedObjects(formData.preferredHobbies)}
-                  onChange={(name, values) =>
-                    handleChange({
-                      target: { name, value: dedupeToLabels(values) },
-                    })
-                  }
-                />
-              </div>
-            )}
+
+{openLifestyle && (
+  <div className="p-4">
+    <MultiSelectCheckbox
+      label="Hobbies"
+      name="preferredHobbies"
+      options={hobbyOptions}
+      selectedValues={toUniqueSelectedObjects(formData.preferredHobbies)}
+      onChange={(name, values) =>
+        handleChange({
+          target: { name, value: dedupeToLabels(values) },
+        })
+      }
+    />
+  </div>
+)}
+
+
           </section>
 
           {/* Navigation */}
