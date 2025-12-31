@@ -264,7 +264,7 @@ const BasicSearchForm = () => {
 
                             {/* Gotra */}
                             <StyledFormField
-                                label="Gotra"
+                                label="Gotra Other than"
                                 name="gotra"
                                 value={searchQuery.gotra}
                                 onChange={handleChange}

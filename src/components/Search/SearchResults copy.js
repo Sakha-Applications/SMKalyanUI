@@ -1,7 +1,7 @@
 // src/components/Search/SearchResults.js
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from 'react-router-dom'; // Add Link here added on 31-Dec-25
-import { Typography, Box, Grid, Dialog } from "@mui/material";
+import { Typography, Box, Grid } from "@mui/material";
 //import { useNavigate } from 'react-router-dom';
 import getBaseUrl from '../../utils/GetUrl';
 // Import only the specific functions needed
@@ -16,8 +16,6 @@ const SearchResults = ({ results }) => {
   const [hoverMessage, setHoverMessage] = useState(null); //
   const [profilePhotoUrls, setProfilePhotoUrls] = useState({}); //
   const [loadingPhotos, setLoadingPhotos] = useState(true); //
-  const [selectedProfileId, setSelectedProfileId] = useState(null);
-const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     console.log("[SearchResults][useEffect] Triggered with results:", results); //
@@ -106,31 +104,13 @@ const [isModalOpen, setIsModalOpen] = useState(false);
     return `${API_BASE_URL}${FALLBACK_DEFAULT_IMAGE_PATH}`; //
   };
 
- /* const handleCardClick = (profileId) => {
+  const handleCardClick = (profileId) => {
   if (!profileId) {
     console.warn("[SearchResults] handleCardClick called without profileId");
     return;
   }
-*/
-const handleCardClick = (profileId) => {
-  if (!profileId) return;
 
   const token = sessionStorage.getItem('token');
-
-  if (!token) {
-    alert(`To see the details, please log in.`);
-    navigate('/login'); 
-    return;
-  }
-
-  // Generate the URL and append the token as a query parameter
-  const profileUrl = `/view-profile/${profileId}?sid=${encodeURIComponent(token)}`;
-  
-  // Open in a new tab
-  window.open(profileUrl, '_blank');
-};
-/*
-const token = sessionStorage.getItem('token');
 
   if (!token) {
     alert(`To see the details for profile ${profileId}, please log in or register.`);
@@ -142,7 +122,7 @@ const token = sessionStorage.getItem('token');
   console.log(`[SearchResults] Navigating to view-profile for profileId: ${profileId}`);
   navigate(`/view-profile/${profileId}`);
 };
-*/
+
 
 
   return (
@@ -181,14 +161,20 @@ const token = sessionStorage.getItem('token');
                   padding: (theme) => theme.spacing(1.5),
                 }}
               >
-<Box
-  onClick={() => handleCardClick(currentProfileId)} 
+  <Box
+  component={Link} // This tells MUI to treat the Box as a Link
+  to={`/view-profile/${currentProfileId}`} // The destination URL
+  target="_blank" // Opens in a new tab
+  rel="noopener noreferrer" // Security best practice for new tabs
   className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden"
   sx={{ 
     cursor: 'pointer', 
-    display: 'block'
+    display: 'block', 
+    textDecoration: 'none', // Removes default underline from links
+    color: 'inherit'        // Keeps your text colors as defined
   }}
 >
+
                   {/* Image Section */}
                   <Box sx={{ width: '100%', height: 200, overflow: 'hidden', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                     <img
@@ -248,20 +234,6 @@ const token = sessionStorage.getItem('token');
       ) : (
         <Typography align="center" className="text-gray-700 mt-4">No results found</Typography>
       )}
-      <Dialog 
-  open={isModalOpen} 
-  onClose={() => setIsModalOpen(false)}
-  fullWidth
-  maxWidth="md"
->
-  {/* Replace this div with your actual ViewProfile component later */}
-  <div style={{ padding: '20px' }}>
-    <button onClick={() => setIsModalOpen(false)}>Close</button>
-    <p>Loading Profile Details for ID: {selectedProfileId}</p>
-    {/* <ViewProfile id={selectedProfileId} /> */}
-  </div>
-</Dialog>
-
     </div>
   );
 };

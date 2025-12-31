@@ -1,6 +1,6 @@
 // src/components/ProfileModule/ViewOtherProfilePage.jsx
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import getBaseUrl from '../../utils/GetUrl';
 
@@ -34,6 +34,8 @@ import ReferencesSection from '../ModifyProfile/PartnerPreferences/sections/Refe
 const API_BASE_URL = `${getBaseUrl()}`;
 const FALLBACK_DEFAULT_IMAGE_PATH = '/ProfilePhotos/defaultImage.jpg';
 
+
+
 const ViewOtherProfilePage = () => {
   const { profileId } = useParams();
   const navigate = useNavigate();
@@ -58,15 +60,38 @@ const ViewOtherProfilePage = () => {
     setExpanded(isExpanded ? panel : false);
   };
 
+// Add this right after: const navigate = useNavigate();
+const [searchParams] = useSearchParams(); // You may need to import useSearchParams from 'react-router-dom'
+//added on 31-Dec-25
+
+useEffect(() => {
+  const urlToken = searchParams.get('sid');
+  console.log("[Debug] Token found in URL:", urlToken ? "YES (starts with " + urlToken.substring(0, 10) + "...)" : "NO");
+
+  if (urlToken) {
+    sessionStorage.setItem('token', urlToken);
+    console.log("[Debug] Token saved to sessionStorage.");
+    
+    const newUrl = window.location.pathname;
+    console.log("[Debug] Cleaning URL to:", newUrl);
+    window.history.replaceState({}, document.title, newUrl);
+  } else {
+    console.warn("[Debug] No 'sid' found in URL. Checking existing session...");
+  }
+}, [searchParams]);
+
   useEffect(() => {
     const fetchProfile = async () => {
-      if (!profileId) {
+      
+          if (!profileId) {
         setError("Profile ID is missing from the URL.");
         setLoading(false);
         return;
       }
 
       const token = sessionStorage.getItem('token');
+
+      console.log("[Debug] fetchProfile starting. Token in storage:", token ? "FOUND" : "MISSING");
       if (!token) {
         navigate('/login');
         return;
@@ -310,7 +335,7 @@ const ViewOtherProfilePage = () => {
         <div className="p-6 space-y-4">
           {/* Invitation Section */}
           <div className="bg-gray-50 p-4 rounded-lg shadow-sm">
-            <Typography variant="h6" className="text-indigo-800 mb-3">Invite to Review Profile</Typography>
+            <Typography variant="h6" className="text-indigo-800 mb-3">Connect to Review Profile</Typography>
             <TextField
               label="Optional message"
               variant="outlined"
@@ -329,7 +354,7 @@ const ViewOtherProfilePage = () => {
               onClick={handleSendInvitation}
               disabled={isSendingInvitation}
             >
-              {isSendingInvitation ? 'Sending Invitation...' : 'Send Invitation'}
+              {isSendingInvitation ? 'Sending Connect Request...' : 'Send Connect Request'}
             </Button>
           </div>
 
@@ -399,12 +424,14 @@ const ViewOtherProfilePage = () => {
 
 
           <div className="flex justify-center pt-6">
-            <button
-              className="px-8 py-3 bg-gray-400 text-white rounded-lg hover:bg-gray-500 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
-              onClick={() => navigate('/dashboard')}
-            >
-              Back to Dashboard
-            </button>
+            
+          <button
+  className="px-8 py-3 bg-gray-400 text-white rounded-lg hover:bg-gray-500 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
+  onClick={() => window.close()} // This closes the tab and returns focus to Search
+>
+  Close and Return to Search
+</button>
+          
           </div>
         </div>
       </div>
