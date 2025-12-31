@@ -354,7 +354,7 @@ const AdvancedSearchForm = () => {
                         Advanced Profile Search
                     </Link>
                     <div className="space-x-4">
-                        <Link to="/" className="text-gray-700 hover:text-indigo-500">Home</Link>
+                        <Link to="/dashboard" className="text-gray-700 hover:text-indigo-500">Dashboard</Link>
                     </div>
                 </div>
             </nav>

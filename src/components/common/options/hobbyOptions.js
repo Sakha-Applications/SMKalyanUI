@@ -1,0 +1,22 @@
+export const hobbyOptions = [
+  { label: 'Reading' },
+  { label: 'Traveling' },
+  { label: 'Music' },
+  { label: 'Sports' },
+  { label: 'Art & Craft' },
+  { label: 'Cooking' },
+  { label: 'Meditation' },
+  { label: 'Gardening' },
+  { label: 'Photography' },
+  { label: 'Contributing to Social Activities' },
+  { label: 'Participating in Aradhana' },
+  { label: 'Participating in Patha' },
+  { label: 'Participating in Pravachana' },
+  { label: 'Participating in Bhajane' },
+  { label: 'Practicing Puja' },
+  { label: 'Practicing Sandhyavandane' },
+  { label: 'Practicing Tulasi Puje' },
+  { label: 'Observing Rajamanta' },
+  { label: 'Observing Chaturmasya' },
+  { label: 'Daily Rituals' }
+];

@@ -7,6 +7,8 @@ import FormNavigation from "../FormNavigation";
 import useApiData from "../../hooks/useApiData";
 import axios from "axios";
 import getBaseUrl from '../../utils/GetUrl';
+import FullWidthHobbiesGrid from "../common/options/FullWidthHobbiesGrid";
+import { hobbyOptions } from "../common/options/hobbyOptions";
 
 const ModifyProfilePersonalInfoTab = ({ formData, handleChange, handleDOBChange, handleTimeBlur, tabIndex, setTabIndex }) => {
     const { isLoading, error, gotraOptions, rashiOptions, nakshatraOptions } = useApiData();

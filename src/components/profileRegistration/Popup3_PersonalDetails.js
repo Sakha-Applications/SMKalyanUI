@@ -10,6 +10,8 @@ import validateRequiredFields from '../common/validateRequiredFields';
 import ValidationErrorDialog from '../common/ValidationErrorDialog';
 import CountryStateCitySelector from "../common/CountryStateCitySelector";
 import useApiData from '../../hooks/useApiData';
+import FullWidthHobbiesGrid from "../common/options/FullWidthHobbiesGrid";
+import { hobbyOptions } from "../common/options/hobbyOptions";
 
 const Popup3_PersonalDetails = ({
   formData,
@@ -82,7 +84,7 @@ const Popup3_PersonalDetails = ({
     handleChange({ target: { name: 'guruMatha', value: value.label } });
   };
 
-  const hobbyOptions = [
+  /* const hobbyOptions = [
  { label: 'Reading' },
       { label: 'Traveling' },
       { label: 'Music' },
@@ -104,7 +106,7 @@ const Popup3_PersonalDetails = ({
       { label: 'Observing Chaturmasya' },
       { label: 'Daily Rituals' }
   ];
-
+*/
   const getAgeWithMonths = (dob) => {
     if (!dob) return '';
     const birth = new Date(dob);
@@ -247,6 +249,7 @@ const Popup3_PersonalDetails = ({
 
 
 
+
             {/* --- Horoscope fields --- */}
             <div>
               <L>Gotra <span className="text-red-500">*</span></L>
@@ -373,14 +376,21 @@ const Popup3_PersonalDetails = ({
               )}
             </div>
 
-{/* Hobbies full width */}
+<FullWidthHobbiesGrid
+  label="Hobbies"
+  fieldName="hobbies"
+  formData={formData}
+  handleChange={handleChange}
+/>
+
+{/* Hobbies full width 
 <div className="md:col-span-2">
   <L className="mb-2 block">Hobbies</L>
 
   <div className="border rounded-lg p-3 bg-white max-h-64 overflow-y-auto">
     <div className="grid grid-cols-2 gap-6">
 
-      {/* ---------- COLUMN 1 ---------- */}
+      {/* ---------- COLUMN 1 ---------- 
       <div>
         <div className="font-semibold text-gray-700 mb-2">General Hobbies</div>
 
@@ -426,7 +436,7 @@ const Popup3_PersonalDetails = ({
         </div>
       </div>
 
-      {/* ---------- COLUMN 2 ---------- */}
+      {/* ---------- COLUMN 2 ---------- 
       <div>
         <div className="font-semibold text-gray-700 mb-2">Spiritual & Activities</div>
 
@@ -476,7 +486,7 @@ const Popup3_PersonalDetails = ({
   </div>
 </div>
 
-
+*/}
             
             
             

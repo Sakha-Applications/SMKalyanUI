@@ -7,6 +7,8 @@ import validateRequiredFields from "../common/validateRequiredFields";
 import MultiSelectCheckbox from "../common/MultiSelectCheckbox";
 import useApiData from "../../hooks/useApiData";
 import MultiCountryStateCitySelector from "../common/MultiCountryStateCitySelector";
+import FullWidthHobbiesGrid from "../common/options/FullWidthHobbiesGrid";
+import { hobbyOptions } from "../common/options/hobbyOptions";
 
 // Static option sets
 const maritalStatusOptions = [
@@ -59,7 +61,7 @@ const locationOptions = [
 ];
 
 
-
+{/*
 const hobbyOptions = [
  { label: 'Reading' },
       { label: 'Traveling' },
@@ -82,7 +84,7 @@ const hobbyOptions = [
       { label: 'Observing Chaturmasya' },
       { label: 'Daily Rituals' }
 ];
-
+*/}
 const subCasteOptions = [
   { label: "Madhva (ಮಾಧ್ವ)" },
   { label: "Smarta (ಸ್ಮಾರ್ತ)" },
@@ -284,11 +286,11 @@ const Popup9_PartnerPreferences = ({
     const ok = await handleIntermediateProfileUpdate({ formData, setIsProcessing });
     if (ok) onNext();
   };
-
+/*
   const midHobbyIndex = Math.ceil(hobbyOptions.length / 2);
   const generalHobbies = hobbyOptions.slice(0, midHobbyIndex);
   const spiritualHobbies = hobbyOptions.slice(midHobbyIndex);
-
+*/
 
 
 
@@ -620,6 +622,7 @@ const Popup9_PartnerPreferences = ({
               <Chevron open={openLifestyle} />
             </button>
 
+{/*
 {openLifestyle && (
   <div className="p-4">
     <MultiSelectCheckbox
@@ -632,6 +635,18 @@ const Popup9_PartnerPreferences = ({
           target: { name, value: dedupeToLabels(values) },
         })
       }
+    />
+  </div>
+)}
+   */   }
+
+{openLifestyle && (
+  <div className="p-4">
+    <FullWidthHobbiesGrid
+      label="Preferred Partner Hobbies"
+      fieldName="preferredHobbies"
+      formData={formData}
+      handleChange={handleChange}
     />
   </div>
 )}
