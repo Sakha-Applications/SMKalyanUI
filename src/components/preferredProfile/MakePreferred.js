@@ -1,6 +1,6 @@
 // src/components/preferredProfile/MakePreferred.js
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Box, Button, TextField, Typography, Alert, CircularProgress, Grid } from '@mui/material';
 import getBaseUrl from '../../utils/GetUrl';
 
@@ -284,6 +284,20 @@ const MakePreferred = () => {
 
   return (
     <Box sx={{ maxWidth: 700, mx: 'auto', mt: 6, p: 3 }}>
+          {/* Header */}
+    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+      <Typography variant="h5">Make Profile Preferred</Typography>
+
+      <Button
+        component={Link}
+        to="/dashboard"
+        variant="outlined"
+        sx={{ textTransform: 'none' }}
+      >
+        Back to Dashboard
+      </Button>
+    </Box>
+
       <Typography variant="h5" gutterBottom>
         Make Profile Preferred
       </Typography>
