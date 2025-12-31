@@ -1,6 +1,6 @@
 // src/components/ProfileModule/ViewOtherProfilePage.jsx
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import getBaseUrl from '../../utils/GetUrl';
 
@@ -59,6 +59,36 @@ const ViewOtherProfilePage = () => {
   const handleChange = (panel) => (event, isExpanded) => {
     setExpanded(isExpanded ? panel : false);
   };
+
+  // added on 31-Dec-25 for handling
+ 
+const location = useLocation();
+
+const handleReturn = () => {
+  const params = new URLSearchParams(location.search);
+  const returnTo = params.get("returnTo"); // e.g. "/dashboard" or "/basic-search"
+
+  // If opened in a new tab via window.open, close works (browser allows)
+  if (window.opener && !window.opener.closed) {
+    window.close();
+    return;
+  }
+
+  // If caller provided a return path, use it
+  if (returnTo) {
+    navigate(returnTo);
+    return;
+  }
+
+  // Otherwise try browser back
+  if (window.history.length > 1) {
+    navigate(-1);
+    return;
+  }
+
+  // Safe fallback
+  navigate("/dashboard");
+};
 
 // Add this right after: const navigate = useNavigate();
 const [searchParams] = useSearchParams(); // You may need to import useSearchParams from 'react-router-dom'
@@ -425,12 +455,13 @@ useEffect(() => {
 
           <div className="flex justify-center pt-6">
             
-          <button
+         <button
   className="px-8 py-3 bg-gray-400 text-white rounded-lg hover:bg-gray-500 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
-  onClick={() => window.close()} // This closes the tab and returns focus to Search
+  onClick={handleReturn}  // Go back to previous page (SearchResults or Dashboard)
 >
-  Close and Return to Search
+   Close and Return
 </button>
+
           
           </div>
         </div>
