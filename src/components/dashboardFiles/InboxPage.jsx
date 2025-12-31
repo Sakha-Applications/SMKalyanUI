@@ -164,7 +164,7 @@ const InboxPage = () => {
           {/* Column 1: Invitations Received */}
           <div>
             <Typography variant="h5" sx={{ mb: 3, color: 'indigo.800', fontWeight: 'bold' }}>
-              Invitations Received
+              Connections Received
             </Typography>
             {receivedInvitations.length === 0 ? (
               renderNoInvitations("You have no new invitations at the moment.")
@@ -204,7 +204,7 @@ const InboxPage = () => {
           {/* Column 2: Invitations Sent */}
           <div>
             <Typography variant="h5" sx={{ mb: 3, color: 'indigo.800', fontWeight: 'bold' }}>
-              Invitations Sent
+              Connectionss Sent
             </Typography>
             {sentInvitations.length === 0 ? (
               renderNoInvitations("You haven't sent any invitations yet.")

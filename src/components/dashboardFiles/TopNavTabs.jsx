@@ -5,7 +5,7 @@ const tabs = [
   { to: "/dashboard", label: "My Kalyana" }, // Assuming My Kalyana links to dashboard
   { to: "/matches", label: "Matches" },      // Assuming a /matches route exists
   { to: "/basic-search", label: "Search" },  // Link to your new Basic Search Form
-  { to: "/inbox", label: "Inbox" }           // Assuming an /inbox route exists
+  { to: "/inbox", label: "Connections" }           // Assuming an /inbox route exists
 ];
 
 const TopNavTabs = ({ onMatchesClick }) => ( // <--- ADDED { onMatchesClick } here
