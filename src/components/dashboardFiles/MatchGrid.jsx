@@ -13,6 +13,7 @@ import styles from './MatchGrid.module.css';
 // --- END NEW IMPORTS ---
 
 const FALLBACK_DEFAULT_IMAGE_PATH = '/ProfilePhotos/defaultImage.jpg';
+const VISIBLE_COUNT = 20; // Step-1: prevent loading too many profiles/photos at once
 
 const Matches = ({ profileId }) => {
   const navigate = useNavigate();
@@ -197,6 +198,8 @@ const Matches = ({ profileId }) => {
     }
   }, [userProfileData, error, navigate]);
 
+  const visibleProfiles = matchedProfiles.slice(0, VISIBLE_COUNT);
+
   // --- Photo Loading Logic ---
   useEffect(() => {
     const loadAllProfilePhotos = async (resultsData) => {
@@ -239,13 +242,21 @@ const Matches = ({ profileId }) => {
       setLoadingPhotos(false);
     };
 
-    if (matchedProfiles.length > 0) {
+/*    if (matchedProfiles.length > 0) {
       loadAllProfilePhotos(matchedProfiles);
     } else {
       setProfilePhotoUrls({});
       setLoadingPhotos(false);
     }
   }, [matchedProfiles]);
+*/
+if (visibleProfiles.length > 0) {
+  loadAllProfilePhotos(visibleProfiles);
+} else {
+  setProfilePhotoUrls({});
+  setLoadingPhotos(false);
+}
+}, [visibleProfiles]);
 
   // Helper to get profile photo URL from state
   const getProfilePhotoUrl = useCallback((id) => {
@@ -306,7 +317,7 @@ const Matches = ({ profileId }) => {
         // REMOVED: All wrapper divs and sections that were adding extra styling
         // Use only the cards container with proper CSS module styling
         <div className={styles.cardsContainer}>
-          {matchedProfiles.map((profile) => (
+          {visibleProfiles.map((profile) => (
             <ProfileCard
               key={profile.profile_id}
               profile={profile}
