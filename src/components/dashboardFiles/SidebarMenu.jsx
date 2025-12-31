@@ -1,90 +1,109 @@
-import React, { useState, useEffect } from 'react'; //
-import { Link } from "react-router-dom"; //
-import { fetchDefaultPhoto } from '../UploadProfilePhoto/photoUploadUtils'; //
+import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+import { fetchDefaultPhoto } from "../UploadProfilePhoto/photoUploadUtils";
+
+const FALLBACK_DEFAULT_IMAGE = "/ProfilePhotos/defaultImage.jpg";
 
 const navItems = [
-  { to: "/my-profile", label: "Edit Your Profile" }, //
-  { to: "/partner-preferences", label: "Edit Your Preferences" }, //
-  { to: "/basic-search", label: "Search" }, //
-  { to: "/advanced-search", label: "Advanced Search" } //
+  { to: "/my-profile", label: "Edit Your Profile" },
+  { to: "/partner-preferences", label: "Edit Your Preferences" },
+  { to: "/basic-search", label: "Search" },
+  { to: "/advanced-search", label: "Advanced Search" },
 ];
 
 const SidebarMenu = ({ profileId }) => {
-  const [defaultPhotoUrl, setDefaultPhotoUrl] = useState('https://via.placeholder.com/150'); //
-  const [isLoadingPhoto, setIsLoadingPhoto] = useState(true); //
-  const [photoError, setPhotoError] = useState(null); //
+  const [defaultPhotoUrl, setDefaultPhotoUrl] = useState(FALLBACK_DEFAULT_IMAGE);
+  const [isLoadingPhoto, setIsLoadingPhoto] = useState(true);
+  const [photoError, setPhotoError] = useState(null);
 
   const loadAndDisplayDefaultPhoto = async () => {
     console.log("[SidebarMenu] Attempting to load default profile photo.");
 
     if (!profileId) {
-      console.warn("[SidebarMenu] No profile ID available from prop. Cannot fetch default photo.");
-      setDefaultPhotoUrl('https://via.placeholder.com/150?text=No+User'); //
-      setIsLoadingPhoto(false); //
-      setPhotoError(null); //
+      console.warn("[SidebarMenu] No profile ID available. Using fallback image.");
+      setDefaultPhotoUrl(FALLBACK_DEFAULT_IMAGE);
+      setIsLoadingPhoto(false);
+      setPhotoError(null);
       return;
     }
 
-    setIsLoadingPhoto(true); //
-    setPhotoError(null); // Clear error at the start of fetch
+    setIsLoadingPhoto(true);
+    setPhotoError(null);
 
     try {
-      // Create temporary state handlers for fetchDefaultPhoto (as it still uses callbacks internally)
-      let fetchedPhotoObj = null; //
-      let fetchedErrorMsg = null; //
+      let fetchedPhotoObj = null;
+      let fetchedErrorMsg = null;
 
-      await fetchDefaultPhoto( //
+      await fetchDefaultPhoto(
         profileId,
-        (photoObject) => { // Success callback provided to fetchDefaultPhoto
-          fetchedPhotoObj = photoObject; // Capture the photo object
+        (photoObject) => {
+          fetchedPhotoObj = photoObject;
         },
-        (error) => { // Error callback provided to fetchDefaultPhoto
-          fetchedErrorMsg = error; // Capture the error
+        (error) => {
+          fetchedErrorMsg = error;
         }
       );
 
-      // Now, evaluate the result from fetchDefaultPhoto after it has completed
+      // ✅ If photo exists, use it. Otherwise fallback silently (NO red error tile)
       if (fetchedPhotoObj && fetchedPhotoObj.fullUrl) {
-        setDefaultPhotoUrl(fetchedPhotoObj.fullUrl); //
-        setPhotoError(null); // Clear any previous error on success
-        console.log("[SidebarMenu] Default photo fetched successfully for profile ID:", profileId, "URL:", fetchedPhotoObj.fullUrl, '');
-      } else if (fetchedErrorMsg) {
-        // If an error was reported by fetchDefaultPhoto (e.g., 404, or API returned 200 but no photo data)
-        const errorMessage = fetchedErrorMsg && fetchedErrorMsg.message ? fetchedErrorMsg.message : "Failed to load photo due to an API error."; //
-        console.error("[SidebarMenu] Error fetching default photo for profile ID:", profileId, fetchedErrorMsg, '');
-        setPhotoError(errorMessage); //
-        setDefaultPhotoUrl('https://placehold.co/150x150/ff0000/ffffff?text=Error'); //
-      }
-      else {
-          // Fallback for cases where fetchDefaultPhoto completed without error but also no photo (e.g., 200 OK with null data)
-          setDefaultPhotoUrl('https://via.placeholder.com/150?text=No+Photo'); //
-          setPhotoError("No profile photo found."); //
-          console.log("[SidebarMenu] No default photo found for profile ID:", profileId, "or incomplete data.");
-      }
+        setDefaultPhotoUrl(fetchedPhotoObj.fullUrl);
+        setPhotoError(null);
+        console.log(
+          "[SidebarMenu] Default photo fetched successfully for profile ID:",
+          profileId,
+          "URL:",
+          fetchedPhotoObj.fullUrl
+        );
+      } else {
+        setDefaultPhotoUrl(FALLBACK_DEFAULT_IMAGE);
+        setPhotoError(null);
 
+        if (fetchedErrorMsg) {
+          console.warn(
+            "[SidebarMenu] No default photo found for profile ID:",
+            profileId,
+            "Using fallback.",
+            fetchedErrorMsg
+          );
+        } else {
+          console.log(
+            "[SidebarMenu] No default photo returned for profile ID:",
+            profileId,
+            "Using fallback."
+          );
+        }
+      }
     } catch (err) {
-      // This catch block would only be hit if fetchDefaultPhoto itself throws an *unhandled* error,
-      // which it shouldn't if its internal try/catch is robust.
-      console.error("[SidebarMenu] Unexpected runtime error during photo load for profile ID:", profileId, err, '');
-      setPhotoError("An unexpected error occurred while loading photo."); //
-      setDefaultPhotoUrl('https://placehold.co/150x150/ff0000/ffffff?text=Error'); //
+      console.error(
+        "[SidebarMenu] Unexpected runtime error during photo load for profile ID:",
+        profileId,
+        err
+      );
+      // Even for unexpected errors, show fallback image (don't show red tile unless you want)
+      setDefaultPhotoUrl(FALLBACK_DEFAULT_IMAGE);
+      setPhotoError(null);
     } finally {
-      setIsLoadingPhoto(false); //
-      console.log("[SidebarMenu] Default photo loading process completed for profile ID:", profileId, '');
+      setIsLoadingPhoto(false);
+      console.log(
+        "[SidebarMenu] Default photo loading process completed for profile ID:",
+        profileId
+      );
     }
   };
 
   useEffect(() => {
-    console.log("[SidebarMenu] useEffect triggered. Profile ID:", profileId, '');
+    console.log("[SidebarMenu] useEffect triggered. Profile ID:", profileId);
+
     if (profileId) {
-      loadAndDisplayDefaultPhoto(); //
+      loadAndDisplayDefaultPhoto();
     } else {
-      setDefaultPhotoUrl('https://via.placeholder.com/150?text=No+User'); //
-      setIsLoadingPhoto(false); //
-      setPhotoError(null); //
-      console.log("[SidebarMenu] Profile ID is null, skipping default photo fetch.");
+      setDefaultPhotoUrl(FALLBACK_DEFAULT_IMAGE);
+      setIsLoadingPhoto(false);
+      setPhotoError(null);
+      console.log("[SidebarMenu] Profile ID is null, using fallback image.");
     }
-  }, [profileId]); //
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profileId]);
 
   return (
     <div className="bg-white text-gray-800 h-full rounded-xl shadow-md p-6 border border-gray-200 text-sm">
@@ -92,54 +111,58 @@ const SidebarMenu = ({ profileId }) => {
         {/* Conditional rendering for Profile Image */}
         {isLoadingPhoto ? (
           <div className="flex items-center justify-center w-32 h-32 mx-auto rounded shadow bg-gray-100 animate-pulse">
-            <svg className="animate-spin h-8 w-8 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            <svg
+              className="animate-spin h-8 w-8 text-gray-500"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              ></circle>
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              ></path>
             </svg>
             <span className="sr-only">Loading profile photo...</span>
           </div>
         ) : (
-          // Display the fetched photo or a specific placeholder/error image
           <img
             src={defaultPhotoUrl}
             alt="Profile Photo"
             className="rounded shadow mx-auto w-32 h-32 object-cover"
             onError={(e) => {
-              e.target.onerror = null; // Prevent infinite loop on error
-              // Only set fallback if not already showing an error image or placeholder
-              if (!e.target.src.includes('placehold.co') && !e.target.src.includes('via.placeholder')) { //
-                e.target.src = 'https://placehold.co/150x150/cccccc/333333?text=Image+Load+Fail'; //
-                setPhotoError("Image failed to load visually in browser."); // Provide UI feedback for browser error
-                console.error("[SidebarMenu] Image element onError triggered. Image source likely invalid or unreachable:", defaultPhotoUrl, '');
-              }
+              e.target.onerror = null;
+              e.target.src = FALLBACK_DEFAULT_IMAGE;
             }}
           />
         )}
 
-        {photoError && (
-          <p className="text-red-500 text-xs mt-1">{photoError}</p> //
-        )}
+        {/* We intentionally do NOT show error for "no photo" */}
+        {photoError && <p className="text-red-500 text-xs mt-1">{photoError}</p>}
 
         {/* Upload your Photo (Clickable) */}
         <div className="mt-2">
-          <Link
-            to="/upload-photo"
-            className="text-indigo-600 text-sm hover:underline font-medium" //
-          >
+          <Link to="/upload-photo" className="text-indigo-600 text-sm hover:underline font-medium">
             Upload your Photo
           </Link>
         </div>
 
-        <hr className="my-3" /> {/* */}
+        <hr className="my-3" />
 
         {/* Placeholder Profile Status */}
         <p className="text-sm text-gray-700">
-          Your Profile Status:{" "}
-          <span className="text-green-600 font-medium">Verified</span> {/* */}
-          {/* You can replace with dynamic status */}
+          Your Profile Status: <span className="text-green-600 font-medium">Verified</span>
         </p>
 
-        <hr className="my-3" /> {/* */}
+        <hr className="my-3" />
       </div>
 
       {/* Main Navigation */}
@@ -148,7 +171,7 @@ const SidebarMenu = ({ profileId }) => {
           <Link
             key={item.to}
             to={item.to}
-            className="block px-3 py-2 rounded hover:bg-indigo-100 text-indigo-800 font-medium" //
+            className="block px-3 py-2 rounded hover:bg-indigo-100 text-indigo-800 font-medium"
           >
             {item.label}
           </Link>
