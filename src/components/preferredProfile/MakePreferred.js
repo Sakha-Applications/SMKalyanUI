@@ -283,211 +283,262 @@ const MakePreferred = () => {
   });
 
   return (
-    <Box sx={{ maxWidth: 700, mx: 'auto', mt: 6, p: 3 }}>
-          {/* Header */}
-    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-      <Typography variant="h5">Make Profile Preferred</Typography>
+  <Box sx={{ bgcolor: "#f5f5f5", minHeight: "100vh", pb: 4 }}>
+    {/* Top Nav (same style as Donate) */}
+    <Box
+      component="nav"
+      sx={{
+        bgcolor: "white",
+        boxShadow: 2,
+        py: 2,
+        mb: 4,
+      }}
+    >
+      <Box sx={{ maxWidth: "lg", mx: "auto", px: 2 }}>
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <Typography
+            variant="h5"
+            component={Link}
+            to="/dashboard"
+            sx={{ fontWeight: "bold", color: "#3f51b5", textDecoration: "none" }}
+          >
+            Make Preferred
+          </Typography>
 
-      <Button
-        component={Link}
-        to="/dashboard"
-        variant="outlined"
-        sx={{ textTransform: 'none' }}
-      >
-        Back to Dashboard
-      </Button>
+          <Box>
+            <Button
+              component={Link}
+              to="/dashboard"
+              sx={{ color: "#555", "&:hover": { color: "#3f51b5" } }}
+            >
+              Dashboard
+            </Button>
+          </Box>
+        </Box>
+      </Box>
     </Box>
 
-      <Typography variant="h5" gutterBottom>
-        Make Profile Preferred
-      </Typography>
-      
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-        Search by any one or combination of the following criteria:
-      </Typography>
-      
-      <Grid container spacing={2}>
-        <Grid item xs={12} md={4}>
-          <TextField
-            label="Email Address"
-            value={searchCriteria.email}
-            onChange={(e) => handleInputChange('email', e.target.value)}
-            fullWidth
-            margin="normal"
-            type="email"
-            placeholder="Enter email address"
-          />
-        </Grid>
-        
-        <Grid item xs={12} md={4}>
-          <TextField
-            label="Phone Number"
-            value={searchCriteria.phone}
-            onChange={(e) => handleInputChange('phone', e.target.value)}
-            fullWidth
-            margin="normal"
-            placeholder="Enter phone number"
-          />
-        </Grid>
-        
-        <Grid item xs={12} md={4}>
-          <TextField
-            label="Profile ID"
-            value={searchCriteria.profile_id}
-            onChange={(e) => handleInputChange('profile_id', e.target.value)}
-            fullWidth
-            margin="normal"
-            placeholder="Enter profile ID"
-          />
-        </Grid>
-      </Grid>
-      
-      <Button 
-        variant="contained" 
-        onClick={handleSearch}
-        disabled={searching}
-        sx={{ mt: 3 }}
-        size="large"
-      >
-        {searching ? (
-          <>
-            <CircularProgress size={20} sx={{ mr: 1 }} />
-            Searching...
-          </>
-        ) : (
-          'Search Profile'
-        )}
-      </Button>
-      
-      {error && (
-        <Alert severity="error" sx={{ mt: 2 }}>
-          {error}
-        </Alert>
-      )}
-      
-      {profileData && (
-        <Box sx={{ mt: 4 }}>
-          {/* Profile Details Box */}
-          <Box sx={{ 
-            p: 3, 
-            border: '1px solid #ddd', 
-            borderRadius: 2,
-            backgroundColor: '#f9f9f9',
-            mb: 2
-          }}>
-            <Typography variant="h6" gutterBottom color="primary">
-              Profile Details
-            </Typography>
-            
-            <Typography sx={{ mb: 1 }}>
-              <strong>Name:</strong> {profileData.name || 'N/A'}
-            </Typography>
-            
-            <Typography sx={{ mb: 1 }}>
-              <strong>Email:</strong> {profileData.email || 'N/A'}
-            </Typography>
-            
-            {profileData.current_age && (
-              <Typography sx={{ mb: 1 }}>
-                <strong>Current Age:</strong> {profileData.current_age}
-              </Typography>
-            )}
-            
-            {profileData.gotra && (
-              <Typography sx={{ mb: 1 }}>
-                <strong>Gotra:</strong> {profileData.gotra}
-              </Typography>
-            )}
-            
-            {profileData.phone && (
-              <Typography sx={{ mb: 1 }}>
-                <strong>Phone:</strong> {profileData.phone}
-              </Typography>
-            )}
-            
-            {profileData.id && (
-              <Typography sx={{ mb: 2 }}>
-                <strong>Profile ID:</strong> {profileData.id}
-              </Typography>
-            )}
-          </Box>
+    {/* Main Content */}
+    <Box sx={{ maxWidth: "md", mx: "auto", px: 2 }}>
+      <Box sx={{ bgcolor: "white", boxShadow: 3, p: 4, borderRadius: 2 }}>
+        <Typography variant="h4" sx={{ color: "#3f51b5", fontWeight: "bold", mb: 1 }}>
+          Make Profile Preferred
+        </Typography>
 
-          {/* Preferred Status Check */}
-          {preferredStatus?.isPreferred ? (
-            // Profile is already preferred
-            <Alert 
-              severity="info" 
-              sx={{ 
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+          Search by any one or combination of the following criteria:
+        </Typography>
+
+        <Grid container spacing={2}>
+          <Grid item xs={12} md={4}>
+            <TextField
+              label="Email Address"
+              value={searchCriteria.email}
+              onChange={(e) => handleInputChange("email", e.target.value)}
+              fullWidth
+              margin="normal"
+              type="email"
+              placeholder="Enter email address"
+            />
+          </Grid>
+
+          <Grid item xs={12} md={4}>
+            <TextField
+              label="Phone Number"
+              value={searchCriteria.phone}
+              onChange={(e) => handleInputChange("phone", e.target.value)}
+              fullWidth
+              margin="normal"
+              placeholder="Enter phone number"
+            />
+          </Grid>
+
+          <Grid item xs={12} md={4}>
+            <TextField
+              label="Profile ID"
+              value={searchCriteria.profile_id}
+              onChange={(e) => handleInputChange("profile_id", e.target.value)}
+              fullWidth
+              margin="normal"
+              placeholder="Enter profile ID"
+            />
+          </Grid>
+        </Grid>
+
+        <Box sx={{ mt: 2 }}>
+          <Button
+            variant="contained"
+            onClick={handleSearch}
+            disabled={searching}
+            size="large"
+            sx={{
+              bgcolor: "#3f51b5",
+              color: "white",
+              textTransform: "none",
+              "&:hover": { bgcolor: "#303f9f" },
+            }}
+          >
+            {searching ? (
+              <>
+                <CircularProgress size={20} sx={{ mr: 1, color: "white" }} />
+                Searching...
+              </>
+            ) : (
+              "Search Profile"
+            )}
+          </Button>
+        </Box>
+
+        {error && (
+          <Alert severity="error" sx={{ mt: 2 }}>
+            {error}
+          </Alert>
+        )}
+
+        {/* Results */}
+        {profileData && (
+          <Box sx={{ mt: 4 }}>
+            {/* Profile Details Box */}
+            <Box
+              sx={{
+                p: 3,
+                border: "1px solid #ddd",
+                borderRadius: 2,
+                backgroundColor: "#f9f9f9",
                 mb: 2,
-                '& .MuiAlert-message': {
-                  width: '100%'
-                }
               }}
             >
-              <Typography variant="h6" sx={{ mb: 1, color: 'info.main' }}>
-                Profile Already Preferred
+              <Typography variant="h6" gutterBottom sx={{ fontWeight: "bold", color: "#333" }}>
+                Profile Details
               </Typography>
+
               <Typography sx={{ mb: 1 }}>
-                This profile is already marked as preferred and is currently active.
+                <strong>Name:</strong> {profileData.name || "N/A"}
               </Typography>
-              
-              {preferredStatus.details && (
-                <>
-                  <Typography sx={{ mb: 1 }}>
-                    <strong>Valid Until:</strong> {formatDate(preferredStatus.details.validity_date)}
-                  </Typography>
-                  
-                  {preferredStatus.details.days_remaining !== undefined && (
-                    <Typography sx={{ mb: 1 }}>
-                      <strong>Days Remaining:</strong> {preferredStatus.details.days_remaining} days
-                    </Typography>
-                  )}
-                  
-                  <Typography sx={{ mb: 1 }}>
-                    <strong>Payment Amount:</strong> ₹{preferredStatus.details.payment_amount}
-                  </Typography>
-                  
-                  <Typography sx={{ mb: 1 }}>
-                    <strong>Payment Date:</strong> {formatDate(preferredStatus.details.payment_date)}
-                  </Typography>
-                </>
+
+              <Typography sx={{ mb: 1 }}>
+                <strong>Email:</strong> {profileData.email || "N/A"}
+              </Typography>
+
+              {profileData.current_age && (
+                <Typography sx={{ mb: 1 }}>
+                  <strong>Current Age:</strong> {profileData.current_age}
+                </Typography>
               )}
-              
-              <Typography sx={{ mt: 2, fontStyle: 'italic' }}>
-                You cannot make this profile preferred again until the current preferred status expires.
-              </Typography>
-            </Alert>
-          ) : (
-            // Profile is not preferred - show payment option
-            <Box sx={{ 
-              p: 3, 
-              border: '1px solid #e8f5e8', 
-              borderRadius: 2,
-              backgroundColor: '#f8fff8'
-            }}>
-              <Typography sx={{ mb: 2, fontWeight: 'medium', color: 'success.main' }}>
-                This profile is available for preferred status.
-              </Typography>
-              
-              <Typography sx={{ mb: 2, color: 'text.secondary' }}>
-                Make this profile preferred for ₹250 and get premium visibility for 90 days.
-              </Typography>
-              
-              <Button 
-                variant="contained" 
-                color="secondary" 
-                onClick={handleConfirm}
-                size="large"
-                sx={{ mt: 1 }}
-              >
-                Proceed to Payment (₹250)
-              </Button>
+
+              {profileData.gotra && (
+                <Typography sx={{ mb: 1 }}>
+                  <strong>Gotra:</strong> {profileData.gotra}
+                </Typography>
+              )}
+
+              {profileData.phone && (
+                <Typography sx={{ mb: 1 }}>
+                  <strong>Phone:</strong> {profileData.phone}
+                </Typography>
+              )}
+
+              {profileData.id && (
+                <Typography sx={{ mb: 0 }}>
+                  <strong>Profile ID:</strong> {profileData.id}
+                </Typography>
+              )}
             </Box>
-          )}
-        </Box>
-      )}
+
+            {/* Preferred Status Check */}
+            {preferredStatus?.isPreferred ? (
+              <Alert
+                severity="info"
+                sx={{
+                  mb: 2,
+                  "& .MuiAlert-message": { width: "100%" },
+                }}
+              >
+                <Typography variant="h6" sx={{ mb: 1, color: "info.main" }}>
+                  Profile Already Preferred
+                </Typography>
+                <Typography sx={{ mb: 1 }}>
+                  This profile is already marked as preferred and is currently active.
+                </Typography>
+
+                {preferredStatus.details && (
+                  <>
+                    <Typography sx={{ mb: 1 }}>
+                      <strong>Valid Until:</strong> {formatDate(preferredStatus.details.validity_date)}
+                    </Typography>
+
+                    {preferredStatus.details.days_remaining !== undefined && (
+                      <Typography sx={{ mb: 1 }}>
+                        <strong>Days Remaining:</strong> {preferredStatus.details.days_remaining} days
+                      </Typography>
+                    )}
+
+                    <Typography sx={{ mb: 1 }}>
+                      <strong>Payment Amount:</strong> ₹{preferredStatus.details.payment_amount}
+                    </Typography>
+
+                    <Typography sx={{ mb: 1 }}>
+                      <strong>Payment Date:</strong> {formatDate(preferredStatus.details.payment_date)}
+                    </Typography>
+                  </>
+                )}
+
+                <Typography sx={{ mt: 2, fontStyle: "italic" }}>
+                  You cannot make this profile preferred again until the current preferred status expires.
+                </Typography>
+              </Alert>
+            ) : (
+              <Box
+                sx={{
+                  p: 3,
+                  border: "1px solid #e8f5e8",
+                  borderRadius: 2,
+                  backgroundColor: "#f8fff8",
+                }}
+              >
+                <Typography sx={{ mb: 1, fontWeight: "medium", color: "success.main" }}>
+                  This profile is available for preferred status.
+                </Typography>
+
+                <Typography sx={{ mb: 2, color: "text.secondary" }}>
+                  Make this profile preferred for ₹250 and get premium visibility for 90 days.
+                </Typography>
+
+                <Button
+                  variant="contained"
+                  color="secondary"
+                  onClick={handleConfirm}
+                  size="large"
+                  sx={{ textTransform: "none" }}
+                >
+                  Proceed to Payment (₹250)
+                </Button>
+              </Box>
+            )}
+          </Box>
+        )}
+      </Box>
     </Box>
-  );
+
+    {/* Footer (same style as Donate) */}
+    <Box
+      component="footer"
+      sx={{
+        bgcolor: "white",
+        boxShadow: "0px -2px 4px rgba(0,0,0,0.05)",
+        py: 3,
+        mt: 4,
+        textAlign: "center",
+      }}
+    >
+      <Box sx={{ maxWidth: "lg", mx: "auto", px: 2 }}>
+        <Typography variant="body2" color="text.secondary">
+          &copy; {new Date().getFullYear()} ProfileConnect. All rights reserved.
+        </Typography>
+      </Box>
+    </Box>
+  </Box>
+);
 };
 
 export default MakePreferred;
