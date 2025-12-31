@@ -40,12 +40,14 @@ const [isModalOpen, setIsModalOpen] = useState(false);
       const profileId = result.profile_id || result.profileId; // Use profile_id or profileId
       if (!profileId) {
         console.warn("[SearchResults][loadAllProfilePhotos] Profile missing profile_id/profileId. Skipping photo fetch and using fallback.");
-        return { profileId: 'unknown', photoUrl: `${API_BASE_URL}${FALLBACK_DEFAULT_IMAGE_PATH}` }; //
+     return { profileId: 'unknown', photoUrl: FALLBACK_DEFAULT_IMAGE_PATH };
+
       }
       console.log(`[SearchResults][loadAllProfilePhotos][${profileId}] Calling fetchDefaultPhoto...`);
 
       // Variables to hold the fetched photo URL and potential error
-      let photoUrl = `${API_BASE_URL}${FALLBACK_DEFAULT_IMAGE_PATH}`; // Default to fallback
+let photoUrl = FALLBACK_DEFAULT_IMAGE_PATH;
+
       let currentFetchError = null; // To capture errors from fetchDefaultPhoto
 
       // Pass temporary state setters to fetchDefaultPhoto
@@ -68,7 +70,8 @@ const [isModalOpen, setIsModalOpen] = useState(false);
 
         if (currentFetchError) {
           console.warn(`[SearchResults][loadAllProfilePhotos][${profileId}] fetchDefaultPhoto reported an error: ${currentFetchError}. Using fallback.`);
-          photoUrl = `${API_BASE_URL}${FALLBACK_DEFAULT_IMAGE_PATH}`; // Ensure fallback on error
+photoUrl = FALLBACK_DEFAULT_IMAGE_PATH;
+
         }
 
       } catch (err) {
@@ -103,7 +106,8 @@ const [isModalOpen, setIsModalOpen] = useState(false);
         return url; //
     }
     console.log(`[getProfilePhotoUrl][${profileId}] No URL found in state or state not yet updated, returning initial fallback.`);
-    return `${API_BASE_URL}${FALLBACK_DEFAULT_IMAGE_PATH}`; //
+return FALLBACK_DEFAULT_IMAGE_PATH;
+
   };
 
  /* const handleCardClick = (profileId) => {
@@ -202,12 +206,7 @@ const token = sessionStorage.getItem('token');
                       onError={(e) => {
                         e.target.onerror = null; // Prevent infinite loop on error
                         // Only set fallback if the current src is not already the fallback
-                        if (e.target.src !== `${API_BASE_URL}${FALLBACK_DEFAULT_IMAGE_PATH}`) { //
-                            e.target.src = `${API_BASE_URL}${FALLBACK_DEFAULT_IMAGE_PATH}`; //
-                            console.error(`[SearchResults][${currentProfileId}] Image element failed to load its src. Setting fallback. Error:`, e, '');
-                        } else {
-                            console.warn(`[SearchResults][${currentProfileId}] Image element already showing fallback. No further action needed.`);
-                        }
+             e.target.src = FALLBACK_DEFAULT_IMAGE_PATH;
                       }}
                       onLoad={() => {
                         console.log(`[SearchResults][${currentProfileId}] Image element successfully loaded URL:`, imageUrl, '');
