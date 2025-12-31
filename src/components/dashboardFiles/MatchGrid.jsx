@@ -25,7 +25,10 @@ const Matches = ({ profileId }) => {
   const [loadingMatches, setLoadingMatches] = useState(false);
   const [error, setError] = useState(null);
   const [profilePhotoUrls, setProfilePhotoUrls] = useState({});
-  const [loadingPhotos, setLoadingPhotos] = useState(true);
+  const noPhotoCacheRef = React.useRef(new Set());
+
+const [loadingPhotos, setLoadingPhotos] = useState(false);
+
 
   // Helper function: Converts CM to Feet'Inches" string for display
   const cmToFeetInchesString = useCallback((cmValue) => {
@@ -200,62 +203,68 @@ const Matches = ({ profileId }) => {
 
   const visibleProfiles = matchedProfiles.slice(0, VISIBLE_COUNT);
 
-  // --- Photo Loading Logic ---
-  useEffect(() => {
-    const loadAllProfilePhotos = async (resultsData) => {
-      setLoadingPhotos(true);
-      const photoPromises = resultsData.map(async (result) => {
-        const currentProfileId = result.profile_id || result.profileId;
-        if (!currentProfileId) {
-          console.warn(`[Matches][loadAllProfilePhotos] Profile missing profile_id/profileId:`, result);
-          return { profileId: 'unknown', photoUrl: `${getBaseUrl()}${FALLBACK_DEFAULT_IMAGE_PATH}` };
-        }
+// --- Photo Loading Logic (FIXED) ---
+useEffect(() => {
+  const loadAllProfilePhotos = async (resultsData) => {
+    setLoadingPhotos(true);
 
-        let photoUrl = `${getBaseUrl()}${FALLBACK_DEFAULT_IMAGE_PATH}`;
-        let fetchError = null;
+    const photoPromises = resultsData.map(async (result) => {
+      const currentProfileId = result.profile_id || result.profileId;
 
-        await fetchDefaultPhoto(
-          currentProfileId,
-          (photoObject) => {
-            if (photoObject && photoObject.fullUrl) {
-              photoUrl = photoObject.fullUrl;
-            }
-          },
-          (errorMsg) => {
-            fetchError = errorMsg;
-          }
-        );
+      if (!currentProfileId) {
+        return {
+          profileId: 'unknown',
+          photoUrl: `${getBaseUrl()}${FALLBACK_DEFAULT_IMAGE_PATH}`,
+        };
+      }
 
-        if (fetchError) {
-          console.warn(`[Matches][loadAllProfilePhotos][${currentProfileId}] fetchDefaultPhoto reported an error: ${fetchError}. Using fallback.`);
-        }
-        return { profileId: currentProfileId, photoUrl };
-      });
+      let photoUrl = `${getBaseUrl()}${FALLBACK_DEFAULT_IMAGE_PATH}`;
 
-      const photoResults = await Promise.all(photoPromises);
-      const photoMap = {};
-      photoResults.forEach(({ profileId, photoUrl }) => {
-        photoMap[profileId] = photoUrl;
-      });
-
-      setProfilePhotoUrls(photoMap);
-      setLoadingPhotos(false);
-    };
-
-/*    if (matchedProfiles.length > 0) {
-      loadAllProfilePhotos(matchedProfiles);
-    } else {
-      setProfilePhotoUrls({});
-      setLoadingPhotos(false);
-    }
-  }, [matchedProfiles]);
-*/
-if (visibleProfiles.length > 0) {
-  loadAllProfilePhotos(visibleProfiles);
-} else {
-  setProfilePhotoUrls({});
-  setLoadingPhotos(false);
+      // Skip API call if we already know this profile has no photo
+if (noPhotoCacheRef.current.has(currentProfileId)) {
+  return {
+    profileId: currentProfileId,
+    photoUrl: `${getBaseUrl()}${FALLBACK_DEFAULT_IMAGE_PATH}`,
+  };
 }
+
+await fetchDefaultPhoto(
+  currentProfileId,
+  (photoObject) => {
+    if (photoObject?.fullUrl) {
+      photoUrl = photoObject.fullUrl;
+    } else {
+      // no photo returned → cache it
+      noPhotoCacheRef.current.add(currentProfileId);
+    }
+  },
+  () => {
+    // error (404) → cache as no-photo
+    noPhotoCacheRef.current.add(currentProfileId);
+  }
+);
+
+
+      return { profileId: currentProfileId, photoUrl };
+    });
+
+    const photoResults = await Promise.all(photoPromises);
+
+    const photoMap = {};
+    photoResults.forEach(({ profileId, photoUrl }) => {
+      photoMap[profileId] = photoUrl;
+    });
+
+    setProfilePhotoUrls(photoMap);
+    setLoadingPhotos(false);
+  };
+
+  if (visibleProfiles.length > 0) {
+    loadAllProfilePhotos(visibleProfiles);
+  } else {
+    setProfilePhotoUrls({});
+    setLoadingPhotos(false);
+  }
 }, [visibleProfiles]);
 
   // Helper to get profile photo URL from state
@@ -300,39 +309,56 @@ if (visibleProfiles.length > 0) {
     );
   }
 
-  return (
-    <>
-      {/* Loading spinner for match search or photo loading */}
-      {loadingMatches || loadingPhotos ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 4 }}>
-          <svg className="animate-spin h-8 w-8 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
-          <Typography variant="body1" sx={{ ml: 2, color: 'text.secondary' }}>
-            {loadingMatches ? "Finding your perfect matches..." : "Loading match photos..."}
-          </Typography>
-        </Box>
-      ) : matchedProfiles.length > 0 ? (
-        // REMOVED: All wrapper divs and sections that were adding extra styling
-        // Use only the cards container with proper CSS module styling
-        <div className={styles.cardsContainer}>
-          {visibleProfiles.map((profile) => (
-            <ProfileCard
-              key={profile.profile_id}
-              profile={profile}
-              imageUrl={getProfilePhotoUrl(profile.profile_id)}
-              onCardClick={handleCardClick}
-            />
-          ))}
-        </div>
-      ) : (
-        <Typography align="center" className="text-gray-700 py-4">
-          No matches found based on your preferences.
+return (
+  <>
+    {/* STEP-2: Show spinner ONLY while matches are loading (do not block UI for photos) */}
+    {loadingMatches ? (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 4 }}>
+        <svg
+          className="animate-spin h-8 w-8 text-indigo-500"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+        >
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+          <path
+            className="opacity-75"
+            fill="currentColor"
+            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+          ></path>
+        </svg>
+
+        <Typography variant="body1" sx={{ ml: 2, color: 'text.secondary' }}>
+          Finding your perfect matches...
         </Typography>
-      )}
-    </>
-  );
+      </Box>
+    ) : matchedProfiles.length > 0 ? (
+      <div className={styles.cardsContainer}>
+        {/* Optional: small indicator (non-blocking) */}
+        {loadingPhotos && (
+          <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '6px 0' }}>
+            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+              Loading photos...
+            </Typography>
+          </div>
+        )}
+
+        {visibleProfiles.map((profile) => (
+          <ProfileCard
+            key={profile.profile_id}
+            profile={profile}
+            imageUrl={getProfilePhotoUrl(profile.profile_id)}
+            onCardClick={handleCardClick}
+          />
+        ))}
+      </div>
+    ) : (
+      <Typography align="center" className="text-gray-700 py-4">
+        No matches found based on your preferences.
+      </Typography>
+    )}
+  </>
+);
 };
 
 export default Matches;
