@@ -1,7 +1,7 @@
 // src/components/dashboard/MatchGrid.jsx
 // This file functionally acts as the "Matches" component.
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Typography, Box, Button } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import getBaseUrl from '../../utils/GetUrl';
@@ -201,7 +201,11 @@ const [loadingPhotos, setLoadingPhotos] = useState(false);
     }
   }, [userProfileData, error, navigate]);
 
-  const visibleProfiles = matchedProfiles.slice(0, VISIBLE_COUNT);
+const visibleProfiles = useMemo(
+  () => matchedProfiles.slice(0, VISIBLE_COUNT),
+  [matchedProfiles]
+);
+
 
 // --- Photo Loading Logic (FIXED) ---
 useEffect(() => {
