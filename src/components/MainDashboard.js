@@ -6,7 +6,7 @@ import {
   MatchGrid,
   TimelineStatsGrid,
   TopNavTabs
-} from "../components/dashboard";
+} from "./components/dashboard";
 import PreferredProfilesSection from "../components/preferredProfile/PreferredProfilesSection";
 
 const Dashboard = () => {

@@ -33,17 +33,15 @@ const BirthAndAstro = ({ profileData, mode }) => {
   return (
     <section className="mb-8">
       <h2 className="text-xl font-semibold text-indigo-600 mb-4 border-b pb-2 border-indigo-200">
-        Birth & Astro Info
+        Birth Details
       </h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <DataRow label="Date of Birth" value={profileData?.dob} />
+        <DataRow label="Date of Birth" value={profileData?.dob ? profileData.dob.split('T')[0] : '-'} />
         <DataRow label="Time of Birth" value={profileData?.time_of_birth || profileData?.timeOfBirth} />
         <DataRow label="Current Age" value={profileData?.current_age} />
-        <DataRow label="Sub Caste" value={profileData?.sub_caste} />
         <DataRow label="Place of Birth" value={profileData?.place_of_birth} />
         <DataRow label="Place of Birth State" value={profileData?.place_of_birth_state} />
         <DataRow label="Place of Birth Country" value={profileData?.place_of_birth_country} />
-        <DataRow label="Charana Pada" value={profileData?.charana_pada} />
       </div>
     </section>
   );

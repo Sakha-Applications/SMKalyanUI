@@ -1,6 +1,10 @@
 // D:\1. Data\1. Personal DOcument\00.SM\NewProject\dev\SMKalyanUI\src\components\dashboardFiles/AllMatchesPage.jsx
 import React from 'react';
 import MatchGrid from './MatchGrid';
+import { Link } from 'react-router-dom';
+import Button from '@mui/material/Button';
+import { Box } from 'lucide-react';
+
 
 const AllMatchesPage = () => {
   // It's good practice to ensure profileId is available for MatchGrid.
@@ -15,10 +19,17 @@ const AllMatchesPage = () => {
           MatchGrid already handles its own loading, errors, and authentication redirects.
           It will use the userProfileId passed to it.
         */}
+        
+        <Button component={Link} to="/dashboard" sx={{ color: "#10a8eeff", '&:hover': { color: "#3f51b5" } }}>
+                Back to Dashboard
+              </Button>
+        
         <MatchGrid profileId={userProfileId} />
       </div>
     </div>
   );
 };
+
+
 
 export default AllMatchesPage;

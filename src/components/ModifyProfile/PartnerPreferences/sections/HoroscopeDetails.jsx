@@ -141,7 +141,9 @@ const HoroscopeDetails = ({
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                           Current Age
                       </label>
-                      <I type="text" value={profileData?.currentAge || ''} readOnly className="w-full bg-gray-100 cursor-not-allowed" />
+                      <I type="text" value=
+                      {profileData?.current_age}
+                      readOnly className="w-full bg-gray-100 cursor-not-allowed" />
                   </div>
                 </div>
 

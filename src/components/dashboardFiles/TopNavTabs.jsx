@@ -2,7 +2,7 @@ import { Link } from "react-router-dom"; // Import Link component
 
 // Define the tabs with their respective paths
 const tabs = [
-  { to: "/dashboard", label: "My Kalyana" }, // Assuming My Kalyana links to dashboard
+  { to: "/dashboard", label: "Dashboard" }, // Assuming My Kalyana links to dashboard
   { to: "/matches", label: "Matches" },      // Assuming a /matches route exists
   { to: "/basic-search", label: "Search" },  // Link to your new Basic Search Form
   { to: "/inbox", label: "Connections" }           // Assuming an /inbox route exists

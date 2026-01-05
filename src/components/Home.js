@@ -16,7 +16,7 @@ export default function Home() {
       <nav className="bg-white shadow-md py-4">
         <div className="container mx-auto flex justify-between items-center px-6">
           <Link to="/home" className="text-xl font-bold text-indigo-700">
-            Sarvamool - Kalyan Sakha Home Page
+            Sarvamool - Kalyana Sakha Home Page
           </Link>
           <div className="space-x-4">
             <Link to="/home" className="text-gray-700 hover:text-indigo-500">Home</Link>

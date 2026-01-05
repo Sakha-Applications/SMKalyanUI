@@ -363,31 +363,7 @@ useEffect(() => {
 
 
         <div className="p-6 space-y-4">
-          {/* Invitation Section */}
-          <div className="bg-gray-50 p-4 rounded-lg shadow-sm">
-            <Typography variant="h6" className="text-indigo-800 mb-3">Connect to Review Profile</Typography>
-            <TextField
-              label="Optional message"
-              variant="outlined"
-              fullWidth
-              multiline
-              rows={3}
-              value={inviterMessage}
-              onChange={(e) => setInviterMessage(e.target.value)}
-              margin="normal"
-              disabled={isSendingInvitation}
-              sx={{ mb: 2 }}
-            />
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={handleSendInvitation}
-              disabled={isSendingInvitation}
-            >
-              {isSendingInvitation ? 'Sending Connect Request...' : 'Send Connect Request'}
-            </Button>
-          </div>
-
+          
           {/* Accordion for Basic Details */}
           <Accordion expanded={expanded === 'panel1'} onChange={handleChange('panel1')}>
             <AccordionSummary expandIcon={<ExpandMoreIcon />} aria-controls="panel1a-content" id="panel1a-header">
@@ -431,13 +407,13 @@ useEffect(() => {
             </AccordionDetails>
           </Accordion>
 
-          {/* Accordion for Birth & Astro Details */}
+          {/* Accordion for Horoscope Details */}
           <Accordion expanded={expanded === 'panel5'} onChange={handleChange('panel5')}>
             <AccordionSummary expandIcon={<ExpandMoreIcon />} aria-controls="panel5a-content" id="panel5a-header">
-              <Typography variant="h6">Birth & Astro Details</Typography>
+              <Typography variant="h6">Horoscope Details</Typography>
             </AccordionSummary>
             <AccordionDetails>
-              <BirthAndAstro profileData={profileData} />
+
               <HoroscopeDetails profileData={profileData} />
             </AccordionDetails>
           </Accordion>
@@ -452,6 +428,30 @@ useEffect(() => {
             </AccordionDetails>
           </Accordion>
 
+{/* Invitation Section */}
+          <div className="bg-gray-50 p-4 rounded-lg shadow-sm">
+            <Typography variant="h6" className="text-indigo-800 mb-3">Connect to Review Profile</Typography>
+            <TextField
+              label="Optional message"
+              variant="outlined"
+              fullWidth
+              multiline
+              rows={3}
+              value={inviterMessage}
+              onChange={(e) => setInviterMessage(e.target.value)}
+              margin="normal"
+              disabled={isSendingInvitation}
+              sx={{ mb: 2 }}
+            />
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={handleSendInvitation}
+              disabled={isSendingInvitation}
+            >
+              {isSendingInvitation ? 'Sending Connect Request...' : 'Send Connect Request'}
+            </Button>
+          </div>
 
           <div className="flex justify-center pt-6">
             

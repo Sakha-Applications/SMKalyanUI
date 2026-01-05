@@ -20,8 +20,6 @@ const DashboardLayout = ({ children, profileId }) => {
   <h3 className="text-xl font-semibold text-indigo-800 mb-2">Suggested Matches</h3>
   <MatchGrid profileId={profileId} />
 
-  <h3 className="text-xl font-semibold mt-4 mb-2 text-indigo-800">Invitations</h3>
-  <MatchGrid profileId={profileId} />
   
 </div>
     </div>
