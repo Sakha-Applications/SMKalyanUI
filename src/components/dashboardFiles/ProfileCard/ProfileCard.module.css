@@ -9,7 +9,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  
+
   /* --- REVISED WIDTH FOR "2.5 CARDS" ON SCREEN --- */
   width: 240px; /* Set a specific width for each card */
   flex-shrink: 0; /* Prevents cards from shrinking in flex container */
@@ -35,6 +35,9 @@
   justify-content: center;
   align-items: center;
   background-color: #f0f0f0;
+
+  /* ADDED: to overlay next/prev controls inside the circle */
+  position: relative;
 }
 
 .profilePhoto {
@@ -112,4 +115,46 @@
     width: 95%; /* Make it take almost full width on very small screens */
     max-width: 260px; /* Keep a reasonable max width */
   }
+}
+
+/* -------------------------------
+   NEW: Multi-photo controls
+-------------------------------- */
+.photoControls {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 6px;
+  pointer-events: auto;
+}
+
+.navButton {
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 22px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  padding: 0;
+}
+
+.navButton:hover {
+  background: rgba(0, 0, 0, 0.75);
+}
+
+.photoCount {
+  font-size: 11px;
+  font-weight: 600;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.35);
+  padding: 2px 6px;
+  border-radius: 10px;
 }

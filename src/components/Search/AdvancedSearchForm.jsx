@@ -16,7 +16,40 @@ import MultiSelectCheckbox from '../common/MultiSelectCheckbox.js';
 
 const AdvancedSearchForm = () => {
     const navigate = useNavigate();
+// --- Default "Looking For" based on logged-in user's profile type ---
+const getOppositeProfileFor = (myProfileFor) => {
+  if (!myProfileFor) return "";
+  const val = String(myProfileFor).trim().toLowerCase();
+  if (val === "bride") return "Bridegroom";
+  if (val === "bridegroom") return "Bride";
+  return "";
+};
 
+const getLoggedInUserProfileFor = () => {
+  try {
+    const raw =
+      localStorage.getItem("userProfile") ||
+      localStorage.getItem("profile") ||
+      localStorage.getItem("user") ||
+      localStorage.getItem("currentUser");
+
+    if (!raw) return "";
+
+    const obj = JSON.parse(raw);
+
+    return (
+      obj?.profileFor ||
+      obj?.profile_for ||
+      obj?.genderCategory ||
+      obj?.gender ||
+      ""
+    );
+  } catch (e) {
+    return "";
+  }
+};
+
+    
     const [searchQuery, setSearchQuery] = useState({
         profileId: "",
         profileFor: "",
@@ -121,7 +154,18 @@ const AdvancedSearchForm = () => {
         searchQuery.education, searchQuery.profession,
     ]);
 
+/* useEffect(() => {
+  if (!searchQuery.profileFor) {
+    const myProfileFor = getLoggedInUserProfileFor();
+    const opposite = getOppositeProfileFor(myProfileFor);
+    if (opposite) {
+      setSearchQuery((prev) => ({ ...prev, profileFor: opposite }));
+    }
+  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, []);
 
+*/
     // Define static options for Select fields (unchanged)
     const profileForOptions = [
         { label: "Bride", value: "Bride" },
@@ -283,56 +327,110 @@ const AdvancedSearchForm = () => {
     }, []);
 
 
-    const handleSearch = async () => {
-        setLoading(true);
-        setError(null);
-        try {
-            const searchPayload = { ...searchQuery };
+    const getApiBaseUrl = () => {
+  const base = String(getBaseUrl() || "").replace(/\/+$/, "");
+  if (!base) return "";
+  if (base.endsWith("/api")) return base;
+  return `${base}/api`;
+};
 
-            // Convert min height from feet and inches to "X'Y"" string format for VARCHAR storage
-            if (searchQuery.heightMinFeet !== "" && searchQuery.heightMinInches !== "") {
-                searchPayload.heightMin = `${searchQuery.heightMinFeet}'${searchQuery.heightMinInches}"`;
-            } else {
-                searchPayload.heightMin = "";
-            }
+const safeReadJsonOrTextError = async (response) => {
+  const contentType = response.headers.get("content-type") || "";
+  const isJson = contentType.includes("application/json");
 
-            // Convert max height from feet and inches to "X'Y"" string format for VARCHAR storage
-            if (searchQuery.heightMaxFeet !== "" && searchQuery.heightMaxInches !== "") {
-                searchPayload.heightMax = `${searchQuery.heightMaxFeet}'${searchQuery.heightMaxInches}"`;
-            } else {
-                searchPayload.heightMax = "";
-            }
+  if (!isJson) {
+    const txt = await response.text();
+    const snippet = String(txt || "").slice(0, 200);
+    console.log("❌ ADV SEARCH UI Non-JSON response content-type:", contentType);
+    console.log("❌ ADV SEARCH UI Non-JSON response snippet:", snippet);
+    throw new Error(
+      `Non-JSON response from API (content-type: ${contentType}). Check API base URL (/api).`
+    );
+  }
+  return await response.json();
+};
 
-            // Remove the individual feet/inches fields from the payload as they are for UI input only
-            delete searchPayload.heightMinFeet;
-            delete searchPayload.heightMinInches;
-            delete searchPayload.heightMaxFeet;
-            delete searchPayload.heightMaxInches;
+const handleSearch = async () => {
+  setLoading(true);
+  setError(null);
+  try {
+    const searchPayload = { ...searchQuery };
 
-            console.log("Sending search request with:", searchPayload);
-            const response = await fetch(
-                `${getBaseUrl()}/api/advancedSearchProfiles`,
-                {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(searchPayload)
-                }
-            );
+    // ✅ CRITICAL: send logged-in profile id so backend can fetch myProfileFor from DB
+    const myProfileId = sessionStorage.getItem("profileId") || "";
+    console.log("🧾 ADV SEARCH UI myProfileId(from sessionStorage.profileId):", myProfileId || "(EMPTY)");
+    searchPayload.myProfileId = myProfileId;
 
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || `HTTP error! Status: ${response.status}`);
-            }
+    // Optional debug/backward compat (may be empty)
+    const myProfileFor = getLoggedInUserProfileFor();
+    console.log("🧾 ADV SEARCH UI myProfileFor(from localStorage attempt):", myProfileFor || "(EMPTY)");
+    searchPayload.myProfileFor = myProfileFor;
 
-            const data = await response.json();
-            setSearchResults(data);
-        } catch (err) {
-            console.error("Advanced Search failed:", err);
-            setError(err.message || "Advanced Search failed. Please try again.");
-        } finally {
-            setLoading(false);
-        }
-    };
+    // ✅ IMPORTANT: Do NOT force opposite in UI. Keep blank if user didn't select.
+    if (!searchPayload.profileFor) {
+      console.log("✅ ADV SEARCH UI profileFor not selected. Backend must apply opposite filter using myProfileId → DB → myProfileFor.");
+    } else {
+      console.log("ℹ️ ADV SEARCH UI profileFor selected by user:", searchPayload.profileFor);
+    }
+
+    // Convert min height from feet/inches to "X'Y\"" string
+    if (searchQuery.heightMinFeet !== "" && searchQuery.heightMinInches !== "") {
+      searchPayload.heightMin = `${searchQuery.heightMinFeet}'${searchQuery.heightMinInches}"`;
+    } else {
+      searchPayload.heightMin = "";
+    }
+
+    // Convert max height from feet/inches to "X'Y\"" string
+    if (searchQuery.heightMaxFeet !== "" && searchQuery.heightMaxInches !== "") {
+      searchPayload.heightMax = `${searchQuery.heightMaxFeet}'${searchQuery.heightMaxInches}"`;
+    } else {
+      searchPayload.heightMax = "";
+    }
+
+    delete searchPayload.heightMinFeet;
+    delete searchPayload.heightMinInches;
+    delete searchPayload.heightMaxFeet;
+    delete searchPayload.heightMaxInches;
+
+    console.log("🧾 ADV SEARCH UI sending payload:", searchPayload);
+
+    const token =
+      sessionStorage.getItem("token") ||
+      sessionStorage.getItem("authToken") ||
+      localStorage.getItem("token") ||
+      localStorage.getItem("authToken");
+
+    console.log("🧾 ADV SEARCH UI token present:", !!token);
+
+    const headers = { "Content-Type": "application/json" };
+    if (token) headers.Authorization = `Bearer ${token}`;
+
+    const apiBaseUrl = getApiBaseUrl();
+    const url = `${apiBaseUrl}/advancedSearchProfiles`;
+    console.log("🧾 ADV SEARCH UI final URL:", url);
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(searchPayload),
+    });
+
+    if (!response.ok) {
+      const errPayload = await safeReadJsonOrTextError(response);
+      throw new Error(
+        errPayload?.error || errPayload?.message || `HTTP error! Status: ${response.status}`
+      );
+    }
+
+    const data = await safeReadJsonOrTextError(response);
+    setSearchResults(data);
+  } catch (err) {
+    console.error("Advanced Search failed:", err);
+    setError(err.message || "Advanced Search failed. Please try again.");
+  } finally {
+    setLoading(false);
+  }
+};
 
     const handleBackToDashboard = () => {
         navigate('/Dashboard');
