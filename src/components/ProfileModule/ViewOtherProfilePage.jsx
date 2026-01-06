@@ -1,11 +1,7 @@
-// src/components/ProfileModule/ViewOtherProfilePage.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import getBaseUrl from '../../utils/GetUrl';
-
-// ⬇️ NEW: photo helper import
-import { fetchDefaultPhoto } from '../UploadProfilePhoto/photoUploadUtils';
 
 // Material-UI Accordion imports
 import Accordion from '@mui/material/Accordion';
@@ -30,11 +26,9 @@ import HoroscopeDetails from '../ModifyProfile/PartnerPreferences/sections/Horos
 import AddressDetails from '../ModifyProfile/PartnerPreferences/sections/AddressDetails';
 import ReferencesSection from '../ModifyProfile/PartnerPreferences/sections/ReferencesSection';
 
-// ⬇️ NEW: reuse same pattern as SearchResults
+// ⬇️ reuse same pattern as SearchResults (base for images)
 const API_BASE_URL = `${getBaseUrl()}`;
 const FALLBACK_DEFAULT_IMAGE_PATH = '/ProfilePhotos/defaultImage.jpg';
-
-
 
 const ViewOtherProfilePage = () => {
   const { profileId } = useParams();
@@ -49,11 +43,14 @@ const ViewOtherProfilePage = () => {
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState('success');
 
-  // ⬇️ NEW: photo-specific state
-  const [photoUrl, setPhotoUrl] = useState(
-    `${API_BASE_URL}${FALLBACK_DEFAULT_IMAGE_PATH}`
-  );
-  const [photoLoading, setPhotoLoading] = useState(false);
+  // ✅ Carousel state (ONLY in ViewOtherProfilePage)
+  const [photos, setPhotos] = useState([]); // normalized: [{ id, fullUrl, blobName }]
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [photosLoading, setPhotosLoading] = useState(false);
+  const [photosError, setPhotosError] = useState('');
+  const [brokenUrls, setBrokenUrls] = useState(() => new Set());
+
+  const fallbackImageUrl = useMemo(() => `${API_BASE_URL}${FALLBACK_DEFAULT_IMAGE_PATH}`, []);
 
   // Handler for accordion expansion change
   const handleChange = (panel) => (event, isExpanded) => {
@@ -61,59 +58,56 @@ const ViewOtherProfilePage = () => {
   };
 
   // added on 31-Dec-25 for handling
- 
-const location = useLocation();
+  const location = useLocation();
 
-const handleReturn = () => {
-  const params = new URLSearchParams(location.search);
-  const returnTo = params.get("returnTo"); // e.g. "/dashboard" or "/basic-search"
+  const handleReturn = () => {
+    const params = new URLSearchParams(location.search);
+    const returnTo = params.get("returnTo"); // e.g. "/dashboard" or "/basic-search"
 
-  // If opened in a new tab via window.open, close works (browser allows)
-  if (window.opener && !window.opener.closed) {
-    window.close();
-    return;
-  }
+    // If opened in a new tab via window.open, close works (browser allows)
+    if (window.opener && !window.opener.closed) {
+      window.close();
+      return;
+    }
 
-  // If caller provided a return path, use it
-  if (returnTo) {
-    navigate(returnTo);
-    return;
-  }
+    // If caller provided a return path, use it
+    if (returnTo) {
+      navigate(returnTo);
+      return;
+    }
 
-  // Otherwise try browser back
-  if (window.history.length > 1) {
-    navigate(-1);
-    return;
-  }
+    // Otherwise try browser back
+    if (window.history.length > 1) {
+      navigate(-1);
+      return;
+    }
 
-  // Safe fallback
-  navigate("/dashboard");
-};
+    // Safe fallback
+    navigate("/dashboard");
+  };
 
-// Add this right after: const navigate = useNavigate();
-const [searchParams] = useSearchParams(); // You may need to import useSearchParams from 'react-router-dom'
-//added on 31-Dec-25
+  // Add this right after: const navigate = useNavigate();
+  const [searchParams] = useSearchParams(); //added on 31-Dec-25
 
-useEffect(() => {
-  const urlToken = searchParams.get('sid');
-  console.log("[Debug] Token found in URL:", urlToken ? "YES (starts with " + urlToken.substring(0, 10) + "...)" : "NO");
+  useEffect(() => {
+    const urlToken = searchParams.get('sid');
+    console.log("[Debug] Token found in URL:", urlToken ? "YES (starts with " + urlToken.substring(0, 10) + "...)" : "NO");
 
-  if (urlToken) {
-    sessionStorage.setItem('token', urlToken);
-    console.log("[Debug] Token saved to sessionStorage.");
-    
-    const newUrl = window.location.pathname;
-    console.log("[Debug] Cleaning URL to:", newUrl);
-    window.history.replaceState({}, document.title, newUrl);
-  } else {
-    console.warn("[Debug] No 'sid' found in URL. Checking existing session...");
-  }
-}, [searchParams]);
+    if (urlToken) {
+      sessionStorage.setItem('token', urlToken);
+      console.log("[Debug] Token saved to sessionStorage.");
+
+      const newUrl = window.location.pathname;
+      console.log("[Debug] Cleaning URL to:", newUrl);
+      window.history.replaceState({}, document.title, newUrl);
+    } else {
+      console.warn("[Debug] No 'sid' found in URL. Checking existing session...");
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     const fetchProfile = async () => {
-      
-          if (!profileId) {
+      if (!profileId) {
         setError("Profile ID is missing from the URL.");
         setLoading(false);
         return;
@@ -163,54 +157,143 @@ useEffect(() => {
     fetchProfile();
   }, [profileId, navigate]);
 
-    // ⬇️ NEW: load profile photo once profileData is available
+  // ✅ NEW: load full carousel photos here only + clean 404 handling
   useEffect(() => {
     if (!profileData) return;
 
     const pid = profileData.profile_id || profileData.profileId;
     if (!pid) {
-      console.warn("[ViewOtherProfilePage] profileData missing profile_id/profileId, using fallback photo.");
-      setPhotoUrl(`${API_BASE_URL}${FALLBACK_DEFAULT_IMAGE_PATH}`);
+      console.warn("[ViewOtherProfilePage] profileData missing profile_id/profileId. Using fallback photo.");
+      setPhotos([{ id: null, fullUrl: fallbackImageUrl, blobName: "" }]);
+      setActiveIndex(0);
+      setPhotosError("");
       return;
     }
 
-    const loadPhoto = async () => {
-      console.log(`[ViewOtherProfilePage] Loading photo for profileId: ${pid}`);
-      setPhotoLoading(true);
+    let cancelled = false;
 
-      let finalUrl = `${API_BASE_URL}${FALLBACK_DEFAULT_IMAGE_PATH}`;
-      let currentError = null;
+    const normalizePhoto = (p) => {
+      if (!p) return null;
 
-      const tempDefaultPhoto = (photoObj) => {
-        if (photoObj && photoObj.fullUrl) {
-          finalUrl = photoObj.fullUrl;
-        }
-      };
+      const idVal = p.id ?? p.photo_id ?? p.photoId ?? null;
 
-      const tempSetFetchError = (msg) => {
-        currentError = msg;
-      };
+      let fullUrl =
+        p.fullUrl ??
+        p.photo_path ??
+        p.url_path ??
+        p.photoPath ??
+        p.urlPath ??
+        "";
 
-      try {
-        await fetchDefaultPhoto(pid, tempDefaultPhoto, tempSetFetchError);
-
-        if (currentError) {
-          console.warn(`[ViewOtherProfilePage] fetchDefaultPhoto error for ${pid}: ${currentError}. Using fallback.`);
-          finalUrl = `${API_BASE_URL}${FALLBACK_DEFAULT_IMAGE_PATH}`;
-        }
-      } catch (err) {
-        console.error(`[ViewOtherProfilePage] Unexpected error loading photo for ${pid}:`, err);
-        finalUrl = `${API_BASE_URL}${FALLBACK_DEFAULT_IMAGE_PATH}`;
+      // If backend returned relative path, prefix with API base (safe default)
+      if (fullUrl && !/^https?:\/\//i.test(fullUrl)) {
+        const clean = String(fullUrl).startsWith("/") ? String(fullUrl) : `/${String(fullUrl)}`;
+        fullUrl = `${API_BASE_URL}${clean}`;
       }
 
-      console.log(`[ViewOtherProfilePage] Final photo URL for ${pid}:`, finalUrl);
-      setPhotoUrl(finalUrl);
-      setPhotoLoading(false);
+      return {
+        id: idVal,
+        blobName: p.blobName ?? p.filename ?? p.blob_name ?? "",
+        fullUrl: fullUrl || "",
+      };
     };
 
-    loadPhoto();
-  }, [profileData]);
+    const loadCarousel = async () => {
+      console.log(`[ViewOtherProfilePage] Loading carousel photos for profileId: ${pid}`);
+      setPhotosLoading(true);
+      setPhotosError("");
+      setBrokenUrls(new Set());
+      setActiveIndex(0);
+      setPhotos([]);
 
+      // Token is optional for these endpoints; if present, attach it (safe)
+      const token = sessionStorage.getItem("token");
+      const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
+
+      try {
+        // 1) Full carousel
+        const photosRes = await axios.get(`${getBaseUrl()}/api/get-photos`, {
+          headers,
+          params: { profileId: pid },
+        });
+
+        const list = Array.isArray(photosRes.data) ? photosRes.data : [];
+        const normalized = list.map(normalizePhoto).filter((x) => x && x.fullUrl);
+
+        if (cancelled) return;
+
+        if (normalized.length > 0) {
+          setPhotos(normalized);
+          return;
+        }
+
+        // 2) If carousel empty → try default photo
+        try {
+          const defRes = await axios.get(`${getBaseUrl()}/api/get-default-photo`, {
+            headers,
+            params: { profileId: pid },
+          });
+
+          if (cancelled) return;
+
+          const defNorm = normalizePhoto(defRes.data);
+          if (defNorm?.fullUrl) {
+            setPhotos([defNorm]);
+          } else {
+            setPhotos([{ id: null, fullUrl: fallbackImageUrl, blobName: "" }]);
+            setPhotosError("Photos not available for this profile.");
+          }
+        } catch (defErr) {
+          if (cancelled) return;
+
+          // ✅ Clean 404 handling
+          if (defErr?.response?.status === 404) {
+            setPhotos([{ id: null, fullUrl: fallbackImageUrl, blobName: "" }]);
+            setPhotosError("Photos not available for this profile.");
+          } else {
+            console.warn("[ViewOtherProfilePage] get-default-photo failed:", defErr?.message);
+            setPhotos([{ id: null, fullUrl: fallbackImageUrl, blobName: "" }]);
+            setPhotosError("Failed to load photos.");
+          }
+        }
+      } catch (err) {
+        if (cancelled) return;
+
+        // ✅ Clean handling if get-photos fails (including 404)
+        if (err?.response?.status === 404) {
+          setPhotos([{ id: null, fullUrl: fallbackImageUrl, blobName: "" }]);
+          setPhotosError("Photos not available for this profile.");
+        } else {
+          console.warn("[ViewOtherProfilePage] get-photos failed:", err?.message);
+          setPhotos([{ id: null, fullUrl: fallbackImageUrl, blobName: "" }]);
+          setPhotosError("Failed to load photos.");
+        }
+      } finally {
+        if (!cancelled) setPhotosLoading(false);
+      }
+    };
+
+    loadCarousel();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [profileData, fallbackImageUrl]);
+
+  const activePhotoUrl = useMemo(() => {
+    const p = photos?.[activeIndex];
+    const url = p?.fullUrl || fallbackImageUrl;
+    if (brokenUrls.has(url)) return fallbackImageUrl;
+    return url;
+  }, [photos, activeIndex, brokenUrls, fallbackImageUrl]);
+
+  const handleActiveImageError = () => {
+    setBrokenUrls((prev) => {
+      const next = new Set(prev);
+      next.add(activePhotoUrl);
+      return next;
+    });
+  };
 
   // Handler for sending invitation
   const handleSendInvitation = async () => {
@@ -284,86 +367,163 @@ useEffect(() => {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-100 p-6">
       <div className="max-w-5xl mx-auto bg-white shadow-lg rounded-lg overflow-hidden">
 
-<div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-6">
-  <div className="flex flex-col md:flex-row items-center gap-4">
-    {/* ⬇️ Profile photo */}
-    <div className="relative">
-      <img
-        src={photoUrl}
-        alt={profileData.name || 'Profile Photo'}
-        className="w-28 h-28 md:w-32 md:h-32 rounded-full border-4 border-white object-cover shadow-md bg-gray-100"
-        onError={(e) => {
-          e.target.onerror = null;
-          if (e.target.src !== `${API_BASE_URL}${FALLBACK_DEFAULT_IMAGE_PATH}`) {
-            e.target.src = `${API_BASE_URL}${FALLBACK_DEFAULT_IMAGE_PATH}`;
-            console.warn('[ViewOtherProfilePage] Photo failed to load, using fallback.');
-          }
-        }}
-      />
-      {photoLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30 rounded-full">
-          <svg
-            className="animate-spin h-6 w-6 text-white"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-          >
-            <circle
-              className="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              strokeWidth="4"
-            ></circle>
-            <path
-              className="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-            ></path>
-          </svg>
+        <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-6">
+          <div className="flex flex-col md:flex-row items-center gap-4">
+            {/* ⬇️ Profile photo (uses active carousel photo) */}
+            <div className="relative">
+              <img
+                src={activePhotoUrl}
+                alt={profileData.name || 'Profile Photo'}
+                className="w-28 h-28 md:w-32 md:h-32 rounded-full border-4 border-white object-cover shadow-md bg-gray-100"
+                onError={(e) => {
+                  e.target.onerror = null;
+                  if (e.target.src !== fallbackImageUrl) {
+                    e.target.src = fallbackImageUrl;
+                    console.warn('[ViewOtherProfilePage] Header photo failed to load, using fallback.');
+                  }
+                }}
+              />
+              {photosLoading && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30 rounded-full">
+                  <svg
+                    className="animate-spin h-6 w-6 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                    ></path>
+                  </svg>
+                </div>
+              )}
+            </div>
+
+            {/* ⬇️ Basic info */}
+            <div className="flex-1 text-center md:text-left">
+              <h1 className="text-2xl md:text-3xl font-bold">
+                {profileData.name || 'Profile Details'}
+              </h1>
+              <p className="mt-1 text-sm md:text-base text-indigo-100">
+                Profile ID:&nbsp;
+                <span className="font-semibold">
+                  {profileData.profile_id || profileData.profileId}
+                </span>
+              </p>
+              <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-2 text-xs md:text-sm text-indigo-100">
+                {profileData.current_age && (
+                  <div>
+                    <span className="font-semibold">Age:&nbsp;</span>
+                    {profileData.current_age}
+                  </div>
+                )}
+                {profileData.height && (
+                  <div>
+                    <span className="font-semibold">Height:&nbsp;</span>
+                    {profileData.height}
+                  </div>
+                )}
+                {profileData.current_location && (
+                  <div>
+                    <span className="font-semibold">Location:&nbsp;</span>
+                    {profileData.current_location}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
-      )}
-    </div>
-
-    {/* ⬇️ Basic info */}
-    <div className="flex-1 text-center md:text-left">
-      <h1 className="text-2xl md:text-3xl font-bold">
-        {profileData.name || 'Profile Details'}
-      </h1>
-      <p className="mt-1 text-sm md:text-base text-indigo-100">
-        Profile ID:&nbsp;
-        <span className="font-semibold">
-          {profileData.profile_id || profileData.profileId}
-        </span>
-      </p>
-      <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-2 text-xs md:text-sm text-indigo-100">
-        {profileData.current_age && (
-          <div>
-            <span className="font-semibold">Age:&nbsp;</span>
-            {profileData.current_age}
-          </div>
-        )}
-        {profileData.height && (
-          <div>
-            <span className="font-semibold">Height:&nbsp;</span>
-            {profileData.height}
-          </div>
-        )}
-        {profileData.current_location && (
-          <div>
-            <span className="font-semibold">Location:&nbsp;</span>
-            {profileData.current_location}
-          </div>
-        )}
-      </div>
-    </div>
-  </div>
-</div>
-
 
         <div className="p-6 space-y-4">
-          
+
+          {/* ✅ Photos Carousel (ONLY place it loads and shows full carousel) */}
+          <div className="bg-white">
+            <div className="flex items-center justify-between mb-2">
+              <Typography variant="h6" className="text-indigo-800">Photos</Typography>
+              {photosLoading && (
+                <span className="text-sm text-gray-600">Loading photos...</span>
+              )}
+            </div>
+
+            {!photosLoading && photosError && (
+              <div className="mb-2">
+                <Alert severity="info">{photosError}</Alert>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-[520px_1fr] gap-4 items-start">
+              {/* Main photo */}
+              <div className="w-full max-w-[520px] rounded-lg overflow-hidden border border-gray-200 bg-white">
+                <img
+                  src={activePhotoUrl}
+                  alt={profileData.name || 'Profile'}
+                  onError={handleActiveImageError}
+                  style={{
+                    width: '100%',
+                    height: 'auto',
+                    display: 'block',
+                    objectFit: 'cover',
+                  }}
+                />
+              </div>
+
+              {/* Thumbnails */}
+              <div>
+                <div className="text-sm text-gray-600 mb-2">
+                  {photos?.length > 1 ? 'Click a thumbnail to view' : 'Only one photo available'}
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  {(photos?.length ? photos : [{ fullUrl: fallbackImageUrl }]).map((p, idx) => {
+                    const thumbUrl = p?.fullUrl || fallbackImageUrl;
+                    const isActive = idx === activeIndex;
+                    const isBroken = brokenUrls.has(thumbUrl);
+
+                    return (
+                      <div
+                        key={`${p?.id ?? 'p'}-${idx}`}
+                        onClick={() => setActiveIndex(idx)}
+                        className={`w-[88px] h-[88px] rounded-lg overflow-hidden cursor-pointer bg-white ${
+                          isActive ? 'border-2 border-gray-900' : 'border border-gray-200'
+                        }`}
+                        title={`Photo ${idx + 1}`}
+                        style={{ opacity: isBroken ? 0.6 : 1 }}
+                      >
+                        <img
+                          src={isBroken ? fallbackImageUrl : thumbUrl}
+                          alt={`Thumbnail ${idx + 1}`}
+                          onError={() => {
+                            setBrokenUrls((prev) => {
+                              const next = new Set(prev);
+                              next.add(thumbUrl);
+                              return next;
+                            });
+                          }}
+                          style={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover',
+                            display: 'block',
+                          }}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Accordion for Basic Details */}
           <Accordion expanded={expanded === 'panel1'} onChange={handleChange('panel1')}>
             <AccordionSummary expandIcon={<ExpandMoreIcon />} aria-controls="panel1a-content" id="panel1a-header">
@@ -374,7 +534,6 @@ useEffect(() => {
             </AccordionDetails>
           </Accordion>
 
-          {/* Accordion for Contact & Address Details */}
           {/* Accordion for Contact & Address Details removed 
           <Accordion expanded={expanded === 'panel2'} onChange={handleChange('panel2')}>
             <AccordionSummary expandIcon={<ExpandMoreIcon />} aria-controls="panel2a-content" id="panel2a-header">
@@ -385,11 +544,11 @@ useEffect(() => {
               <ContactDetails profileData={profileData} />
             </AccordionDetails>
           </Accordion>
-*/}
+          */}
+
           {/* Accordion for Education & Job Details */}
           <Accordion expanded={expanded === 'panel3'} onChange={handleChange('panel3')}>
             <AccordionSummary expandIcon={<ExpandMoreIcon />} aria-controls="panel3a-content" id="panel3a-header">
-              {/* Removed the extra closing Typography tag here */}
               <Typography variant="h6">Education & Job Details</Typography>
             </AccordionSummary>
             <AccordionDetails>
@@ -413,7 +572,6 @@ useEffect(() => {
               <Typography variant="h6">Horoscope Details</Typography>
             </AccordionSummary>
             <AccordionDetails>
-
               <HoroscopeDetails profileData={profileData} />
             </AccordionDetails>
           </Accordion>
@@ -428,7 +586,7 @@ useEffect(() => {
             </AccordionDetails>
           </Accordion>
 
-{/* Invitation Section */}
+          {/* Invitation Section */}
           <div className="bg-gray-50 p-4 rounded-lg shadow-sm">
             <Typography variant="h6" className="text-indigo-800 mb-3">Connect to Review Profile</Typography>
             <TextField
@@ -454,18 +612,16 @@ useEffect(() => {
           </div>
 
           <div className="flex justify-center pt-6">
-            
-         <button
-  className="px-8 py-3 bg-gray-400 text-white rounded-lg hover:bg-gray-500 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
-  onClick={handleReturn}  // Go back to previous page (SearchResults or Dashboard)
->
-   Close and Return
-</button>
-
-          
+            <button
+              className="px-8 py-3 bg-gray-400 text-white rounded-lg hover:bg-gray-500 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
+              onClick={handleReturn}
+            >
+              Close and Return
+            </button>
           </div>
         </div>
       </div>
+
       {/* Snackbar for feedback */}
       <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={() => setSnackbarOpen(false)}>
         <Alert onClose={() => setSnackbarOpen(false)} severity={snackbarSeverity} sx={{ width: '100%' }}>
