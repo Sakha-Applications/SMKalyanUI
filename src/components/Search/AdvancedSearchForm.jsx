@@ -183,7 +183,7 @@ const getLoggedInUserProfileFor = () => {
         { label: "Select Category", value: "" },
         { label: "Domestic", value: "Domestic" },
         { label: "International", value: "International" },
-        { label: "Vaidik", value: "Vaidhik" },
+        { label: "Vaidika", value: "Vaidika" },
         { label: "Anyone", value: "Anyone" },
     ];
 

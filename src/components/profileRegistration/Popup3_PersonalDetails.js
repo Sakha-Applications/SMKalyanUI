@@ -205,7 +205,7 @@ const Popup3_PersonalDetails = ({
                 <option value="">Select Category</option>
                 <option value="Domestic">Domestic</option>
                 <option value="International">International</option>
-                <option value="Vaidik">Vaidhik</option>
+                <option value="Vaidika">Vaidika</option>
                 <option value="Anyone">Anyone</option>
               </S>
             </div>

@@ -10,7 +10,7 @@ export const maritalStatusOptions = [
 export const brideGroomCategoryOptions = [
   { label: 'Domestic', value: 'Domestic' },
   { label: 'International', value: 'International' },
-  { label: 'Vaidhik', value: 'Vaidhik' },
+  { label: 'Vaidika', value: 'Vaidika' },
   { label: 'Anyone', value: 'Anyone' },
 ];
 

@@ -458,7 +458,7 @@ const BasicDetailsTab = ({ formData, handleChange, tabIndex, setTabIndex }) => {
         <Select name="profileCategory" value={formData.profileCategory || ""} onChange={handleChange}>
           <MenuItem value="Domestic">Domestic</MenuItem>
           <MenuItem value="International">International</MenuItem>
-          <MenuItem value="Vaidhik">Vaidhik</MenuItem>
+          <MenuItem value="Vaidika">Vaidika</MenuItem>
         </Select>
       </FormControl>
       
