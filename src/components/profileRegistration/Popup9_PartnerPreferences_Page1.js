@@ -17,7 +17,7 @@ const maritalStatusOptions = [
 ];
 
 const brideGroomCategoryOptions = [
-  { label: 'Domestic' },
+  { label: 'Domestic-India' },
   { label: 'International' },
   { label: 'Vaidhik' },
   { label: 'Anyone' }

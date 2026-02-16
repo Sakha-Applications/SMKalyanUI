@@ -203,7 +203,7 @@ const Popup3_PersonalDetails = ({
                 className="w-full"
               >
                 <option value="">Select Category</option>
-                <option value="Domestic">Domestic</option>
+                <option value="Domestic-India">Domestic-India</option>
                 <option value="International">International</option>
                 <option value="Vaidika">Vaidika</option>
                 <option value="Anyone">Anyone</option>

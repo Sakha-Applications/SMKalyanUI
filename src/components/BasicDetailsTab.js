@@ -456,7 +456,7 @@ const BasicDetailsTab = ({ formData, handleChange, tabIndex, setTabIndex }) => {
       <Typography sx={{ fontWeight: "bold", color: "#444" }}>Bride/Groom Category:</Typography>
       <FormControl fullWidth required sx={{ backgroundColor: "#fff", borderRadius: 1 }}>
         <Select name="profileCategory" value={formData.profileCategory || ""} onChange={handleChange}>
-          <MenuItem value="Domestic">Domestic</MenuItem>
+          <MenuItem value="Domestic-India">Domestic-India</MenuItem>
           <MenuItem value="International">International</MenuItem>
           <MenuItem value="Vaidika">Vaidika</MenuItem>
         </Select>
@@ -466,7 +466,7 @@ const BasicDetailsTab = ({ formData, handleChange, tabIndex, setTabIndex }) => {
       <Typography sx={{ fontWeight: "bold", color: "#444" }}>Looking for Bride/Groom Category:</Typography>
       <FormControl fullWidth required sx={{ backgroundColor: "#fff", borderRadius: 1 }}>
         <Select name="profileCategoryneed" value={formData.profileCategoryneed || ""} onChange={handleChange}>
-          <MenuItem value="Domestic">Domestic</MenuItem>
+          <MenuItem value="Domestic-India">Domestic-India</MenuItem>
           <MenuItem value="International">International</MenuItem>
           <MenuItem value="Vaidhik">Vaidhik</MenuItem>
           <MenuItem value="Anyone">Anyone</MenuItem>

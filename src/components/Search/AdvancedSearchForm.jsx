@@ -181,7 +181,7 @@ const getLoggedInUserProfileFor = () => {
 
     const profileCategoryOptions = [
         { label: "Select Category", value: "" },
-        { label: "Domestic", value: "Domestic" },
+        { label: "Domestic-India", value: "Domestic-India" },
         { label: "International", value: "International" },
         { label: "Vaidika", value: "Vaidika" },
         { label: "Anyone", value: "Anyone" },

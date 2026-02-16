@@ -276,7 +276,7 @@ const handleHobbiesChange = (e) => {
                   <label htmlFor="profileCategory" className="block text-sm font-medium text-gray-700 mb-1">Bride/Groom Category</label>
                   <Select name="profileCategory" value={formData.profileCategory || ''} onChange={handleChange} className="w-full">
                       <option value="">Select Category</option>
-                      <option value="Domestic">Domestic</option>
+                      <option value="Domestic-India">Domestic-India</option>
                       <option value="International">International</option>
                       <option value="Vaidhik">Vaidhik</option>
                       <option value="Anyone">Anyone</option>
