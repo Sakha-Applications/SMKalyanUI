@@ -48,6 +48,20 @@ function LoginScreen() {
             if (response.ok && profileData.profile_id) {
               sessionStorage.setItem('profileId', profileData.profile_id);
               console.log("✅ Fetched and stored profile ID:", profileData.profile_id);
+
+              // ✅ NEW: Store profileStatus if available
+  const status =
+    profileData?.profile_status ||
+    profileData?.profileStatus ||
+    profileData?.profile?.profile_status ||
+    "";
+
+  if (status) {
+    sessionStorage.setItem("profileStatus", status);
+    console.log("✅ Stored profileStatus:", status);
+  } else {
+    console.warn("⚠️ profileStatus not found in modifyProfile response:", profileData);
+  }
             } else {
               console.warn("⚠️ Profile ID not found in modifyProfile response:", profileData);
             }
@@ -57,6 +71,35 @@ function LoginScreen() {
         } else {
           console.warn("User email not found in login response.");
         }
+
+        // ✅ Store role for routing decisions
+
+        // ✅ Store role for routing decisions (prefer JWT payload as source of truth)
+let role = (data?.user?.role || data?.role || '').toString();
+
+try {
+  if (!role && data?.token) {
+    const payloadBase64 = data.token.split('.')[1];
+    const payloadJson = JSON.parse(atob(payloadBase64));
+    role = (payloadJson?.role || '').toString();
+  }
+} catch (e) {
+  console.warn("⚠️ Unable to decode JWT role:", e);
+}
+
+if (role) {
+  sessionStorage.setItem('userRole', role);
+  console.log("✅ Stored userRole:", role);
+} else {
+  console.warn("⚠️ userRole could not be determined from response/token.");
+}
+
+// ✅ Redirect admin to admin dashboard
+if (role.toUpperCase() === 'ADMIN') {
+  navigate('/admin');
+  return;
+}
+
 
         navigate('/dashboard');
       } else {

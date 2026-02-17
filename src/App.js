@@ -27,6 +27,7 @@ import MakePreferred from './components/preferredProfile/MakePreferred';
 import PreferredPayment from './components/preferredProfile/PreferredPayment';
 import PartnerPreferencesPage from "./components/ModifyProfile/PartnerPreferencesPage";
 import MyProfilePage from "./components/ModifyProfile/MyProfilePage";
+import AdminDashboard from './components/admin/AdminDashboard';
 
 // Protected route component
 const ProtectedRoute = ({ children }) => {
@@ -39,6 +40,16 @@ const ProtectedRoute = ({ children }) => {
     }
 
     return children;
+};
+
+const AdminRoute = ({ children }) => {
+  const isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
+  const role = (sessionStorage.getItem('userRole') || '').toUpperCase();
+
+  if (!isLoggedIn) return <Navigate to="/login" replace />;
+  if (role !== 'ADMIN') return <Navigate to="/dashboard" replace />;
+
+  return children;
 };
 
 function App() {
@@ -160,6 +171,15 @@ function App() {
             <AdvancedSearchForm />
         </ProtectedRoute>
     }
+/>
+
+<Route
+  path="/admin"
+  element={
+    <AdminRoute>
+      <AdminDashboard />
+    </AdminRoute>
+  }
 />
 
 

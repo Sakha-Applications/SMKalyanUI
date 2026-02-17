@@ -41,6 +41,12 @@ const [loadingPhotos, setLoadingPhotos] = useState(false);
 
   // --- Step 1: Fetch Logged-in User's Profile and Preferences ---
   useEffect(() => {
+    if (!approved) {
+  setError("Your profile is under review. Matches will be available once your profile is approved.");
+  setLoadingUserPreferences(false);
+  return;
+}
+
     const fetchUserPreferences = async () => {
       if (!profileId) {
         setError("Profile ID not available. Cannot fetch user preferences.");
@@ -93,9 +99,16 @@ const [loadingPhotos, setLoadingPhotos] = useState(false);
     fetchUserPreferences();
   }, [profileId, navigate]);
 
+  const statusU = (sessionStorage.getItem("profileStatus") || "").toString().trim().toUpperCase();
+const approved = statusU === "APPROVED";
+
   // --- Step 2 & 3: Construct searchQuery & Execute Match Search ---
   useEffect(() => {
     const findMatches = async () => {
+
+      if (!approved) return;
+
+
       if (!userProfileData || error) {
         return;
       }

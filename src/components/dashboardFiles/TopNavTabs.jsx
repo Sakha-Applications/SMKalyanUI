@@ -1,31 +1,71 @@
-import { Link } from "react-router-dom"; // Import Link component
+import { Link } from "react-router-dom";
 
-// Define the tabs with their respective paths
 const tabs = [
-  { to: "/dashboard", label: "Dashboard" }, // Assuming My Kalyana links to dashboard
-  { to: "/matches", label: "Matches" },      // Assuming a /matches route exists
-  { to: "/basic-search", label: "Search" },  // Link to your new Basic Search Form
-  { to: "/inbox", label: "Connections" }           // Assuming an /inbox route exists
+  { to: "/dashboard", label: "Dashboard" },
+  { to: "/matches", label: "Matches" },
+  { to: "/basic-search", label: "Search" },
+  { to: "/inbox", label: "Connections" }
 ];
 
-const TopNavTabs = ({ onMatchesClick }) => ( // <--- ADDED { onMatchesClick } here
+const isApproved = () => {
+  const s = (sessionStorage.getItem("profileStatus") || "").toString().trim().toUpperCase();
+  return s === "APPROVED";
+};
+
+const blockedMsg =
+  "Your profile is under review. This feature will be available once your profile is approved.";
+
+const TopNavTabs = ({ onMatchesClick }) => (
   <div className="bg-indigo-600 text-white py-2 px-4 rounded-lg shadow mb-2 flex justify-around flex-wrap items-center text-sm font-medium">
-    {tabs.map((item) => (
-      // CORRECTED: Conditionally apply onClick for the 'Matches' tab
-      item.label === "Matches" ? (
-        <Link
-          key={item.to}
-          to="#" // Prevent default navigation for the Matches link
-          onClick={(e) => {
-            e.preventDefault(); // Stop default Link behavior
-            onMatchesClick();   // Call the handler passed from Dashboard
-          }}
-          className="px-4 py-1 rounded hover:bg-indigo-500 transition cursor-pointer"
-        >
-          {item.label}
-        </Link>
-      ) : (
-        // For other tabs, behave as a regular Link
+    {tabs.map((item) => {
+      const locked = (item.label === "Matches" || item.label === "Search") && !isApproved();
+
+      // Matches: keep existing behavior when approved, block when not
+      if (item.label === "Matches") {
+        return (
+          <Link
+            key={item.to}
+            to="#"
+            onClick={(e) => {
+              e.preventDefault();
+              if (locked) {
+                alert(blockedMsg);
+                return;
+              }
+              onMatchesClick();
+            }}
+            className={`px-4 py-1 rounded transition ${
+              locked ? "opacity-60 cursor-not-allowed" : "hover:bg-indigo-500 cursor-pointer"
+            }`}
+          >
+            {item.label}
+          </Link>
+        );
+      }
+
+      // Search: block navigation when not approved
+      if (item.label === "Search") {
+        return (
+          <Link
+            key={item.to}
+            to={locked ? "#" : item.to}
+            onClick={(e) => {
+              if (locked) {
+                e.preventDefault();
+                alert(blockedMsg);
+              }
+            }}
+            className={`px-4 py-1 rounded transition ${
+              locked ? "opacity-60 cursor-not-allowed" : "hover:bg-indigo-500 cursor-pointer"
+            }`}
+          >
+            {item.label}
+          </Link>
+        );
+      }
+
+      // Other tabs normal
+      return (
         <Link
           key={item.to}
           to={item.to}
@@ -33,8 +73,8 @@ const TopNavTabs = ({ onMatchesClick }) => ( // <--- ADDED { onMatchesClick } he
         >
           {item.label}
         </Link>
-      )
-    ))}
+      );
+    })}
   </div>
 );
 

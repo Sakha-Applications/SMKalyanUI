@@ -3,20 +3,6 @@
 import axios from 'axios';
 import getBaseUrl from '../../../utils/GetUrl';
 
-const STATUS_ORDER = ['DRAFT', 'SUBMITTED', 'PAYMENT_SUBMITTED', 'APPROVED'];
-
-const normalizeStatus = (s) => (typeof s === 'string' ? s.trim().toUpperCase() : '');
-const maxStatus = (current, desired) => {
-  const c = normalizeStatus(current);
-  const d = normalizeStatus(desired);
-  const ci = STATUS_ORDER.indexOf(c);
-  const di = STATUS_ORDER.indexOf(d);
-  // If current is unknown/blank, take desired. If desired is unknown, keep current.
-  if (di === -1) return c || '';
-  if (ci === -1) return d;
-  return STATUS_ORDER[Math.max(ci, di)];
-};
-
 const handleIntermediateProfileUpdate = async ({ formData, setIsProcessing }) => {
   setIsProcessing(true);
 
@@ -28,18 +14,11 @@ const handleIntermediateProfileUpdate = async ({ formData, setIsProcessing }) =>
       return false;
     }
 
-    // ✅ Ensure status stays at least DRAFT during Save & Next, but never downgrades
-    const nextStatus = maxStatus(formData.profileStatus, 'DRAFT');
-
-    const updatePayload = {
-      profileData: {
-        ...formData,
-        profileStatus: nextStatus
-      }
-    };
+    const updatePayload = { profileData: formData };
 
     console.log("📤 Intermediate payload:", JSON.stringify(updatePayload, null, 2));
 
+    // ✅ Use PUT and pass profileId in the URL (required by backend)
     const response = await axios.put(
       `${getBaseUrl()}/api/direct/updateProfile/${formData.profileId}`,
       updatePayload

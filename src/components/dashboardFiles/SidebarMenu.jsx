@@ -1,20 +1,49 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import axios from "axios";
+import getBaseUrl from "../../utils/GetUrl";
 import { fetchDefaultPhoto } from "../UploadProfilePhoto/photoUploadUtils";
 
 const FALLBACK_DEFAULT_IMAGE = "/ProfilePhotos/defaultImage.jpg";
 
-const navItems = [
-  { to: "/my-profile", label: "Edit Your Profile" },
-  { to: "/partner-preferences", label: "Edit Your Preferences" },
-  { to: "/basic-search", label: "Search" },
-  { to: "/advanced-search", label: "Advanced Search" },
-];
+// ✅ Status helpers
+const normalizeStatus = (s) => (typeof s === "string" ? s.trim().toUpperCase() : "");
+const isApproved = (status) => normalizeStatus(status) === "APPROVED";
+
+const getStatusUi = (status) => {
+  const s = normalizeStatus(status);
+  switch (s) {
+    case "DRAFT":
+      return { label: "Draft", className: "text-gray-600" };
+    case "SUBMITTED":
+      return { label: "Submitted", className: "text-yellow-700" };
+    case "PAYMENT_SUBMITTED":
+      return { label: "Payment Submitted", className: "text-blue-700" };
+    case "APPROVED":
+      return { label: "Approved", className: "text-green-600 font-medium" };
+    default:
+      return { label: s || "UNKNOWN", className: "text-gray-600" };
+  }
+};
+
+const blockedMsg =
+  "Your profile is under review. Search features will be available once your profile is approved.";
 
 const SidebarMenu = ({ profileId }) => {
   const [defaultPhotoUrl, setDefaultPhotoUrl] = useState(FALLBACK_DEFAULT_IMAGE);
   const [isLoadingPhoto, setIsLoadingPhoto] = useState(true);
   const [photoError, setPhotoError] = useState(null);
+
+  const [profileStatus, setProfileStatus] = useState(sessionStorage.getItem("profileStatus") || "");
+  const [isLoadingStatus, setIsLoadingStatus] = useState(false);
+
+  // ✅ Navigation items (Search + Advanced Search will be locked in UI)
+  const navItems = [
+    { to: "/my-profile", label: "Edit Your Profile" },
+    { to: "/partner-preferences", label: "Edit Your Preferences" },
+    { to: "/basic-search", label: "Search", lockUntilApproved: true },
+    { to: "/advanced-search", label: "Advanced Search", lockUntilApproved: true },
+  ];
 
   const loadAndDisplayDefaultPhoto = async () => {
     console.log("[SidebarMenu] Attempting to load default profile photo.");
@@ -44,7 +73,6 @@ const SidebarMenu = ({ profileId }) => {
         }
       );
 
-      // ✅ If photo exists, use it. Otherwise fallback silently (NO red error tile)
       if (fetchedPhotoObj && fetchedPhotoObj.fullUrl) {
         setDefaultPhotoUrl(fetchedPhotoObj.fullUrl);
         setPhotoError(null);
@@ -79,103 +107,114 @@ const SidebarMenu = ({ profileId }) => {
         profileId,
         err
       );
-      // Even for unexpected errors, show fallback image (don't show red tile unless you want)
       setDefaultPhotoUrl(FALLBACK_DEFAULT_IMAGE);
       setPhotoError(null);
     } finally {
       setIsLoadingPhoto(false);
-      console.log(
-        "[SidebarMenu] Default photo loading process completed for profile ID:",
-        profileId
-      );
+    }
+  };
+
+  const loadProfileStatus = async () => {
+    if (!profileId) return;
+
+    setIsLoadingStatus(true);
+    try {
+      const token = sessionStorage.getItem("token");
+
+      const res = await axios.get(`${getBaseUrl()}/api/profile/${profileId}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      });
+
+      const status = res?.data?.profile_status || res?.data?.profileStatus || "";
+      console.log("[SidebarMenu] Loaded profile status:", status);
+
+      setProfileStatus(status);
+      if (status) sessionStorage.setItem("profileStatus", status);
+    } catch (err) {
+      console.error("[SidebarMenu] Failed to load profile status:", err?.message);
+      // keep previous profileStatus
+    } finally {
+      setIsLoadingStatus(false);
     }
   };
 
   useEffect(() => {
-    console.log("[SidebarMenu] useEffect triggered. Profile ID:", profileId);
-
-    if (profileId) {
-      loadAndDisplayDefaultPhoto();
-    } else {
-      setDefaultPhotoUrl(FALLBACK_DEFAULT_IMAGE);
-      setIsLoadingPhoto(false);
-      setPhotoError(null);
-      console.log("[SidebarMenu] Profile ID is null, using fallback image.");
-    }
+    loadAndDisplayDefaultPhoto();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profileId]);
 
+  useEffect(() => {
+    loadProfileStatus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profileId]);
+
+  const statusUi = getStatusUi(profileStatus);
+  const approved = isApproved(profileStatus);
+
   return (
-    <div className="bg-white text-gray-800 h-full rounded-xl shadow-md p-6 border border-gray-200 text-sm">
-      <div className="text-center mb-6">
-        {/* Conditional rendering for Profile Image */}
-        {isLoadingPhoto ? (
-          <div className="flex items-center justify-center w-32 h-32 mx-auto rounded shadow bg-gray-100 animate-pulse">
-            <svg
-              className="animate-spin h-8 w-8 text-gray-500"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-              ></circle>
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-              ></path>
-            </svg>
-            <span className="sr-only">Loading profile photo...</span>
-          </div>
-        ) : (
-          <img
-            src={defaultPhotoUrl}
-            alt="Profile Photo"
-            className="rounded shadow mx-auto w-32 h-32 object-cover"
-            onError={(e) => {
-              e.target.onerror = null;
-              e.target.src = FALLBACK_DEFAULT_IMAGE;
-            }}
-          />
-        )}
+    <div className="bg-white rounded-lg shadow p-4">
+      {/* Profile Photo */}
+      <div className="flex flex-col items-center">
+        <div className="w-28 h-28 rounded-full overflow-hidden border border-gray-200 flex items-center justify-center bg-gray-50">
+          {isLoadingPhoto ? (
+            <span className="text-xs text-gray-400">Loading...</span>
+          ) : (
+            <img
+              src={defaultPhotoUrl}
+              alt="Profile"
+              className="w-full h-full object-cover"
+              onError={() => setDefaultPhotoUrl(FALLBACK_DEFAULT_IMAGE)}
+            />
+          )}
+        </div>
 
-        {/* We intentionally do NOT show error for "no photo" */}
-        {photoError && <p className="text-red-500 text-xs mt-1">{photoError}</p>}
-
-        {/* Upload your Photo (Clickable) */}
-        <div className="mt-2">
-          <Link to="/upload-photo" className="text-indigo-600 text-sm hover:underline font-medium">
+        <div className="mt-3">
+          <Link
+            to="/upload-photo"
+            className="text-sm text-indigo-600 hover:text-indigo-800 underline"
+          >
             Upload your Photo
           </Link>
         </div>
 
-        <hr className="my-3" />
+        <hr className="my-3 w-full" />
 
-        {/* Placeholder Profile Status */}
+        {/* Real Profile Status */}
         <p className="text-sm text-gray-700">
-          Your Profile Status: <span className="text-green-600 font-medium">Verified</span>
+          Your Profile Status:{" "}
+          <span className={statusUi.className}>
+            {isLoadingStatus ? "Loading..." : statusUi.label}
+          </span>
         </p>
 
-        <hr className="my-3" />
+        <hr className="my-3 w-full" />
       </div>
 
-      {/* Main Navigation */}
-      <nav className="space-y-4">
-        {navItems.map((item) => (
-          <Link
-            key={item.to}
-            to={item.to}
-            className="block px-3 py-2 rounded hover:bg-indigo-100 text-indigo-800 font-medium"
-          >
-            {item.label}
-          </Link>
-        ))}
+      {/* Navigation */}
+      <nav className="space-y-2 mt-2">
+        {navItems.map((item) => {
+          const locked = item.lockUntilApproved && !approved;
+
+          return (
+            <Link
+              key={item.to}
+              to={locked ? "#" : item.to}
+              onClick={(e) => {
+                if (locked) {
+                  e.preventDefault();
+                  alert(blockedMsg);
+                }
+              }}
+              className={`block px-3 py-2 rounded transition ${
+                locked
+                  ? "opacity-60 cursor-not-allowed bg-gray-50 text-gray-600"
+                  : "hover:bg-indigo-50 text-gray-700"
+              }`}
+            >
+              {item.label}
+            </Link>
+          );
+        })}
       </nav>
     </div>
   );

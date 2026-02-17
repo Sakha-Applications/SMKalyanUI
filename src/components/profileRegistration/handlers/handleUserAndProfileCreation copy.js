@@ -59,20 +59,10 @@ if (profileExists) {
     
     console.log("➡️ Step 1: Creating new profile...");
     console.log("📤 Profile creation payload:", JSON.stringify({ profileData: formData }, null, 2));
-//changed on 16-FEB-2024 by to add status as SUBMITTED on profile creation
-  //  const profileResponse = await axios.post(`${getBaseUrl()}/api/addProfile`, {
-    //  profileData: formData
-   // });
 
-   // ✅ Ensure new profile starts in DRAFT
-const createProfilePayload = {
-  ...formData,
-  profileStatus: (formData.profileStatus && formData.profileStatus.trim()) ? formData.profileStatus : 'DRAFT'
-};
-
-const profileResponse = await axios.post(`${getBaseUrl()}/api/addProfile`, {
-  profileData: createProfilePayload
-});
+    const profileResponse = await axios.post(`${getBaseUrl()}/api/addProfile`, {
+      profileData: formData
+    });
 
     console.log("✅ Profile creation response:", profileResponse.data);
 
