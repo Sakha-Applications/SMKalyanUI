@@ -1,0 +1,635 @@
+import React, { useState, useEffect, useMemo } from 'react';
+import { useParams, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
+import axios from 'axios';
+import getBaseUrl from '../../utils/GetUrl';
+
+// Material-UI Accordion imports
+import Accordion from '@mui/material/Accordion';
+import AccordionSummary from '@mui/material/AccordionSummary';
+import AccordionDetails from '@mui/material/AccordionDetails';
+import Typography from '@mui/material/Typography';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore'; // Make sure @mui/icons-material is installed
+
+// Material-UI components for custom message and feedback
+import TextField from '@mui/material/TextField';
+import Button from '@mui/material/Button';
+import Snackbar from '@mui/material/Snackbar';
+import Alert from '@mui/material/Alert';
+
+// Corrected import paths for the display sections
+import BasicProfile from '../ModifyProfile/PartnerPreferences/sections/BasicProfile';
+import BirthAndAstro from '../ModifyProfile/PartnerPreferences/sections/BirthAndAstro';
+import EducationJobDetails from '../ModifyProfile/PartnerPreferences/sections/EducationJobDetails';
+import ContactDetails from '../ModifyProfile/PartnerPreferences/sections/ContactDetails';
+import FamilyDetails from '../ModifyProfile/PartnerPreferences/sections/FamilyDetails';
+import HoroscopeDetails from '../ModifyProfile/PartnerPreferences/sections/HoroscopeDetails';
+import AddressDetails from '../ModifyProfile/PartnerPreferences/sections/AddressDetails';
+import ReferencesSection from '../ModifyProfile/PartnerPreferences/sections/ReferencesSection';
+
+// ⬇️ reuse same pattern as SearchResults (base for images)
+const API_BASE_URL = `${getBaseUrl()}`;
+const FALLBACK_DEFAULT_IMAGE_PATH = '/ProfilePhotos/defaultImage.jpg';
+
+const ViewOtherProfilePage = () => {
+  const { profileId } = useParams();
+  const navigate = useNavigate();
+  const [profileData, setProfileData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [expanded, setExpanded] = useState(false); // State to manage expanded accordion panels
+  const [inviterMessage, setInviterMessage] = useState(''); // State for custom message
+  const [isSendingInvitation, setIsSendingInvitation] = useState(false); // State for button loading
+  const [snackbarOpen, setSnackbarOpen] = useState(false); // State for Snackbar feedback
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [snackbarSeverity, setSnackbarSeverity] = useState('success');
+
+  // ✅ Carousel state (ONLY in ViewOtherProfilePage)
+  const [photos, setPhotos] = useState([]); // normalized: [{ id, fullUrl, blobName }]
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [photosLoading, setPhotosLoading] = useState(false);
+  const [photosError, setPhotosError] = useState('');
+  const [brokenUrls, setBrokenUrls] = useState(() => new Set());
+
+  const fallbackImageUrl = useMemo(() => `${API_BASE_URL}${FALLBACK_DEFAULT_IMAGE_PATH}`, []);
+
+  // Handler for accordion expansion change
+  const handleChange = (panel) => (event, isExpanded) => {
+    setExpanded(isExpanded ? panel : false);
+  };
+
+  // added on 31-Dec-25 for handling
+  const location = useLocation();
+
+  const handleReturn = () => {
+    const params = new URLSearchParams(location.search);
+    const returnTo = params.get("returnTo"); // e.g. "/dashboard" or "/basic-search"
+
+    // If opened in a new tab via window.open, close works (browser allows)
+    if (window.opener && !window.opener.closed) {
+      window.close();
+      return;
+    }
+
+    // If caller provided a return path, use it
+    if (returnTo) {
+      navigate(returnTo);
+      return;
+    }
+
+    // Otherwise try browser back
+    if (window.history.length > 1) {
+      navigate(-1);
+      return;
+    }
+
+    // Safe fallback
+    navigate("/dashboard");
+  };
+
+  // Add this right after: const navigate = useNavigate();
+  const [searchParams] = useSearchParams(); //added on 31-Dec-25
+
+  useEffect(() => {
+    const urlToken = searchParams.get('sid');
+    console.log("[Debug] Token found in URL:", urlToken ? "YES (starts with " + urlToken.substring(0, 10) + "...)" : "NO");
+
+    if (urlToken) {
+      sessionStorage.setItem('token', urlToken);
+      console.log("[Debug] Token saved to sessionStorage.");
+
+      const newUrl = window.location.pathname;
+      console.log("[Debug] Cleaning URL to:", newUrl);
+      window.history.replaceState({}, document.title, newUrl);
+    } else {
+      console.warn("[Debug] No 'sid' found in URL. Checking existing session...");
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (!profileId) {
+        setError("Profile ID is missing from the URL.");
+        setLoading(false);
+        return;
+      }
+
+      const token = sessionStorage.getItem('token');
+
+      console.log("[Debug] fetchProfile starting. Token in storage:", token ? "FOUND" : "MISSING");
+      if (!token) {
+        navigate('/login');
+        return;
+      }
+
+      setLoading(true);
+      setError(null);
+
+      try {
+        const response = await axios.get(`${getBaseUrl()}/api/modifyProfile/byId`, {
+          headers: { Authorization: `Bearer ${token}` },
+          params: { profileId: profileId }
+        });
+
+        if (response.status === 401) {
+          throw new Error('Authentication required. Your session might have expired.');
+        }
+
+        if (!response.data) {
+          setError("Profile not found.");
+          setProfileData(null);
+        } else {
+          setProfileData(response.data);
+          console.log("✅ Fetched other profile data:", response.data);
+        }
+      } catch (err) {
+        console.error("❌ Error fetching other profile:", err);
+        setError(err.message || "Failed to load profile.");
+        if (err.response?.status === 401 || err.message.includes("Authentication required")) {
+          navigate('/login');
+        } else if (err.response?.status === 404) {
+          setError("Profile not found.");
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, [profileId, navigate]);
+
+  // ✅ NEW: load full carousel photos here only + clean 404 handling
+  useEffect(() => {
+    if (!profileData) return;
+
+    const pid = profileData.profile_id || profileData.profileId;
+    if (!pid) {
+      console.warn("[ViewOtherProfilePage] profileData missing profile_id/profileId. Using fallback photo.");
+      setPhotos([{ id: null, fullUrl: fallbackImageUrl, blobName: "" }]);
+      setActiveIndex(0);
+      setPhotosError("");
+      return;
+    }
+
+    let cancelled = false;
+
+    const normalizePhoto = (p) => {
+      if (!p) return null;
+
+      const idVal = p.id ?? p.photo_id ?? p.photoId ?? null;
+
+      let fullUrl =
+        p.fullUrl ??
+        p.photo_path ??
+        p.url_path ??
+        p.photoPath ??
+        p.urlPath ??
+        "";
+
+      // If backend returned relative path, prefix with API base (safe default)
+      if (fullUrl && !/^https?:\/\//i.test(fullUrl)) {
+        const clean = String(fullUrl).startsWith("/") ? String(fullUrl) : `/${String(fullUrl)}`;
+        fullUrl = `${API_BASE_URL}${clean}`;
+      }
+
+      return {
+        id: idVal,
+        blobName: p.blobName ?? p.filename ?? p.blob_name ?? "",
+        fullUrl: fullUrl || "",
+      };
+    };
+
+    const loadCarousel = async () => {
+      console.log(`[ViewOtherProfilePage] Loading carousel photos for profileId: ${pid}`);
+      setPhotosLoading(true);
+      setPhotosError("");
+      setBrokenUrls(new Set());
+      setActiveIndex(0);
+      setPhotos([]);
+
+      // Token is optional for these endpoints; if present, attach it (safe)
+      const token = sessionStorage.getItem("token");
+      const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
+
+      try {
+        // 1) Full carousel
+        const photosRes = await axios.get(`${getBaseUrl()}/api/get-photos`, {
+          headers,
+          params: { profileId: pid },
+        });
+
+        const list = Array.isArray(photosRes.data) ? photosRes.data : [];
+        const normalized = list.map(normalizePhoto).filter((x) => x && x.fullUrl);
+
+        if (cancelled) return;
+
+        if (normalized.length > 0) {
+          setPhotos(normalized);
+          return;
+        }
+
+        // 2) If carousel empty → try default photo
+        try {
+          const defRes = await axios.get(`${getBaseUrl()}/api/get-default-photo`, {
+            headers,
+            params: { profileId: pid },
+          });
+
+          if (cancelled) return;
+
+          const defNorm = normalizePhoto(defRes.data);
+          if (defNorm?.fullUrl) {
+            setPhotos([defNorm]);
+          } else {
+            setPhotos([{ id: null, fullUrl: fallbackImageUrl, blobName: "" }]);
+            setPhotosError("Photos not available for this profile.");
+          }
+        } catch (defErr) {
+          if (cancelled) return;
+
+          // ✅ Clean 404 handling
+          if (defErr?.response?.status === 404) {
+            setPhotos([{ id: null, fullUrl: fallbackImageUrl, blobName: "" }]);
+            setPhotosError("Photos not available for this profile.");
+          } else {
+            console.warn("[ViewOtherProfilePage] get-default-photo failed:", defErr?.message);
+            setPhotos([{ id: null, fullUrl: fallbackImageUrl, blobName: "" }]);
+            setPhotosError("Failed to load photos.");
+          }
+        }
+      } catch (err) {
+        if (cancelled) return;
+
+        // ✅ Clean handling if get-photos fails (including 404)
+        if (err?.response?.status === 404) {
+          setPhotos([{ id: null, fullUrl: fallbackImageUrl, blobName: "" }]);
+          setPhotosError("Photos not available for this profile.");
+        } else {
+          console.warn("[ViewOtherProfilePage] get-photos failed:", err?.message);
+          setPhotos([{ id: null, fullUrl: fallbackImageUrl, blobName: "" }]);
+          setPhotosError("Failed to load photos.");
+        }
+      } finally {
+        if (!cancelled) setPhotosLoading(false);
+      }
+    };
+
+    loadCarousel();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [profileData, fallbackImageUrl]);
+
+  const activePhotoUrl = useMemo(() => {
+    const p = photos?.[activeIndex];
+    const url = p?.fullUrl || fallbackImageUrl;
+    if (brokenUrls.has(url)) return fallbackImageUrl;
+    return url;
+  }, [photos, activeIndex, brokenUrls, fallbackImageUrl]);
+
+  const handleActiveImageError = () => {
+    setBrokenUrls((prev) => {
+      const next = new Set(prev);
+      next.add(activePhotoUrl);
+      return next;
+    });
+  };
+
+  // Handler for sending invitation
+  const handleSendInvitation = async () => {
+    setIsSendingInvitation(true);
+    setSnackbarOpen(false); // Close any existing snackbar
+
+    const token = sessionStorage.getItem('token');
+    if (!token) {
+      setSnackbarSeverity('error');
+      setSnackbarMessage('You must be logged in to send invitations.');
+      setSnackbarOpen(true);
+      setIsSendingInvitation(false);
+      navigate('/login');
+      return;
+    }
+
+    try {
+      const payload = {
+        invitee_profile_id: profileData.profile_id,
+        inviter_message: inviterMessage.trim() || null, // Send trimmed message or null
+      };
+
+      const response = await axios.post(`${getBaseUrl()}/api/invitations/send`, payload, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      setSnackbarSeverity('success');
+      setSnackbarMessage(response.data.message || 'Invitation sent successfully!');
+      setSnackbarOpen(true);
+      setInviterMessage(''); // Clear message field
+
+    } catch (err) {
+      console.error("❌ Error sending invitation:", err);
+      const errorMessage = err.response?.data?.message || err.response?.data?.error || 'Failed to send invitation.';
+      setSnackbarSeverity('error');
+      setSnackbarMessage(errorMessage);
+      setSnackbarOpen(true);
+    } finally {
+      setIsSendingInvitation(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-100 flex items-center justify-center">
+        <p className="text-gray-600 text-lg">Loading profile details...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-100 flex items-center justify-center">
+        <p className="text-red-600 text-lg">Error: {error}</p>
+      </div>
+    );
+  }
+
+  if (!profileData) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-100 flex items-center justify-center">
+        <p className="text-gray-700 text-lg">Profile not found.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-100 p-6">
+      <div className="max-w-5xl mx-auto bg-white shadow-lg rounded-lg overflow-hidden">
+
+        <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-6">
+          <div className="flex flex-col md:flex-row items-center gap-4">
+            {/* ⬇️ Profile photo (uses active carousel photo) */}
+            <div className="relative">
+              <img
+                src={activePhotoUrl}
+                alt={profileData.name || 'Profile Photo'}
+                className="w-28 h-28 md:w-32 md:h-32 rounded-full border-4 border-white object-cover shadow-md bg-gray-100"
+                onError={(e) => {
+                  e.target.onerror = null;
+                  if (e.target.src !== fallbackImageUrl) {
+                    e.target.src = fallbackImageUrl;
+                    console.warn('[ViewOtherProfilePage] Header photo failed to load, using fallback.');
+                  }
+                }}
+              />
+              {photosLoading && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30 rounded-full">
+                  <svg
+                    className="animate-spin h-6 w-6 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                    ></path>
+                  </svg>
+                </div>
+              )}
+            </div>
+
+            {/* ⬇️ Basic info */}
+            <div className="flex-1 text-center md:text-left">
+              <h1 className="text-2xl md:text-3xl font-bold">
+                {profileData.name || 'Profile Details'}
+              </h1>
+              <p className="mt-1 text-sm md:text-base text-indigo-100">
+                Profile ID:&nbsp;
+                <span className="font-semibold">
+                  {profileData.profile_id || profileData.profileId}
+                </span>
+              </p>
+              <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-2 text-xs md:text-sm text-indigo-100">
+                {profileData.current_age && (
+                  <div>
+                    <span className="font-semibold">Age:&nbsp;</span>
+                    {profileData.current_age}
+                  </div>
+                )}
+                {profileData.height && (
+                  <div>
+                    <span className="font-semibold">Height:&nbsp;</span>
+                    {profileData.height}
+                  </div>
+                )}
+                {profileData.current_location && (
+                  <div>
+                    <span className="font-semibold">Location:&nbsp;</span>
+                    {profileData.current_location}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="p-6 space-y-4">
+
+          {/* ✅ Photos Carousel (ONLY place it loads and shows full carousel) */}
+          <div className="bg-white">
+            <div className="flex items-center justify-between mb-2">
+              <Typography variant="h6" className="text-indigo-800">Photos</Typography>
+              {photosLoading && (
+                <span className="text-sm text-gray-600">Loading photos...</span>
+              )}
+            </div>
+
+            {!photosLoading && photosError && (
+              <div className="mb-2">
+                <Alert severity="info">{photosError}</Alert>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-[520px_1fr] gap-4 items-start">
+              {/* Main photo */}
+              <div className="w-full max-w-[520px] rounded-lg overflow-hidden border border-gray-200 bg-white">
+                <img
+                  src={activePhotoUrl}
+                  alt={profileData.name || 'Profile'}
+                  onError={handleActiveImageError}
+                  style={{
+                    width: '100%',
+                    height: 'auto',
+                    display: 'block',
+                    objectFit: 'cover',
+                  }}
+                />
+              </div>
+
+              {/* Thumbnails */}
+              <div>
+                <div className="text-sm text-gray-600 mb-2">
+                  {photos?.length > 1 ? 'Click a thumbnail to view' : 'Only one photo available'}
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  {(photos?.length ? photos : [{ fullUrl: fallbackImageUrl }]).map((p, idx) => {
+                    const thumbUrl = p?.fullUrl || fallbackImageUrl;
+                    const isActive = idx === activeIndex;
+                    const isBroken = brokenUrls.has(thumbUrl);
+
+                    return (
+                      <div
+                        key={`${p?.id ?? 'p'}-${idx}`}
+                        onClick={() => setActiveIndex(idx)}
+                        className={`w-[88px] h-[88px] rounded-lg overflow-hidden cursor-pointer bg-white ${
+                          isActive ? 'border-2 border-gray-900' : 'border border-gray-200'
+                        }`}
+                        title={`Photo ${idx + 1}`}
+                        style={{ opacity: isBroken ? 0.6 : 1 }}
+                      >
+                        <img
+                          src={isBroken ? fallbackImageUrl : thumbUrl}
+                          alt={`Thumbnail ${idx + 1}`}
+                          onError={() => {
+                            setBrokenUrls((prev) => {
+                              const next = new Set(prev);
+                              next.add(thumbUrl);
+                              return next;
+                            });
+                          }}
+                          style={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover',
+                            display: 'block',
+                          }}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Accordion for Basic Details */}
+          <Accordion expanded={expanded === 'panel1'} onChange={handleChange('panel1')}>
+            <AccordionSummary expandIcon={<ExpandMoreIcon />} aria-controls="panel1a-content" id="panel1a-header">
+              <Typography variant="h6">Basic Details</Typography>
+            </AccordionSummary>
+            <AccordionDetails>
+              <BasicProfile profileData={profileData} />
+            </AccordionDetails>
+          </Accordion>
+
+          {/* Accordion for Contact & Address Details removed 
+          <Accordion expanded={expanded === 'panel2'} onChange={handleChange('panel2')}>
+            <AccordionSummary expandIcon={<ExpandMoreIcon />} aria-controls="panel2a-content" id="panel2a-header">
+              <Typography variant="h6">Contact & Address Details</Typography>
+            </AccordionSummary>
+            <AccordionDetails>
+              <AddressDetails profileData={profileData} />
+              <ContactDetails profileData={profileData} />
+            </AccordionDetails>
+          </Accordion>
+          */}
+
+          {/* Accordion for Education & Job Details */}
+          <Accordion expanded={expanded === 'panel3'} onChange={handleChange('panel3')}>
+            <AccordionSummary expandIcon={<ExpandMoreIcon />} aria-controls="panel3a-content" id="panel3a-header">
+              <Typography variant="h6">Education & Job Details</Typography>
+            </AccordionSummary>
+            <AccordionDetails>
+              <EducationJobDetails profileData={profileData} />
+            </AccordionDetails>
+          </Accordion>
+
+          {/* Accordion for Family Details */}
+          <Accordion expanded={expanded === 'panel4'} onChange={handleChange('panel4')}>
+            <AccordionSummary expandIcon={<ExpandMoreIcon />} aria-controls="panel4a-content" id="panel4a-header">
+              <Typography variant="h6">Family Details</Typography>
+            </AccordionSummary>
+            <AccordionDetails>
+              <FamilyDetails profileData={profileData} />
+            </AccordionDetails>
+          </Accordion>
+
+          {/* Accordion for Horoscope Details */}
+          <Accordion expanded={expanded === 'panel5'} onChange={handleChange('panel5')}>
+            <AccordionSummary expandIcon={<ExpandMoreIcon />} aria-controls="panel5a-content" id="panel5a-header">
+              <Typography variant="h6">Horoscope Details</Typography>
+            </AccordionSummary>
+            <AccordionDetails>
+              <HoroscopeDetails profileData={profileData} />
+            </AccordionDetails>
+          </Accordion>
+
+          {/* Accordion for References */}
+          <Accordion expanded={expanded === 'panel6'} onChange={handleChange('panel6')}>
+            <AccordionSummary expandIcon={<ExpandMoreIcon />} aria-controls="panel6a-content" id="panel6a-header">
+              <Typography variant="h6">References</Typography>
+            </AccordionSummary>
+            <AccordionDetails>
+              <ReferencesSection profileData={profileData} />
+            </AccordionDetails>
+          </Accordion>
+
+          {/* Invitation Section */}
+          <div className="bg-gray-50 p-4 rounded-lg shadow-sm">
+            <Typography variant="h6" className="text-indigo-800 mb-3">Connect to Review Profile</Typography>
+            <TextField
+              label="Optional message"
+              variant="outlined"
+              fullWidth
+              multiline
+              rows={3}
+              value={inviterMessage}
+              onChange={(e) => setInviterMessage(e.target.value)}
+              margin="normal"
+              disabled={isSendingInvitation}
+              sx={{ mb: 2 }}
+            />
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={handleSendInvitation}
+              disabled={isSendingInvitation}
+            >
+              {isSendingInvitation ? 'Sending Connect Request...' : 'Send Connect Request'}
+            </Button>
+          </div>
+
+          <div className="flex justify-center pt-6">
+            <button
+              className="px-8 py-3 bg-gray-400 text-white rounded-lg hover:bg-gray-500 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
+              onClick={handleReturn}
+            >
+              Close and Return
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Snackbar for feedback */}
+      <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={() => setSnackbarOpen(false)}>
+        <Alert onClose={() => setSnackbarOpen(false)} severity={snackbarSeverity} sx={{ width: '100%' }}>
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
+    </div>
+  );
+};
+
+export default ViewOtherProfilePage;

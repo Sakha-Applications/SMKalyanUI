@@ -41,7 +41,7 @@ const ViewContactDetailsForm = () => {
 
         try {
             const token = sessionStorage.getItem('token');
-            const response = await fetch(`${getBaseUrl()}/api/contact-details`, {
+            const response = await fetch(`${getBaseUrl()}/api//contact-details`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

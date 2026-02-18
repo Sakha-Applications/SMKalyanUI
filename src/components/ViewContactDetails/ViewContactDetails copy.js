@@ -192,28 +192,12 @@ const ContactDetailsResults = ({ results, userEmail }) => {
                 console.error('❌ Response error status:', error.response.status);
                 console.error('❌ Response error headers:', error.response.headers);
                 
-                // ✅ 403 = contact limit reached (Recharge)
+                // Check for specific 403 status (contact limit reached)
                 if (error.response.status === 403) {
-                    const data = error.response.data || {};
-                    const limit = data.limit;
-                    const used = data.used;
-
-                    // Prefer backend message (already uses recharge wording),
-                    // but use a recharge-based fallback if missing.
-                    let errorMessage = data.message
-                        ? data.message
-                        : 'You have reached the contact view limit. Please recharge to view more profiles.';
-
-                    // Add limit/used if present
-                    if (limit !== undefined || used !== undefined) {
-                        const parts = [];
-                        if (used !== undefined) parts.push(`Used: ${used}`);
-                        if (limit !== undefined) parts.push(`Limit: ${limit}`);
-                        if (parts.length > 0) {
-                            errorMessage = `${errorMessage} (${parts.join(', ')})`;
-                        }
-                    }
-
+                    const errorMessage = error.response.data && error.response.data.message 
+                        ? error.response.data.message 
+                        : 'You have reached the maximum limit of free contacts. Please upgrade your account to view more contacts.';
+                
                     console.error(`❌ Permission denied (403): ${errorMessage}`);
                     setSnackbarMessage(errorMessage);
                 } else {

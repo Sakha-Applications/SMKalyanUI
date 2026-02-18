@@ -1,9 +1,9 @@
 import { Link } from "react-router-dom";
 
 const secondaryLinks = [
-  { to: "/renew-profile", label: "Renew Profile Activation" },
+  { to: "/renew-profile", label: "Recharge Profile Payment" },
   { to: "/make-preferred", label: "Make Profile Preferred" },
-  { to: "/donate", label: "Donate for the Cause" }
+  { to: "/donate", label: "Donate for Registration/other causes" }
 ];
 
 const isApproved = () => {

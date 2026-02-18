@@ -13,13 +13,13 @@ import {
     Alert,
     IconButton,
     Paper,
+    Grid
 } from "@mui/material";
 import PrintIcon from '@mui/icons-material/Print';
 import EmailIcon from '@mui/icons-material/Email';
 import CloseIcon from '@mui/icons-material/Close';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom'; // Import useNavigate
-import Grid from '@mui/material/Unstable_Grid2'; // Import Grid v2
 import getBaseUrl from '../../utils/GetUrl';
 
 const API_BASE_URL = `${getBaseUrl()}`;
@@ -32,20 +32,16 @@ const ContactDetailsResults = ({ results, userEmail }) => {
     const [snackbarMessage, setSnackbarMessage] = useState('');
     const [snackbarSeverity, setSnackbarSeverity] = useState('success');
     const [profilePhotos, setProfilePhotos] = useState({});
-    const [isLoading, setIsLoading] = useState(false); // Add loading state
     const navigate = useNavigate(); // Initialize useNavigate
 
     useEffect(() => {
         const fetchPhotos = async () => {
-            console.log("🖼️ Fetching photos for profiles:", results.map(p => p.profile_id).join(', '));
             const photosByProfile = {};
             for (const profile of results) {
                 try {
-                    console.log(`🖼️ Fetching photos for profile ID: ${profile.profile_id}`);
                     const response = await axios.get(`${API_BASE_URL}/api/get-photos?profileId=${profile.profile_id}`);
-                    console.log(`🖼️ Received photos for profile ${profile.profile_id}:`, response.data);
                     photosByProfile[profile.profile_id] = response.data.map(photo => {
-                        const parts = photo.photo_path.split(/[\\\/]/);
+                        const parts = photo.photo_path.split("/");
                         const filename = parts[parts.length - 1];
                         return {
                             path: `/ProfilePhotos/${filename}`,
@@ -53,13 +49,11 @@ const ContactDetailsResults = ({ results, userEmail }) => {
                             filename: filename
                         };
                     });
-                    console.log(`🖼️ Processed photos for profile ${profile.profile_id}:`, photosByProfile[profile.profile_id]);
                 } catch (error) {
-                    console.error(`❌ Error fetching photos for profile ${profile.profile_id}:`, error);
+                    console.error(`Error fetching photos for profile ${profile.profile_id}:`, error);
                     photosByProfile[profile.profile_id] = [];
                 }
             }
-            console.log("🖼️ All profile photos fetched:", photosByProfile);
             setProfilePhotos(photosByProfile);
         };
 
@@ -71,19 +65,15 @@ const ContactDetailsResults = ({ results, userEmail }) => {
     const getDefaultPhotoUrl = (profileId) => {
         const photos = profilePhotos[profileId];
         if (!photos || photos.length === 0) {
-            console.log(`🖼️ No photos found for profile ${profileId}, using default image`);
             return `${API_BASE_URL}${BACKEND_DEFAULT_IMAGE_URL}`;
         }
         const defaultPhoto = photos.find(photo => photo.isDefault);
-        console.log(`🖼️ Default photo for profile ${profileId}:`, defaultPhoto);
         return defaultPhoto ? `${API_BASE_URL}${defaultPhoto.path}` : `${API_BASE_URL}${photos[0].path}`;
     };
 
     const handlePrintReport = () => {
-        console.log("🖨️ Print report function called");
         const printableContent = document.getElementById('printable-contact-details');
         if (printableContent) {
-            console.log("🖨️ Found printable content, preparing for print");
             const originalContents = document.body.innerHTML;
             document.body.innerHTML = `
                 <div style="padding: 20px;">
@@ -94,12 +84,10 @@ const ContactDetailsResults = ({ results, userEmail }) => {
                     </p>
                 </div>
             `;
-            console.log("🖨️ Opening print dialog");
             window.print();
             document.body.innerHTML = originalContents;
-            console.log("🖨️ Print completed, restored original content");
         } else {
-            console.error("❌ Error: 'printable-contact-details' element not found in the DOM.");
+            console.error("Error: 'printable-contact-details' element not found in the DOM.");
             setSnackbarMessage("Error: Could not prepare report for printing.");
             setSnackbarSeverity('error');
             setSnackbarOpen(true);
@@ -107,34 +95,27 @@ const ContactDetailsResults = ({ results, userEmail }) => {
     };
 
     const handleEmailDialogOpen = () => {
-        console.log("📧 Opening email dialog");
         setEmailDialogOpen(true);
     };
 
     const handleEmailDialogClose = () => {
-        console.log("📧 Closing email dialog");
         setEmailDialogOpen(false);
     };
 
     const handleEmailSend = async () => {
-        console.log("📧 Sending email report to:", emailAddress);
         try {
-            setIsLoading(true);
-            console.log("📧 Simulating email sending process");
             await new Promise(resolve => setTimeout(resolve, 1000));
-            console.log("📧 Email simulation completed successfully");
+            console.log('Emailing report data to:', emailAddress);
             setSnackbarMessage(`Report successfully sent to ${emailAddress}`);
             setSnackbarSeverity('success');
             setSnackbarOpen(true);
             setEmailDialogOpen(false);
             // In a real implementation, you would call your API here
         } catch (error) {
-            console.error('❌ Error sending email:', error);
+            console.error('Error sending email:', error);
             setSnackbarMessage('Failed to send email. Please try again.');
             setSnackbarSeverity('error');
             setSnackbarOpen(true);
-        } finally {
-            setIsLoading(false);
         }
     };
 
@@ -143,97 +124,41 @@ const ContactDetailsResults = ({ results, userEmail }) => {
     };
 
     const handleGetDetails = async (profile) => {
-        console.log("🔍 Getting details for profile:", profile);
-        setIsLoading(true);
-        try {
-            const token = sessionStorage.getItem('token'); 
-            console.log("🔑 Token retrieved from session storage");
-            
-            if (!token) {
-                console.error("❌ No authentication token found");
-                setSnackbarMessage('Authentication error. Please log in again.');
-                setSnackbarSeverity('error');
-                setSnackbarOpen(true);
-                setIsLoading(false);
-                return;
-            }
-            
-            console.log(`🔄 Sending request to share contact details for profile ${profile.profile_id}`);
-            console.log("📤 Request payload:", {
+    try {
+        const token = sessionStorage.getItem('token');
+        const response = await axios.post(
+            `${API_BASE_URL}/api/share-contact-details`,
+            {
                 sharedProfileId: profile.profile_id,
-                sharedProfileName: profile.name
-            });
-            
-            const response = await axios.post(
-                `${API_BASE_URL}/api/share-contact-details`,
-                {
-                    sharedProfileId: profile.profile_id,
-                    sharedProfileName: profile.name,
+                sharedProfileName: profile.name,
+            },
+            {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
                 },
-                {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                    },
-                }
-            );
-            
-            console.log("📥 Received response:", response);
-            console.log("✅ Contact details shared successfully");
-            
-            // Navigate to the new page and pass the profile details
-            console.log("🧭 Navigating to sharing contact details page");
-            navigate('/sharingcontactdetails', { state: { profile } });
-        } catch (error) {
-            console.error('❌ Error sharing contact details:', error);
-            
-            // Enhanced error logging
-            if (error.response) {
-                console.error('❌ Response error data:', error.response.data);
-                console.error('❌ Response error status:', error.response.status);
-                console.error('❌ Response error headers:', error.response.headers);
-                
-                // ✅ 403 = contact limit reached (Recharge)
-                if (error.response.status === 403) {
-                    const data = error.response.data || {};
-                    const limit = data.limit;
-                    const used = data.used;
-
-                    // Prefer backend message (already uses recharge wording),
-                    // but use a recharge-based fallback if missing.
-                    let errorMessage = data.message
-                        ? data.message
-                        : 'You have reached the contact view limit. Please recharge to view more profiles.';
-
-                    // Add limit/used if present
-                    if (limit !== undefined || used !== undefined) {
-                        const parts = [];
-                        if (used !== undefined) parts.push(`Used: ${used}`);
-                        if (limit !== undefined) parts.push(`Limit: ${limit}`);
-                        if (parts.length > 0) {
-                            errorMessage = `${errorMessage} (${parts.join(', ')})`;
-                        }
-                    }
-
-                    console.error(`❌ Permission denied (403): ${errorMessage}`);
-                    setSnackbarMessage(errorMessage);
-                } else {
-                    console.error(`❌ HTTP error: ${error.response.status}`);
-                    setSnackbarMessage(`Server error (${error.response.status}): ${error.response.data?.message || 'Failed to get contact details'}`);
-                }
-            } else if (error.request) {
-                console.error('❌ No response received from server:', error.request);
-                setSnackbarMessage('No response received from server. Please check your connection and try again.');
-            } else {
-                console.error('❌ Error setting up request:', error.message);
-                setSnackbarMessage(`Error: ${error.message}`);
             }
-            
+        );
+
+        if (response.ok || response.status === 200) {
+            navigate('/sharingcontactdetails', { state: { profile } });
+        } else {
+            const errorData = await response.data;
+            console.error('Error sharing contact details:', errorData);
+            setSnackbarMessage(errorData.message || 'Failed to get contact details.');
             setSnackbarSeverity('error');
             setSnackbarOpen(true);
-        } finally {
-            setIsLoading(false);
         }
-    };
+    } catch (error) {
+        console.error('Error sharing contact details:', error);
+        if (error.response && error.response.status === 403) {
+            setSnackbarMessage(error.response.data.message || 'You have reached your contact sharing limit. Please renew the profile');
+        } else {
+            setSnackbarMessage('Failed to get contact details. Please try again.');
+        }
+        setSnackbarSeverity('error');
+        setSnackbarOpen(true);
+    }
+};
 
     // Print and Email buttons component
     const actionButtons = (
@@ -242,7 +167,6 @@ const ContactDetailsResults = ({ results, userEmail }) => {
                 variant="outlined"
                 startIcon={<PrintIcon />}
                 onClick={handlePrintReport}
-                disabled={isLoading}
             >
                 Print Report
             </Button>
@@ -250,7 +174,6 @@ const ContactDetailsResults = ({ results, userEmail }) => {
                 variant="outlined"
                 startIcon={<EmailIcon />}
                 onClick={handleEmailDialogOpen}
-                disabled={isLoading}
             >
                 Email Report
             </Button>
@@ -272,7 +195,7 @@ const ContactDetailsResults = ({ results, userEmail }) => {
                     <Paper key={profile.profile_id} elevation={3} sx={{ p: 2, mb: 2 }}>
                         <Grid container spacing={2} alignItems="center">
                             {/* Profile Photo (Left Side) */}
-                            <Grid xs={12} sm={4} md={3} lg={2}>
+                            <Grid item xs={12} sm={4} md={3} lg={2}>
                                 <Box
                                     sx={{
                                         width: '100%',
@@ -291,16 +214,12 @@ const ContactDetailsResults = ({ results, userEmail }) => {
                                             height: 'auto',
                                             objectFit: 'cover',
                                         }}
-                                        onError={(e) => {
-                                            console.error(`❌ Error loading image for profile ${profile.profile_id}`);
-                                            e.target.src = `${API_BASE_URL}${BACKEND_DEFAULT_IMAGE_URL}`;
-                                        }}
                                     />
                                 </Box>
                             </Grid>
 
                             {/* Profile Details (Middle Column) */}
-                            <Grid xs={12} sm={8} md={5} lg={5}>
+                            <Grid item xs={12} sm={8} md={5} lg={5}>
                                 <Typography variant="subtitle1">
                                     <strong>Profile ID:</strong> {profile.profile_id}
                                 </Typography>
@@ -331,7 +250,7 @@ const ContactDetailsResults = ({ results, userEmail }) => {
                             </Grid>
 
                             {/* Additional Profile Details (Right Column) */}
-                            <Grid xs={12} md={4} lg={5}>
+                            <Grid item xs={12} md={4} lg={5}>
                                 <Typography variant="subtitle1">
                                     <strong>Expectations:</strong> {profile.expectations}
                                 </Typography>
@@ -358,14 +277,13 @@ const ContactDetailsResults = ({ results, userEmail }) => {
                                 </Typography>
                                 {/* Add other relevant details here */}
                             </Grid>
-                            <Grid xs={12} sx={{ textAlign: 'right' }}>
+                            <Grid item xs={12} sx={{ textAlign: 'right' }}>
                                 <Button
                                     variant="contained"
                                     color="primary"
                                     onClick={() => handleGetDetails(profile)}
-                                    disabled={isLoading}
                                 >
-                                    {isLoading ? 'Loading...' : 'Get Details'}
+                                    Get Details
                                 </Button>
                             </Grid>
                         </Grid>
@@ -410,13 +328,13 @@ const ContactDetailsResults = ({ results, userEmail }) => {
                     />
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={handleEmailDialogClose} disabled={isLoading}>Cancel</Button>
+                    <Button onClick={handleEmailDialogClose}>Cancel</Button>
                     <Button
                         onClick={handleEmailSend}
                         variant="contained"
-                        disabled={!emailAddress || !emailAddress.includes('@') || isLoading}
+                        disabled={!emailAddress || !emailAddress.includes('@')}
                     >
-                        {isLoading ? 'Sending...' : 'Send'}
+                        Send
                     </Button>
                 </DialogActions>
             </Dialog>
