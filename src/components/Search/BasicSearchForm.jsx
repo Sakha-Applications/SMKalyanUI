@@ -7,7 +7,7 @@ import { Link, useNavigate } from "react-router-dom";
 import StyledFormField from "../common/StyledFormField";
 import AutocompleteInput from "../common/renderAutocomplete";
 import CountryStateCitySelector from "../common/CountryStateCitySelector";
-import dayjs from "dayjs";
+//import dayjs from "dayjs";
 
 const BasicSearchForm = () => {
   const navigate = useNavigate();
@@ -54,6 +54,28 @@ const BasicSearchForm = () => {
     if (!base) return "";
     if (base.endsWith("/api")) return base;
     return `${base}/api`;
+  };
+
+    // --- Lock "Looking For" based on logged-in user's profileFor (Bride/Bridegroom) ---
+  const [isLookingForLocked, setIsLookingForLocked] = useState(false);
+
+  const getMyProfileForFromStorage = () => {
+    try {
+      // try sessionStorage first (more reliable in your app)
+      const ss =
+        sessionStorage.getItem("profileFor") ||
+        sessionStorage.getItem("myProfileFor") ||
+        sessionStorage.getItem("profile_for");
+      if (ss === "Bride" || ss === "Bridegroom") return ss;
+
+      // fallback to your existing localStorage-based attempt
+      const ls = getLoggedInUserProfileFor();
+      if (ls === "Bride" || ls === "Bridegroom") return ls;
+
+      return "";
+    } catch {
+      return "";
+    }
   };
 
   const [searchQuery, setSearchQuery] = useState({
@@ -163,8 +185,85 @@ const BasicSearchForm = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+    useEffect(() => {
+  let cancelled = false;
+
+  const applyLock = (myProfileForResolved) => {
+    const opposite = getOppositeProfileFor(myProfileForResolved);
+
+    if (opposite) {
+      setSearchQuery((prev) => ({ ...prev, profileFor: opposite }));
+      setIsLookingForLocked(true);
+      console.log("🔒 Looking For locked to:", opposite, "| myProfileFor:", myProfileForResolved);
+    } else {
+      setIsLookingForLocked(false);
+      console.log("ℹ️ Looking For not locked. myProfileFor:", myProfileForResolved || "(EMPTY)");
+    }
+  };
+
+  const init = async () => {
+    // 1) Try storage first
+    let myProfileForResolved = getMyProfileForFromStorage();
+
+    // 2) If not found, fetch from backend using sessionStorage.profileId
+    if (!myProfileForResolved) {
+      const myProfileId = sessionStorage.getItem("profileId") || "";
+      if (myProfileId) {
+        try {
+          const token =
+            sessionStorage.getItem("token") ||
+            sessionStorage.getItem("authToken") ||
+            localStorage.getItem("token") ||
+            localStorage.getItem("authToken");
+
+          const headers = {};
+          if (token) headers.Authorization = `Bearer ${token}`;
+
+          const apiBaseUrl = getApiBaseUrl(); // this is <host>/api
+          const url = `${apiBaseUrl}/profile/${encodeURIComponent(myProfileId)}`;
+          console.log("🧾 UI DEBUG Fetching my profileFor from:", url);
+
+          const res = await fetch(url, { headers });
+          if (res.ok) {
+            const data = await res.json();
+            myProfileForResolved =
+              data?.profile_for || data?.profileFor || data?.profileForValue || "";
+
+            // cache for next time (optional but helpful)
+            if (myProfileForResolved) {
+              sessionStorage.setItem("profileFor", myProfileForResolved);
+            }
+          } else {
+            console.warn("⚠️ Could not fetch my profileFor. HTTP:", res.status);
+          }
+        } catch (e) {
+          console.warn("⚠️ Error fetching my profileFor:", e?.message || e);
+        }
+      }
+    }
+
+    if (!cancelled) applyLock(myProfileForResolved);
+  };
+
+  init();
+
+  return () => {
+    cancelled = true;
+  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, []);
+
+
+
   const handleChange = (e) => {
     const { name, value } = e.target;
+
+    // 🔒 Do not allow edits to "Looking For" if locked
+    if (name === "profileFor" && isLookingForLocked) {
+      console.log("🔒 Ignoring change to profileFor (locked).");
+      return;
+    }
+
     setSearchQuery((prev) => ({ ...prev, [name]: value }));
     console.log(`handleChange called: ${name}: ${value}`);
   };
@@ -318,12 +417,14 @@ const BasicSearchForm = () => {
               />
 
               <StyledFormField
-                label="Looking For"
-                name="profileFor"
-                value={searchQuery.profileFor}
-                onChange={handleChange}
-                selectOptions={profileForOptions}
-              />
+  label="Looking For"
+  name="profileFor"
+  value={searchQuery.profileFor}
+  onChange={handleChange}
+  selectOptions={profileForOptions}
+  disabled={isLookingForLocked}
+/>
+
 
               <StyledFormField label="Min Age" type="number" name="minAge" value={searchQuery.minAge} onChange={handleChange} />
               <StyledFormField label="Max Age" type="number" name="maxAge" value={searchQuery.maxAge} onChange={handleChange} />

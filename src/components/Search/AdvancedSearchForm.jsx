@@ -27,6 +27,12 @@ const getOppositeProfileFor = (myProfileFor) => {
 
 const getLoggedInUserProfileFor = () => {
   try {
+    const ss =
+      sessionStorage.getItem("profileFor") ||
+      sessionStorage.getItem("myProfileFor") ||
+      sessionStorage.getItem("profile_for");
+    if (ss === "Bride" || ss === "Bridegroom") return ss;
+
     const raw =
       localStorage.getItem("userProfile") ||
       localStorage.getItem("profile") ||
@@ -49,6 +55,8 @@ const getLoggedInUserProfileFor = () => {
   }
 };
 
+
+  const [isLookingForLocked, setIsLookingForLocked] = useState(false);
     
     const [searchQuery, setSearchQuery] = useState({
         profileId: "",
@@ -154,18 +162,19 @@ const getLoggedInUserProfileFor = () => {
         searchQuery.education, searchQuery.profession,
     ]);
 
-/* useEffect(() => {
-  if (!searchQuery.profileFor) {
+  useEffect(() => {
     const myProfileFor = getLoggedInUserProfileFor();
     const opposite = getOppositeProfileFor(myProfileFor);
+
     if (opposite) {
       setSearchQuery((prev) => ({ ...prev, profileFor: opposite }));
+      setIsLookingForLocked(true);
+    } else {
+      setIsLookingForLocked(false);
     }
-  }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-}, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-*/
     // Define static options for Select fields (unchanged)
     const profileForOptions = [
         { label: "Bride", value: "Bride" },
@@ -198,16 +207,15 @@ const getLoggedInUserProfileFor = () => {
       { label: 'Gardening' },
       { label: 'Photography' },
       { label: 'Contributing to Social Activities' },
-      { label: 'Participating in Aradhana' },
-      { label: 'Participating in Patha' },
-      { label: 'Participating in Pravachana' },
-      { label: 'Participating in Bhajane' },
-      { label: 'Practicing Puja' },
-      { label: 'Practicing Sandhyavandane' },
-      { label: 'Practicing Tulasi Puje' },
-      { label: 'Observing Rajamanta' },
-      { label: 'Observing Chaturmasya' },
-      { label: 'Daily Rituals' }
+      { label: 'Intersted / Participating in Aradhana' },
+      { label: 'Intersted / Participating in Patha' },
+      { label: 'Intersted / Participating in Pravachana' },
+      { label: 'Intersted / Participating in Bhajane' },
+      { label: 'Intersted / Practicing Puja' },
+      { label: 'Intersted / Practicing Sandhyavandane' },
+      { label: 'Intersted / Practicing Tulasi Puje' },
+      { label: 'Menstruration Practices' },
+      { label: 'Observing Chaturmasya' }
     ];
 
     const workingStatusOptions = [
@@ -291,10 +299,18 @@ const getLoggedInUserProfileFor = () => {
 
 
     const handleChange = useCallback((e) => {
-        const { name, value } = e.target;
-        setSearchQuery((prev) => ({ ...prev, [name]: value }));
-        console.log(`handleChange called: ${name}: ${value}`);
-    }, []);
+    const { name, value } = e.target;
+
+    // 🔒 Do not allow edits to "Looking For" if locked
+    if (name === "profileFor" && isLookingForLocked) {
+        console.log("🔒 Ignoring change to profileFor (locked).");
+        return;
+    }
+
+    setSearchQuery((prev) => ({ ...prev, [name]: value }));
+    console.log(`handleChange called: ${name}: ${value}`);
+}, [isLookingForLocked]);
+
 
     // NEW: Generic handler for AutocompleteInput's text change
     const handleAutocompleteInputChange = useCallback((name, value) => {
@@ -479,13 +495,16 @@ const handleSearch = async () => {
                                     value={searchQuery.profileId}
                                     onChange={handleChange}
                                 />
-                                <StyledFormField
-                                    label="Looking For"
-                                    name="profileFor"
-                                    value={searchQuery.profileFor}
-                                    onChange={handleChange}
-                                    selectOptions={profileForOptions}
-                                />
+   <StyledFormField
+  label="Looking For"
+  name="profileFor"
+  value={searchQuery.profileFor}
+  onChange={handleChange}
+  selectOptions={profileForOptions}
+  disabled={isLookingForLocked}
+/>
+
+
                                 {/* Profile Category: should come after Looking For */}
                                 <StyledFormField
                                     label="Profile Category"

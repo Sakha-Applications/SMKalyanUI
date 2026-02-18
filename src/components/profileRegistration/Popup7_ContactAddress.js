@@ -119,6 +119,7 @@ const Popup7_ContactAddress = ({
             {/* Alternate Phone */}
             <div className="md:col-span-2">
               <L>Alternate Phone</L>
+              <L>Please enter your alternate phone number</L>
               <div className="flex space-x-2 w-full">
                 <TextField
                   select
@@ -146,6 +147,7 @@ const Popup7_ContactAddress = ({
             {/* Guardian Phone */}
             <div className="md:col-span-2">
               <L>Guardian Phone</L>
+              <L>Please enter your guardian's phone number</L>
               <div className="flex space-x-2 w-full">
                 <TextField
                   select
@@ -222,8 +224,10 @@ const Popup7_ContactAddress = ({
 */}
           {/* References (merged from Popup8) */}
           <h3 className="font-semibold text-gray-800 pt-4 pb-1">References</h3>
+          <L>Please provide person name who knows you better in care interested people can contact get more details about you and your family </L>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="md:col-span-2">
+              
               <L>Reference 1 Name <span className="text-red-500">*</span></L>
               <I
                 name="reference1Name"

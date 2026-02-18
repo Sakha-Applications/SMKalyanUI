@@ -1,5 +1,5 @@
 // src/components/profileRegistration/Popup9_PartnerPreferences.js
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Label as L, TextArea as TA, Button as B, Select as S } from "../common/FormElements";
 import Slider from "@mui/material/Slider";
 import ValidationErrorDialog from "../common/ValidationErrorDialog";
@@ -27,6 +27,7 @@ const brideGroomCategoryOptions = [
 ];
 
 const locationOptions = [
+  { label: "Any" },
   { label: "North Karnataka – Belagavi, Bagalkot, Vijayapura, Dharwad, Gadag, Haveri, Koppal, Ballari, Bidar, Kalaburagi, Raichur, Yadgir" },
 
   { label: "Kalyana Karnataka (Hyderabad-Karnataka) – Kalaburagi, Bidar, Raichur, Yadgir, Ballari, Koppal" },
@@ -136,6 +137,43 @@ const Popup9_PartnerPreferences = ({
   // Validation
   const [errors, setErrors] = useState({});
   const [showErrorDialog, setShowErrorDialog] = useState(false);
+  const [firstErrorField, setFirstErrorField] = useState("");
+
+  // Refs (best effort; if FormElements don't forwardRef, we fallback to querySelector)
+  const expectationsRef = useRef(null);
+  const maritalStatusRef = useRef(null);
+  const categoryRef = useRef(null);
+
+  const focusAndHighlight = (fieldName) => {
+    if (!fieldName) return;
+
+    // Ensure section is opened (all required fields are in Basic Details right now)
+    setOpenBasic(true);
+
+    setTimeout(() => {
+      const el =
+        (fieldName === "expectations" && expectationsRef.current) ||
+        (fieldName === "preferredMaritalStatus" && maritalStatusRef.current) ||
+        (fieldName === "preferredBrideGroomCategory" && categoryRef.current) ||
+        document.querySelector(`[name="${fieldName}"]`);
+
+      if (!el) return;
+
+      // scroll + focus
+      try {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+      } catch {}
+      try {
+        el.focus();
+      } catch {}
+
+      // highlight (temporary)
+      el.classList.add("ring-2", "ring-red-400", "ring-offset-2");
+      setTimeout(() => {
+        el.classList.remove("ring-2", "ring-red-400", "ring-offset-2");
+      }, 2000);
+    }, 150);
+  };
 
   // Data hooks
   const {
@@ -279,10 +317,13 @@ const Popup9_PartnerPreferences = ({
     };
     const newErrors = validateRequiredFields(formData || {}, requiredFields || {});
     setErrors(newErrors);
-    if (Object.keys(newErrors).length) {
-      setShowErrorDialog(true);
-      return;
-    }
+   if (Object.keys(newErrors).length) {
+  const firstKey = Object.keys(newErrors)[0]; // first invalid field
+  setFirstErrorField(firstKey);
+  setShowErrorDialog(true);
+  return;
+}
+
     const ok = await handleIntermediateProfileUpdate({ formData, setIsProcessing });
     if (ok) onNext();
   };
@@ -306,10 +347,14 @@ const Popup9_PartnerPreferences = ({
       <div className="flex-1 overflow-y-auto p-6">
         <div className="space-y-6">
           <ValidationErrorDialog
-            errors={errors}
-            isOpen={showErrorDialog}
-            onClose={() => setShowErrorDialog(false)}
-          />
+  errors={errors}
+  isOpen={showErrorDialog}
+  onClose={() => {
+    setShowErrorDialog(false);
+    focusAndHighlight(firstErrorField);
+  }}
+/>
+
 
           {/* ========== 1) Basic Details ========== */}
           <section className="bg-white rounded-lg shadow border">
@@ -326,15 +371,18 @@ const Popup9_PartnerPreferences = ({
                 <div>
   <L>Expectations</L>
   <TA
-    name="expectations"
-    value={
-      formData.expectations ||
-      "Tip: You can personalize the pre-filled text with more details (e.g., specific interests, city, or goals).\n Seeking a life partner with a positive attitude and strong emotional maturity, respects individuality and encourages personal growth. Looking for a relationship built on trust, honesty, and shared responsibilities."
-    }
-    onChange={handleChange}
-    placeholder="Write something about your preferred match..."
-    rows={3}
-  />
+  ref={expectationsRef}
+  name="expectations"
+  value={
+    formData.expectations ||
+    "Tip: You can personalize the pre-filled text with more details (e.g., specific interests, city, or goals)."
+  }
+  onChange={handleChange}
+  placeholder="Write something about your preferred match..."
+  rows={3}
+  className={errors.expectations ? "border border-red-400" : ""}
+/>
+
 </div>
 
 
@@ -383,10 +431,13 @@ const Popup9_PartnerPreferences = ({
                 <div>
                   <L htmlFor="preferredMaritalStatus">Preferred Marital Status</L>
                   <S
-                    name="preferredMaritalStatus"
-                    value={formData.preferredMaritalStatus || ""}
-                    onChange={handleChange}
-                  >
+  ref={maritalStatusRef}
+  name="preferredMaritalStatus"
+  value={formData.preferredMaritalStatus || ""}
+  onChange={handleChange}
+  className={errors.preferredMaritalStatus ? "border border-red-400" : ""}
+>
+
                     <option value="">-- Select --</option>
                     {maritalStatusOptions.map((opt) => (
                       <option key={opt.label} value={opt.label}>
@@ -415,10 +466,13 @@ const Popup9_PartnerPreferences = ({
                 <div>
                   <L htmlFor="preferredBrideGroomCategory">Preferred Bride/Groom Category</L>
                   <S
-                    name="preferredBrideGroomCategory"
-                    value={formData.preferredBrideGroomCategory || ""}
-                    onChange={handleChange}
-                  >
+  ref={categoryRef}
+  name="preferredBrideGroomCategory"
+  value={formData.preferredBrideGroomCategory || ""}
+  onChange={handleChange}
+  className={errors.preferredBrideGroomCategory ? "border border-red-400" : ""}
+>
+
                     <option value="">-- Select --</option>
                     {brideGroomCategoryOptions.map((opt) => (
                       <option key={opt.label} value={opt.label}>

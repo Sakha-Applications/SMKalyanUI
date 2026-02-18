@@ -8,6 +8,29 @@ import { Country } from 'country-state-city';
 const Popup1_BasicInfo = ({ formData, handleChange, onNext }) => {
   const [errors, setErrors] = useState({});
   const [showErrorDialog, setShowErrorDialog] = useState(false);
+  //added on 18-Feb-26
+    // Gender auto-default & lock based on "This Profile is For"
+  const isGenderLocked =
+    formData.profileCreatedFor === "Son" || formData.profileCreatedFor === "Daughter";
+
+  const lockedGender =
+    formData.profileCreatedFor === "Son"
+      ? "Male"
+      : formData.profileCreatedFor === "Daughter"
+        ? "Female"
+        : "";
+
+  useEffect(() => {
+    // If user selects "My Son" or "My Daughter", force gender and lock it.
+    if (formData.profileCreatedFor === "Son" && formData.gender !== "Male") {
+      handleChange({ target: { name: "gender", value: "Male" } });
+    } else if (formData.profileCreatedFor === "Daughter" && formData.gender !== "Female") {
+      handleChange({ target: { name: "gender", value: "Female" } });
+    }
+    // For other selections, keep existing gender logic as-is (editable).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formData.profileCreatedFor]); // intentionally only depends on selection
+
 
   const { searchMotherTongues, getMotherTongueById, getPlaceById } = useApiData();
 
@@ -233,17 +256,25 @@ const Popup1_BasicInfo = ({ formData, handleChange, onNext }) => {
             {errors.currentLocationCountry && <p className="mt-1 text-xs text-red-600">{errors.currentLocationCountry}</p>}
           </div>
 
-          <div>
-            <RadioGroup
-              name="gender"
-              legend="Gender"
-              options={[{ label: 'Male', value: 'Male' }, { label: 'Female', value: 'Female' }]}
-              selectedValue={formData.gender || ''}
-              onChange={handleChange}
-              required
-            />
-            {errors.gender && <p className="mt-1 text-xs text-red-600">{errors.gender}</p>}
-          </div>
+<div className={isGenderLocked ? "opacity-70 pointer-events-none" : ""}>
+  <RadioGroup
+    name="gender"
+    legend="Gender"
+    options={[{ label: "Male", value: "Male" }, { label: "Female", value: "Female" }]}
+    selectedValue={isGenderLocked ? lockedGender : (formData.gender || "")}
+    onChange={isGenderLocked ? () => {} : handleChange}
+    required
+  />
+
+  {isGenderLocked && (
+    <p className="mt-1 text-xs text-gray-600">
+      Gender is auto-set based on &quot;This Profile is For&quot; selection.
+    </p>
+  )}
+
+  {errors.gender && <p className="mt-1 text-xs text-red-600">{errors.gender}</p>}
+</div>
+
 
 {formData.gender && (
   <div>

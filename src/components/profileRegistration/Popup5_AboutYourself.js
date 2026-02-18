@@ -21,8 +21,9 @@ const Popup5_AboutYourself = ({
   useEffect(() => {
     const v = (formData.aboutBrideGroom || '').trim();
     if (!v) {
-      const draft = getDefaultAboutText(formData);
-      handleChange({ target: { name: 'aboutBrideGroom', value: draft } });
+//      const draft = getDefaultAboutText(formData);
+const draft = "Please write about yourself in brief. You can include your interests, hobbies, profession, education, values, and what you are looking for in a life partner. This will help others get to know you better and find compatible matches.";  
+handleChange({ target: { name: 'aboutBrideGroom', value: draft } });
     }
     // no deps => run once on mount; we intentionally don't add formData/gender to avoid overwriting later
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -49,7 +50,7 @@ const Popup5_AboutYourself = ({
       {/* Sticky Header (matches your other popups) */}
       <header className="flex-shrink-0 bg-gradient-to-r from-rose-500 to-pink-500 p-5 rounded-t-xl">
         <h1 className="text-2xl font-bold text-white text-center">
-          We’ve added a quick intro about you, review and feel free to modify
+          We’ve added a quick intro about you, review and Please to modify
         </h1>
       </header>
 

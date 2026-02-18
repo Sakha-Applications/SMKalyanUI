@@ -112,13 +112,29 @@ const profileResponse = await axios.post(`${getBaseUrl()}/api/addProfile`, {
     setUserAlreadyCreated(true);
 
     console.log("📧 Step 3: Sending confirmation email...");
-    const emailPayload = {
-      email: userId,
-      profileId
-    };
+    console.log("📧 Step 3: Sending confirmation email...");
+const emailPayload = { email: userId, profileId };
 
-    const emailResponse = await axios.post(`${getBaseUrl()}/api/send-email`, emailPayload);
-    console.log("✅ Email sent response:", emailResponse.data);
+// ✅ attach token if present (route is now protected in backend)
+const token = sessionStorage.getItem("token");
+const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+try {
+  const emailResponse = await axios.post(
+    `${getBaseUrl()}/api/send-email`,
+    emailPayload,
+    { headers }
+  );
+  console.log("✅ Email sent response:", emailResponse.data);
+} catch (emailErr) {
+  // ✅ DO NOT block registration if email fails
+  console.warn(
+    "⚠️ Email send failed (non-blocking).",
+    emailErr?.response?.status,
+    emailErr?.response?.data || emailErr?.message
+  );
+}
+
 
     // Store for later auto-login
     setProfileCreationData({

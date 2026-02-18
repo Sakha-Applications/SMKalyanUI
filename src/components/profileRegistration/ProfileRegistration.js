@@ -181,8 +181,9 @@ const ProfileRegistration = () => {
           <Typography><strong>Password:</strong> {userCreationData?.password}</Typography>
           <Typography><strong>Profile ID:</strong> {userCreationData?.profileId}</Typography>
           <Typography sx={{ mt: 2 }}>
-            You need to provide more details to create you profile...
+            Complete profile creation will help you to get the better response..You need to provide more details to create you profile...
             Would you like to continue Creating your profile now or do it later?
+            Recommend you to continue now to get the best experience out of our platform. You can always update your profile later from the dashboard.
           </Typography>
         </DialogContent>
           <DialogActions>
@@ -203,7 +204,9 @@ const ProfileRegistration = () => {
             Your Career &amp; Education details have been saved.
           </Typography>
           <Typography sx={{ mt: 2 }}>
+            Complete profile creation will help you to get the better response..
             We need to capture more details for your profile Would you like to continue now or complete the rest later?
+            Recommend you to continue now to get the best experience out of our platform. You can always update your profile later from the dashboard.
           </Typography>
         </DialogContent>
         <DialogActions>
@@ -226,7 +229,10 @@ const ProfileRegistration = () => {
             Your profile has been submitted successfully. 🙌
           </Typography>
           <Typography variant="body2" sx={{ mt: 2 }}>
-            Would you consider making a small donation to help us keep this platform free and growing? Every contribution counts. ❤️
+            Registration Fee is manadatory to search profiles. Would you consider making a small registration fee and donation to help us keep this platform growing? Every contribution counts. ❤️
+            Once payment is sucessful, our team will review and activate your profile.
+            You can even make payment later from the dashboard.
+            Please note that your profile will not be visible to others until the registration fee is paid and the profile is activated by our team. We appreciate your support in helping us create a thriving community!
           </Typography>
         </DialogContent>
         <DialogActions>
@@ -234,7 +240,7 @@ const ProfileRegistration = () => {
             Not Now
           </Button>
           <Button startIcon={<Favorite />} onClick={() => handleDonationChoice(true)} variant="contained" color="primary">
-            Yes, I'll Donate
+            Yes, I'll Pay Now
           </Button>
         </DialogActions>
       </Dialog>

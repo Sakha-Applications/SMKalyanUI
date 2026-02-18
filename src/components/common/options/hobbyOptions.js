@@ -9,14 +9,13 @@ export const hobbyOptions = [
   { label: 'Gardening' },
   { label: 'Photography' },
   { label: 'Contributing to Social Activities' },
-  { label: 'Participating in Aradhana' },
-  { label: 'Participating in Patha' },
-  { label: 'Participating in Pravachana' },
-  { label: 'Participating in Bhajane' },
-  { label: 'Practicing Puja' },
-  { label: 'Practicing Sandhyavandane' },
-  { label: 'Practicing Tulasi Puje' },
-  { label: 'Observing Rajamanta' },
-  { label: 'Observing Chaturmasya' },
-  { label: 'Daily Rituals' }
+  { label: 'Intersted / Participating in Aradhana' },
+  { label: 'Intersted / Participating in Patha' },
+  { label: 'Intersted / Participating in Pravachana' },
+  { label: 'Intersted / Participating in Bhajane' },
+  { label: 'Intersted / Practicing Puja' },
+  { label: 'Intersted / Practicing Sandhyavandane' },
+  { label: 'Intersted / Practicing Tulasi Puje' },
+  { label: 'Menstruration Practices' },
+  { label: 'Observing Chaturmasya' }
 ];
