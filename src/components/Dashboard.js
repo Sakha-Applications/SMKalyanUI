@@ -6,7 +6,7 @@ import {
   TopNavTabs,
   SecondaryNavBar
 } from "./dashboardFiles";
-import PreferredProfilesSection from "./preferredProfile/PreferredProfilesSection";
+
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import PreferencesReminderDialog from "../components/common/PreferencesReminderDialog";
@@ -127,17 +127,8 @@ const Dashboard = () => {
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-[1fr_3fr_1fr] gap-4">
-          {/* Left Ads/Preferred Profiles */}
-          <div className="hidden md:block">
-            <PreferredProfilesSection
-              showTicker
-              showCards
-              tickerLimit={8}
-              cardsLimit={6}
-              userProfileId={userProfileId}
-            />
-          </div>
+        <div className="grid grid-cols-1 gap-4">
+          
 
           {/* Center Main Dashboard */}
           <div className="w-full">
@@ -152,12 +143,7 @@ const Dashboard = () => {
             </DashboardLayout>
           </div>
 
-          {/* Right Future Ads */}
-          <div className="hidden md:block">
-            <div className="bg-white rounded shadow text-center py-6 text-gray-400">
-              <p>Ad Space</p>
-            </div>
-          </div>
+          
         </div>
       </div>
 
