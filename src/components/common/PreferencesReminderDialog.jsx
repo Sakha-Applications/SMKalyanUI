@@ -17,15 +17,15 @@ const PreferencesReminderDialog = ({ open, onClose, onSetPreferences, onFindMatc
       </DialogTitle>
       <DialogContent dividers>
         <Typography variant="body1" sx={{ mb: 2 }}>
-          Please ensure you mention your preferences properly to get better matching profiles.
+          Please ensure you define your partner expectations clearly to get better matching profiles.
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          Setting detailed preferences helps us find the most compatible profiles for you.
+          Setting detailed partner expectations helps us find the most compatible profiles for you.
         </Typography>
       </DialogContent>
       <DialogActions>
         <Button onClick={onSetPreferences} variant="contained" color="primary">
-          Set Preferences
+          Set Partner Expectations
         </Button>
         <Button onClick={onFindMatches} variant="outlined" color="secondary" sx={{ ml: 1 }}>
           Find Matches Anyway

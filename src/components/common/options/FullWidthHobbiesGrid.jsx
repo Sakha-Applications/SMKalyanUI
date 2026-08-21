@@ -1,7 +1,10 @@
 // src/components/common/FullWidthHobbiesGrid.jsx
 
 import React from "react";
-import { hobbyOptions } from './hobbyOptions';
+import {
+  generalHobbyOptions,
+  spiritualActivityOptions,
+} from "./hobbyOptions";
 
 const FullWidthHobbiesGrid = ({ label = "Hobbies", fieldName, formData, handleChange }) => {
   // Ensure formData[fieldName] is always an array
@@ -34,7 +37,7 @@ const FullWidthHobbiesGrid = ({ label = "Hobbies", fieldName, formData, handleCh
           <div>
             <div className="font-semibold text-gray-700 mb-2">General Hobbies</div>
             <div className="space-y-1">
-              {hobbyOptions.slice(0, Math.ceil(hobbyOptions.length / 2)).map((opt, idx) => {
+              {generalHobbyOptions.map((opt, idx) => {
                 const itemLabel = String(opt.label ?? opt).trim();
                 const isChecked = current
                   .map((h) => String(h).trim().toLowerCase())
@@ -62,7 +65,7 @@ const FullWidthHobbiesGrid = ({ label = "Hobbies", fieldName, formData, handleCh
           <div>
             <div className="font-semibold text-gray-700 mb-2">Spiritual & Activities</div>
             <div className="space-y-1">
-              {hobbyOptions.slice(Math.ceil(hobbyOptions.length / 2)).map((opt, idx) => {
+              {spiritualActivityOptions.map((opt, idx) => {
                 const itemLabel = String(opt.label ?? opt).trim();
                 const isChecked = current
                   .map((h) => String(h).trim().toLowerCase())

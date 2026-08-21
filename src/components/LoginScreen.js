@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import BackHomeButton from '../hooks/BackHomeButton'; // Ensure this import is correct
 import getBaseUrl from '../utils/GetUrl';
@@ -26,15 +26,15 @@ function LoginScreen() {
       });
 
       const data = await response.json();
-      console.log("🔍 Full Login Response:", data);
+      console.log("ðŸ” Full Login Response:", data);
 
       if (response.ok && data.token) {
         sessionStorage.setItem('token', data.token);
         sessionStorage.setItem('isLoggedIn', 'true');
 
         if (data.user && data.user.email) {
-          localStorage.setItem('userEmail', data.user.email);
-          console.log("🔍 Full user object:", data.user);
+          sessionStorage.setItem('userEmail', data.user.email);
+          console.log("ðŸ” Full user object:", data.user);
           console.log("Login Success: User Email stored:", data.user.email);
 
           // Fetch profile ID from modifyProfile
@@ -47,9 +47,9 @@ function LoginScreen() {
 
             if (response.ok && profileData.profile_id) {
               sessionStorage.setItem('profileId', profileData.profile_id);
-              console.log("✅ Fetched and stored profile ID:", profileData.profile_id);
+              console.log("âœ… Fetched and stored profile ID:", profileData.profile_id);
 
-              // ✅ NEW: Store profileStatus if available
+              // âœ… NEW: Store profileStatus if available
   const status =
     profileData?.profile_status ||
     profileData?.profileStatus ||
@@ -58,23 +58,23 @@ function LoginScreen() {
 
   if (status) {
     sessionStorage.setItem("profileStatus", status);
-    console.log("✅ Stored profileStatus:", status);
+    console.log("âœ… Stored profileStatus:", status);
   } else {
-    console.warn("⚠️ profileStatus not found in modifyProfile response:", profileData);
+    console.warn("âš ï¸ profileStatus not found in modifyProfile response:", profileData);
   }
             } else {
-              console.warn("⚠️ Profile ID not found in modifyProfile response:", profileData);
+              console.warn("âš ï¸ Profile ID not found in modifyProfile response:", profileData);
             }
           } catch (fetchError) {
-            console.error("❌ Error fetching profile ID:", fetchError);
+            console.error("âŒ Error fetching profile ID:", fetchError);
           }
         } else {
           console.warn("User email not found in login response.");
         }
 
-        // ✅ Store role for routing decisions
+        // âœ… Store role for routing decisions
 
-        // ✅ Store role for routing decisions (prefer JWT payload as source of truth)
+        // âœ… Store role for routing decisions (prefer JWT payload as source of truth)
 let role = (data?.user?.role || data?.role || '').toString();
 
 try {
@@ -84,17 +84,17 @@ try {
     role = (payloadJson?.role || '').toString();
   }
 } catch (e) {
-  console.warn("⚠️ Unable to decode JWT role:", e);
+  console.warn("âš ï¸ Unable to decode JWT role:", e);
 }
 
 if (role) {
   sessionStorage.setItem('userRole', role);
-  console.log("✅ Stored userRole:", role);
+  console.log("âœ… Stored userRole:", role);
 } else {
-  console.warn("⚠️ userRole could not be determined from response/token.");
+  console.warn("âš ï¸ userRole could not be determined from response/token.");
 }
 
-// ✅ Redirect admin to admin dashboard
+// âœ… Redirect admin to admin dashboard
 if (role.toUpperCase() === 'ADMIN') {
   navigate('/admin');
   return;
@@ -193,3 +193,4 @@ if (role.toUpperCase() === 'ADMIN') {
 }
 
 export default LoginScreen;
+

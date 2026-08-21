@@ -2,31 +2,24 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Home from './components/Home';
 import LoginScreen from './components/LoginScreen';
-// import ProfileRegisterForm from './components/ProfileRegisterForm';
-import ProfileRegisterForm from './components/profileRegistration/ProfileRegisterForm';
-import ProfileSearchForm from './components/ProfileSearchForm';
-import ViewOtherProfilePage from './components/ProfileModule/ViewOtherProfilePage'; // Adjust path if different
+import SinglePageRegistration from './modules/registration/SinglePageRegistration';
+import ViewOtherProfilePage from "./modules/profile/ViewOtherProfilePage"; // Adjust path if different
 
-import BasicSearchForm from './components/Search/BasicSearchForm'; 
-import AllMatchesPage from './components/dashboardFiles/AllMatchesPage';
-import InboxPage from './components/dashboardFiles/InboxPage';
-import AdvancedSearchForm from './components/Search/AdvancedSearchForm';
-
+import SearchPage from "./modules/search/SearchPage";
+import MatchesPage from "./modules/matches/MatchesPage";
+import ConnectionsPage from "./modules/connections/ConnectionsPage";
 import ResetPasswordScreen from './components/ResetPasswordScreen';
-import Dashboard from './components/Dashboard';
+import Dashboard from "./modules/dashboard/Dashboard";
+import DiscoverResultsPage from "./modules/dashboard/DiscoverResultsPage";
 import ForgotPasswordScreen from './components/ForgotPasswordScreen';
-import UploadPhoto from './components/UploadProfilePhoto/ProfilePhotoUploadForm';
-import ModifyProfile from './components/ModifyProfile';
-import RenewProfile from './components/RenewProfile';
-import Donate from './components/Donate';
+import PhotoManagementPage from "./modules/photoManagement/PhotoManagementPage";
+import RechargeContactViewsPage from "./modules/payments/RechargeContactViewsPage";
+import RegistrationFeePaymentPage from "./modules/payments/RegistrationFeePaymentPage";
 import About from './components/About';
-import ContactDetails from './components/ViewContactDetails/ViewContactDetailsForm';
-import SharingContactDetails from './components/ViewContactDetails/SharingContactDetails';
-import PublicHome from './components/PublicHome'; // Import the new component
-import MakePreferred from './components/preferredProfile/MakePreferred';
-import PreferredPayment from './components/preferredProfile/PreferredPayment';
-import PartnerPreferencesPage from "./components/ModifyProfile/PartnerPreferencesPage";
-import MyProfilePage from "./components/ModifyProfile/MyProfilePage";
+import AdvertiseProfilePage from "./modules/advertisements/AdvertiseProfilePage";
+import AdvertisementPaymentPage from "./modules/payments/AdvertisementPaymentPage";
+import PreferencesPage from "./modules/preferences/PreferencesPage";
+import ProfilePage from "./modules/profile/ProfilePage";
 import AdminDashboard from './components/admin/AdminDashboard';
 
 // Protected route component
@@ -57,15 +50,25 @@ function App() {
         <Router>
             <Routes>
                 {/* Public routes */}
-           {/*     <Route path="/" element={<PublicHome />} />*/}
+           
               <Route path="/" element={<Home />} />
-                <Route path="/login" element={<LoginScreen />} />
-                <Route path="/profile-register" element={<ProfileRegisterForm />} />
-                <Route path="/forgot-password" element={<ForgotPasswordScreen />} />
+<Route path="/login" element={<LoginScreen />} />
+<Route
+  path="/profile-register"
+  element={<SinglePageRegistration />}
+/>
+<Route
+  path="/new-register"
+  element={
+    <Navigate
+      to="/profile-register"
+      replace
+    />
+  }
+/>
+<Route path="/forgot-password" element={<ForgotPasswordScreen />} />
                 <Route path="/reset-password" element={<ResetPasswordScreen />} />
                 <Route path="/about" element={<About />} />
-<Route path="/partner-preferences" element={<PartnerPreferencesPage />} />
-<Route path="/my-profile" element={<MyProfilePage />} />
 
                 {/* Protected routes */}
                 <Route
@@ -80,7 +83,7 @@ function App() {
                     path="/profile-search"
                     element={
                         <ProtectedRoute>
-                            <ProfileSearchForm />
+                            <SearchPage />
                         </ProtectedRoute>
                     }
                 />
@@ -88,32 +91,58 @@ function App() {
                     path="/upload-photo"
                     element={
                         <ProtectedRoute>
-                            <UploadPhoto />
+                            <PhotoManagementPage />
                         </ProtectedRoute>
                     }
                 />
+<Route
+    path="/modify-profile"
+    element={
+        <ProtectedRoute>
+            <Navigate to="/my-profile" replace />
+        </ProtectedRoute>
+    }
+/>
+
+<Route
+  path="/discover/:type"
+  element={
+    <ProtectedRoute>
+      <DiscoverResultsPage />
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+    path="/my-profile"
+    element={
+        <ProtectedRoute>
+            <ProfilePage />
+        </ProtectedRoute>
+    }
+/>
+<Route
+    path="/partner-preferences"
+    element={
+        <ProtectedRoute>
+            <PreferencesPage />
+        </ProtectedRoute>
+    }
+/>
+                
                 <Route
-                    path="/modify-profile"
-                    element={
-                        <ProtectedRoute>
-                            <ModifyProfile />
-                        </ProtectedRoute>
-                    }
-                />
-                <Route
-                    path="/contact-details"
-                    element={
-                        <ProtectedRoute>
-                            <ContactDetails />
-                        </ProtectedRoute>
-                    }
-                />
-                <Route path="/all-matches" element={<AllMatchesPage />} />
+    path="/all-matches"
+    element={
+        <ProtectedRoute>
+            <MatchesPage />
+        </ProtectedRoute>
+    }
+/>
                 <Route
                     path="/renew-profile"
                     element={
                         <ProtectedRoute>
-                            <RenewProfile />
+                            <RechargeContactViewsPage />
                         </ProtectedRoute>
                     }
                 />
@@ -123,7 +152,7 @@ function App() {
                     path="/inbox" // This is the route path for the Inbox tab
                     element={
                         <ProtectedRoute>
-                            <InboxPage />
+                            <ConnectionsPage />
                         </ProtectedRoute>
                     }
                 />
@@ -132,21 +161,27 @@ function App() {
                     path="/donate"
                     element={
                         <ProtectedRoute>
-                            <Donate />
+                            <RegistrationFeePaymentPage />
                         </ProtectedRoute>
                     }
                 />
+                                
                 <Route
-                    path="/sharingcontactdetails" // Add this route
-                    element={
-                        <ProtectedRoute>
-                            <SharingContactDetails />
-                        </ProtectedRoute>
-                    }
-                />
-                
-                <Route path="/make-preferred" element={<MakePreferred />} />
-<Route path="/preferred-payment" element={<PreferredPayment />} />
+    path="/make-preferred"
+    element={
+        <ProtectedRoute>
+            <AdvertiseProfilePage />
+        </ProtectedRoute>
+    }
+/>
+<Route
+    path="/preferred-payment"
+    element={
+        <ProtectedRoute>
+            <AdvertisementPaymentPage />
+        </ProtectedRoute>
+    }
+/>      
 <Route
                     path="/view-profile/:profileId" // Define the dynamic route parameter
                     element={
@@ -155,22 +190,28 @@ function App() {
                         </ProtectedRoute>
                     }
                 />
-            <Route
-                    path="/basic-search"
-                    element={
-                        <ProtectedRoute>
-                            <BasicSearchForm />
-                        </ProtectedRoute>
-                    }
-                />
+<Route
+  path="/basic-search"
+  element={
+    <ProtectedRoute>
+      <Navigate
+        to="/profile-search"
+        replace
+      />
+    </ProtectedRoute>
+  }
+/>
 
 <Route
-    path="/advanced-search"
-    element={
-        <ProtectedRoute>
-            <AdvancedSearchForm />
-        </ProtectedRoute>
-    }
+  path="/advanced-search"
+  element={
+    <ProtectedRoute>
+      <Navigate
+        to="/profile-search"
+        replace
+      />
+    </ProtectedRoute>
+  }
 />
 
 <Route

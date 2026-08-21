@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { FaUserPlus, FaSearch, FaCamera, FaArrowRight } from 'react-icons/fa';
-import PreferredProfilesSection from './preferredProfile/PreferredProfilesSection';
+import AdvertisementSection from "../modules/advertisements/AdvertisementSection";
 
 // Import the image
 import backgroundImage from '../assets/Image/kalayan_bg_img.png'; // Adjust the path as needed
@@ -36,7 +36,7 @@ export default function Home() {
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Left Side - Preferred Profiles Section */}
           <div className="w-full lg:w-1/3 xl:w-1/4">
-            <PreferredProfilesSection 
+            <AdvertisementSection 
               showTicker={true}
               showCards={true}
               tickerLimit={6}

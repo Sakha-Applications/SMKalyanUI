@@ -134,8 +134,7 @@ const useApiData = (endpoint) => {
     try {
       const apiBaseUrl = getApiBaseUrl();
       const response = await axios.get(`${apiBaseUrl}/mother-tongues`);
-      console.log("DEBUG: Full list fetched for mother tongues:", response.data);
-
+      
       if (Array.isArray(response.data)) {
         return response.data
           .filter((item) =>
@@ -387,7 +386,7 @@ const useApiData = (endpoint) => {
     searchMotherTongues,
     getMotherTongueById,
 
-    // ✅ IMPORTANT: these are used by BasicSearchForm/CountryStateCitySelector
+    // Shared place-search helpers used by CountryStateCitySelector and Search.
     searchPlaces,
     getPlaceById,
 
