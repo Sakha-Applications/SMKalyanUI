@@ -3,10 +3,12 @@ import React, { useEffect } from "react";
 import { Select, Input } from "../../../../shared/common/FormElements";
 import EnhancedAutocomplete from "../helpers/EnhancedAutocomplete";
 import { designClasses } from "../../../../shared/styles/designTokens";
+
 import {
   workingStatusOptions,
   annualIncomeOptions,
 } from "../../../../shared/config/profileOptions";
+
 
 // MODIFIED: DataRow no longer applies border/background.
 // It should only handle padding and text styling.
@@ -113,7 +115,7 @@ const EducationJobDetails = ({
             <>
               {/* Education Autocomplete */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className={designClasses.fieldLabel}>
                   Education *
                 </label>
                 <EnhancedAutocomplete
@@ -133,7 +135,7 @@ const EducationJobDetails = ({
 
               {/* Profession Autocomplete */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className={designClasses.fieldLabel}>
                   Profession *
                 </label>
                 <EnhancedAutocomplete
@@ -153,7 +155,7 @@ const EducationJobDetails = ({
 
               {/* Designation - Replace this Input with EnhancedAutocomplete */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className={designClasses.fieldLabel}>
                   Designation
                 </label>
                 <EnhancedAutocomplete
@@ -173,7 +175,7 @@ const EducationJobDetails = ({
 
               {/* Current Company */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className={designClasses.fieldLabel}>
                   Current Company
                 </label>
                 <Input
@@ -187,7 +189,7 @@ const EducationJobDetails = ({
 
               {/* Working Status */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className={designClasses.fieldLabel}>
                   Working Status
                 </label>
                 <Select
@@ -207,7 +209,7 @@ const EducationJobDetails = ({
 
               {/* Annual Income */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className={designClasses.fieldLabel}>
                   Annual Income
                 </label>
                 <Select

@@ -21,7 +21,7 @@ const PartnerPreferencesPage = () => {
   const [formData, setFormData] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [errors, setErrors] = useState({});
+  const [errors] = useState({});
   const [showErrorDialog, setShowErrorDialog] = useState(false);
 
   const [educationInput, setEducationInput] = useState('');
@@ -208,7 +208,7 @@ if (data) {
 const handleUpdate = async () => {
   setLoading(true);
 
-  // Ã°Å¸Â§Â¹ Enhanced utility to sanitize values - handles all data types
+  // Sanitize values across supported data types.
   const sanitize = (value) => {
     // Handle null, undefined, or empty values
     if (!value) return [];
@@ -268,7 +268,7 @@ const handleUpdate = async () => {
     }).filter(item => item && item !== ''); // Remove empty/null items
   };
 
-  // Ã°Å¸Â§Â¹ Special function for single values (not arrays)
+  // Sanitize single-value fields.
   const sanitizeSingle = (value) => {
     if (!value) return '';
     
@@ -298,13 +298,13 @@ const handleUpdate = async () => {
     return String(value);
   };
 
-  // Ã¢Å“â€¦ Convert DOB to YYYY-MM-DD format
+  // Convert DOB to YYYY-MM-DD format.
   if (formData.dob && typeof formData.dob === 'string') {
     formData.dob = formData.dob.split('T')[0];
   }
 
   try {
-    // Ã°Å¸Â§Â¼ Destructure to exclude camelCase keys
+    // Exclude camelCase keys from the backend payload.
     const {
       profileId,
       userId,
@@ -335,7 +335,7 @@ preferredBrideGroomCategory,
       ...rest
     } = formData;
 
-    // Ã¢Å“â€¦ Build final payload in backend-friendly format
+    // Build the final backend-compatible payload.
   const finalPayload = {
   ...rest,
   profile_id: profileId,
@@ -346,7 +346,7 @@ preferredBrideGroomCategory,
   preferred_marital_status: preferredMaritalStatus || profileData.preferred_marital_status || '',
   preferred_bride_groom_category: preferredBrideGroomCategory || profileData.preferred_bride_groom_category || '',
 
-  // Ã¢Å“â€¦ Array fields with fallback to profileData split
+  // Array fields with fallback to existing profile data.
   preferred_education: sanitize(preferredEducation || profileData.preferred_education?.split(',')).join(','),
   preferred_sub_castes: sanitize(preferredSubCastes || profileData.preferred_sub_castes?.split(',')).join(','),
   preferred_guru_mathas: sanitize(preferredGuruMathas || profileData.preferred_guru_mathas?.split(',')).join(','),
@@ -362,7 +362,7 @@ preferredBrideGroomCategory,
   preferred_native_origins: sanitize(preferredNativeOrigins || profileData.preferred_native_origins?.split(',')).join(','),
   preferred_cities: sanitize(preferredCities || profileData.preferred_cities?.split(',')).join(','),
 
-  // Ã¢Å“â€¦ Single-value fields with fallback
+  // Single-value fields with fallback to existing profile data.
   city_living_in: sanitizeSingle(cityLivingIn || profileData.city_living_in),
   country_living_in: sanitizeSingle(countryLivingIn || profileData.country_living_in),
   native_origins: sanitizeSingle(nativeOrigins || profileData.native_origins),
@@ -396,17 +396,26 @@ if (!userEmail) {
     </div>
   );
 }
-if (!userEmail) {
+
+  if (loading) {
   return (
-    <div className="p-6 text-center text-yellow-800 bg-yellow-100 rounded-lg mt-8 max-w-2xl mx-auto">
-      Please log in to view your preferences.
+    <div
+      className={`mt-10 text-center ${designClasses.textSecondary}`}
+    >
+      Loading...
     </div>
   );
 }
-
-  if (loading) return <div className="text-center mt-10 text-gray-600">Loading...</div>;
   if (error) return <div className="text-center text-red-600 mt-10">{error}</div>;
-  if (!profileData) return <div className="text-center text-gray-500 mt-10">No profile data found.</div>;
+  if (!profileData) {
+  return (
+    <div
+      className={`mt-10 text-center ${designClasses.textSecondary}`}
+    >
+      No profile data found.
+    </div>
+  );
+}
 
   return (
     <MemberLayout>

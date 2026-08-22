@@ -1,4 +1,12 @@
-import { Link, useNavigate } from "react-router-dom";
+import {
+  Link,
+  useNavigate,
+} from "react-router-dom";
+
+import {
+  useEffect,
+  useState,
+} from "react";
 
 import kalyanaLogo from "../../assets/branding/kalyana-sakha-logo.png";
 import sarvamoolaLogo from "../../assets/branding/sarvamoola-foundation-logo.png";
@@ -6,6 +14,8 @@ import sarvamoolaLogo from "../../assets/branding/sarvamoola-foundation-logo.png
 import { designClasses } from "../styles/designTokens";
 
 import AdvertisementSpotlight from "../components/AdvertisementSpotlight";
+
+import invitationService from "../../services/invitationService";
 
 const memberLinks = [
   { to: "/dashboard", label: "Dashboard" },
@@ -26,6 +36,11 @@ const MemberLayout = ({
 }) => {
   const navigate = useNavigate();
 
+  const [
+    pendingInvitationCount,
+    setPendingInvitationCount,
+  ] = useState(0);
+
   const profileStatus = normalizeStatus(
     sessionStorage.getItem("profileStatus")
   );
@@ -39,6 +54,51 @@ const MemberLayout = ({
 
   const blockedMessage =
     "Your profile is under review. This feature will be available once your profile is approved.";
+
+  useEffect(() => {
+    let active = true;
+
+    const loadPendingInvitations =
+      async () => {
+        try {
+          const received =
+            await invitationService.getReceivedInvitations();
+
+          if (!active) {
+            return;
+          }
+
+          const pendingCount =
+            Array.isArray(received)
+              ? received.filter(
+                  (invitation) =>
+                    normalizeStatus(
+                      invitation?.status
+                    ) === "PENDING"
+                ).length
+              : 0;
+
+          setPendingInvitationCount(
+            pendingCount
+          );
+        } catch (error) {
+          console.error(
+            "Unable to load invitation notifications:",
+            error
+          );
+
+          if (active) {
+            setPendingInvitationCount(0);
+          }
+        }
+      };
+
+    loadPendingInvitations();
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const handleLogout = () => {
     const confirmed = window.confirm(
@@ -114,7 +174,7 @@ const MemberLayout = ({
             className={`whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold transition ${
               locked
                 ? "cursor-not-allowed opacity-50"
-                : `${designClasses.textPrimary} hover:bg-[#FFF4D6]`
+                : `${designClasses.textPrimary} ${designClasses.bgAccentSoft}`
             }`}
           >
             {item.label}
@@ -130,6 +190,47 @@ const MemberLayout = ({
       >
         Welcome, {memberName}
       </span>
+
+      <button
+        type="button"
+        onClick={() =>
+          navigate("/inbox")
+        }
+        aria-label={
+          pendingInvitationCount > 0
+            ? `${pendingInvitationCount} new invitation${
+                pendingInvitationCount === 1
+                  ? ""
+                  : "s"
+              }`
+            : "No new invitations"
+        }
+        title={
+          pendingInvitationCount > 0
+            ? `${pendingInvitationCount} new invitation${
+                pendingInvitationCount === 1
+                  ? ""
+                  : "s"
+              }`
+            : "Message Box"
+        }
+        className={`relative flex h-10 w-10 items-center justify-center rounded-full border text-lg transition ${designClasses.border} ${designClasses.surface} ${designClasses.textPrimary} hover:bg-[#FFF4D6]`}
+      >
+        <span aria-hidden="true">
+          🔔
+        </span>
+
+        {pendingInvitationCount > 0 && (
+          <span
+            className="absolute -right-1 -top-1 flex min-h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[#B42318] px-1 text-[10px] font-bold leading-none text-white"
+          >
+            {pendingInvitationCount >
+            99
+              ? "99+"
+              : pendingInvitationCount}
+          </span>
+        )}
+      </button>
 
       <button
         type="button"

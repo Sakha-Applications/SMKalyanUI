@@ -8,31 +8,34 @@ const secondaryLinks = [
   { to: "/donate", label: "Registration Fee" },
 ];
 
-const isApproved = () => {
-  const status = (
-    sessionStorage.getItem("profileStatus") || ""
-  )
-    .toString()
-    .trim()
-    .toUpperCase();
-
-  return status === "APPROVED";
-};
+const normalizeStatus = (status) =>
+  typeof status === "string"
+    ? status.trim().toUpperCase()
+    : "";
 
 const blockedMessage =
   "Your profile is under review. This feature will be available once your profile is approved.";
 
-const SecondaryNavBar = () => (
+const SecondaryNavBar = ({
+  profileStatus = "",
+}) => {
+  const approved =
+    normalizeStatus(
+      profileStatus
+    ) === "APPROVED";
+
+  return (
   <div className="mb-3 flex flex-wrap items-center justify-end gap-2">
     <span
       className={`mr-1 hidden text-xs font-semibold uppercase tracking-[0.12em] sm:inline ${designClasses.textSecondary}`}
     >
-      Account
+      Member Services
     </span>
 
     {secondaryLinks.map((item) => {
       const locked =
-        item.requiresApproval && !isApproved();
+        item.requiresApproval &&
+        !approved;
 
       return (
         <Link
@@ -46,8 +49,8 @@ const SecondaryNavBar = () => (
           }}
           className={`rounded-lg px-3 py-2 text-sm font-medium transition ${
             locked
-              ? "cursor-not-allowed border border-gray-200 text-gray-400 opacity-70"
-              : `${designClasses.secondaryButton}`
+              ? `${designClasses.secondaryButton} cursor-not-allowed opacity-40`
+              : designClasses.secondaryButton
           }`}
         >
           {item.label}
@@ -55,6 +58,7 @@ const SecondaryNavBar = () => (
       );
     })}
   </div>
-);
+  );
+};
 
 export default SecondaryNavBar;

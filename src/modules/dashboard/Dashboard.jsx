@@ -95,21 +95,19 @@ const Dashboard = () => {
           />
         )}
 
-        <div className="grid grid-cols-1 gap-4">
-          
-
-          {/* Center Main Dashboard */}
-          <div className="w-full">
-            <div className="mb-2">
-              <SecondaryNavBar />
-            </div>
-
-            <DashboardLayout profileId={userProfileId}>
-  <TimelineStatsGrid />
-  <DiscoverGrid />
-</DashboardLayout>
-          </div>
+                <div className="mb-2">
+          <SecondaryNavBar
+  profileStatus={profileStatus}
+/>
         </div>
+
+        <DashboardLayout
+          profileId={userProfileId}
+          profileStatus={profileStatus}
+        >
+          <TimelineStatsGrid />
+          <DiscoverGrid />
+        </DashboardLayout>
       </div>
 
       <PreferencesReminderDialog

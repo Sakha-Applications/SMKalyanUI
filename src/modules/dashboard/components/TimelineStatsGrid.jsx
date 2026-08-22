@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 
+import { useNavigate } from "react-router-dom";
+
 import invitationService from "../../../services/invitationService";
 import { designClasses } from "../../../shared/styles/designTokens";
 
@@ -9,6 +11,7 @@ const normalizeStatus = (status) =>
     : "";
 
 const TimelineStatsGrid = () => {
+  const navigate = useNavigate();
   const [receivedInvitations, setReceivedInvitations] = useState([]);
   const [sentInvitations, setSentInvitations] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -71,7 +74,7 @@ const TimelineStatsGrid = () => {
         value: awaitingResponse,
       },
       {
-        label: "Accepted Connections",
+        label: "Accepted Interests",
         value: acceptedConnections,
       },
     ];
@@ -80,9 +83,13 @@ const TimelineStatsGrid = () => {
   return (
     <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
       {stats.map(({ label, value }) => (
-        <div
+        <button
           key={label}
-          className={`${designClasses.surface} ${designClasses.border} rounded-xl border p-4 text-center shadow-sm`}
+          type="button"
+          onClick={() =>
+            navigate("/inbox")
+          }
+          className={`${designClasses.card} w-full p-4 text-center transition hover:-translate-y-0.5 hover:shadow-md`}
         >
           <div
             className={`text-3xl font-semibold ${designClasses.textPrimary}`}
@@ -95,7 +102,7 @@ const TimelineStatsGrid = () => {
           >
             {label}
           </div>
-        </div>
+        </button>
       ))}
     </div>
   );

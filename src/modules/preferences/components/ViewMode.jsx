@@ -7,6 +7,10 @@ import GeographicPreferences from "./sections/GeographicPreferences";
 
 import CollapsibleSection from "../../../shared/components/CollapsibleSection";
 
+import {
+  designClasses,
+} from "../../../shared/styles/designTokens";
+
 const ViewMode = ({ profileData, setIsEditing }) => {
   const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState("basic");
@@ -62,7 +66,7 @@ const ViewMode = ({ profileData, setIsEditing }) => {
       <div className="flex flex-col justify-end gap-3 pt-6 sm:flex-row">
         <button
           type="button"
-          className="rounded-lg border border-[#00264D] bg-white px-6 py-2.5 font-semibold text-[#00264D] transition hover:bg-gray-50"
+          className={`rounded-lg px-6 py-2.5 font-semibold transition ${designClasses.secondaryButton}`}
           onClick={() => navigate("/dashboard")}
         >
           Back to Dashboard
@@ -70,7 +74,7 @@ const ViewMode = ({ profileData, setIsEditing }) => {
 
         <button
           type="button"
-          className="rounded-lg bg-[#00264D] px-6 py-2.5 font-semibold text-white transition hover:bg-[#001D3D]"
+          className={`rounded-lg px-6 py-2.5 font-semibold transition ${designClasses.primaryButton}`}
           onClick={() => setIsEditing(true)}
         >
           Edit Expectations

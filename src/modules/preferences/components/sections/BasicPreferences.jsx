@@ -1,12 +1,12 @@
 import React from 'react';
-import { Slider } from '@mui/material';
+import RangeSliderField from "../../../../shared/forms/RangeSliderField";
 import { Label, TextArea, Select } from "../../../../shared/common/FormElements";
 import MultiSelectCheckbox from "../../../../shared/common/MultiSelectCheckbox";
 
-import { RadioGroup } from '../../../../shared/common/FormElements';
-
-
 import { cmToFeetInches, formatDisplayValue, formatSelectedValues } from '../helpers/utils';
+import {
+  designClasses,
+} from "../../../../shared/styles/designTokens";
 
 const BasicPreferences = ({
   mode = 'view', // 'view' or 'edit'
@@ -28,25 +28,23 @@ const BasicPreferences = ({
     }));
   };
 
-  console.log("Ã°Å¸Â§Â  formData.preferredEducation:", formData.preferredEducation);
-console.log("Ã°Å¸Å½â€œ formatted:", formatSelectedValues(formData, 'preferredEducation'));
   if (mode === 'view') {
     return (
       <section>
         <div className="space-y-4">
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <h4 className="font-semibold text-gray-700 mb-2">Expectations</h4>
-            <p className="text-gray-600">{formatDisplayValue(profileData.expectations)}</p>
+          <div className={`rounded-lg p-4 ${designClasses.surfaceMuted}`}>
+            <h4 className={`mb-2 font-semibold ${designClasses.textPrimary}`}>Expectations</h4>
+            <p className={designClasses.textSecondary}>{formatDisplayValue(profileData.expectations)}</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <h4 className="font-semibold text-gray-700 mb-2">Age Range</h4>
-              <p className="text-gray-600">{formatDisplayValue(profileData.age_range)} years</p>
+            <div className={`rounded-lg p-4 ${designClasses.surfaceMuted}`}>
+              <h4 className={`mb-2 font-semibold ${designClasses.textPrimary}`}>Age Range</h4>
+              <p className={designClasses.textSecondary}>{formatDisplayValue(profileData.age_range)} years</p>
             </div>
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <h4 className="font-semibold text-gray-700 mb-2">Height Range</h4>
-              <p className="text-gray-600">
+            <div className={`rounded-lg p-4 ${designClasses.surfaceMuted}`}>
+              <h4 className={`mb-2 font-semibold ${designClasses.textPrimary}`}>Height Range</h4>
+              <p className={designClasses.textSecondary}>
                 {profileData.height_range
                   ? profileData.height_range
                       .split(',')
@@ -58,30 +56,30 @@ console.log("Ã°Å¸Å½â€œ formatted:", formatSelectedValues(formData, 'pr
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <h4 className="font-semibold text-gray-700 mb-2">Annual Income Range</h4>
-              <p className="text-gray-600">{formatDisplayValue(profileData.preferred_income_range)} Lacs</p>
+            <div className={`rounded-lg p-4 ${designClasses.surfaceMuted}`}>
+              <h4 className={`mb-2 font-semibold ${designClasses.textPrimary}`}>Annual Income Range</h4>
+              <p className={designClasses.textSecondary}>{formatDisplayValue(profileData.preferred_income_range)} Lacs</p>
             </div>
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <h4 className="font-semibold text-gray-700 mb-2">Marital Status</h4>
-              <p className="text-gray-600">{formatDisplayValue(profileData.preferred_marital_status)}</p>
+            <div className={`rounded-lg p-4 ${designClasses.surfaceMuted}`}>
+              <h4 className={`mb-2 font-semibold ${designClasses.textPrimary}`}>Marital Status</h4>
+              <p className={designClasses.textSecondary}>{formatDisplayValue(profileData.preferred_marital_status)}</p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <h4 className="font-semibold text-gray-700 mb-2">Mother Tongue</h4>
-              <p className="text-gray-600">{formatDisplayValue(profileData.preferred_mother_tongues)}</p>
+            <div className={`rounded-lg p-4 ${designClasses.surfaceMuted}`}>
+              <h4 className={`mb-2 font-semibold ${designClasses.textPrimary}`}>Mother Tongue</h4>
+              <p className={designClasses.textSecondary}>{formatDisplayValue(profileData.preferred_mother_tongues)}</p>
             </div>
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <h4 className="font-semibold text-gray-700 mb-2">Bride/Groom Category</h4>
-              <p className="text-gray-600">{formatDisplayValue(profileData.preferred_bride_groom_category)}</p>
+            <div className={`rounded-lg p-4 ${designClasses.surfaceMuted}`}>
+              <h4 className={`mb-2 font-semibold ${designClasses.textPrimary}`}>Bride/Groom Category</h4>
+              <p className={designClasses.textSecondary}>{formatDisplayValue(profileData.preferred_bride_groom_category)}</p>
             </div>
           </div>
 
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <h4 className="font-semibold text-gray-700 mb-2">Education</h4>
-            <p className="text-gray-600">{formatDisplayValue(profileData.preferred_education)}</p>
+          <div className={`rounded-lg p-4 ${designClasses.surfaceMuted}`}>
+            <h4 className={`mb-2 font-semibold ${designClasses.textPrimary}`}>Education</h4>
+            <p className={designClasses.textSecondary}>{formatDisplayValue(profileData.preferred_education)}</p>
           </div>
         </div>
       </section>
@@ -103,50 +101,70 @@ console.log("Ã°Å¸Å½â€œ formatted:", formatSelectedValues(formData, 'pr
           />
         </div>
 
-        <div>
-          <Label>Preferred Age Range</Label>
-          <Slider
-  value={formData.ageRange || [25, 35]}
-  onChange={(e, val) => handleInputChange({ target: { name: 'ageRange', value: val } })}
-  valueLabelDisplay="on"
-  valueLabelFormat={(val) => `${val} yrs`}
-  min={18}
-  max={60}
-  step={1}
-  className="mt-4"
-/>
+        <RangeSliderField
+          label="Preferred Age Range"
+          value={
+            formData.ageRange ||
+            [25, 35]
+          }
+          min={18}
+          max={60}
+          step={1}
+          onChange={(value) =>
+            handleInputChange({
+              target: {
+                name: "ageRange",
+                value,
+              },
+            })
+          }
+          formatValue={(value) =>
+            `${value} yrs`
+          }
+        />
 
-        </div>
+        <RangeSliderField
+          label="Preferred Height Range"
+          value={
+            formData.heightRange ||
+            [150, 180]
+          }
+          min={120}
+          max={210}
+          step={1}
+          onChange={(value) =>
+            handleInputChange({
+              target: {
+                name: "heightRange",
+                value,
+              },
+            })
+          }
+          formatValue={cmToFeetInches}
+        />
 
-        <div>
-          <Label>Preferred Height Range</Label>
-          <Slider
-            value={formData.heightRange || [150, 180]}
-            onChange={(e, val) => handleInputChange({ target: { name: 'heightRange', value: val } })}
-            valueLabelDisplay="on"
-            min={120}
-            max={210}
-            marks={[120, 150, 180, 210].map((val) => ({ value: val, label: cmToFeetInches(val) }))}
-            valueLabelFormat={(value) => cmToFeetInches(value)}
-            className="mt-4"
-          />
-        </div>
-
-        <div>
-          <Label>Annual Income Range (INR Lacs)</Label>
-    <Slider
-  value={formData.preferredIncomeRange || [5, 20]}
-  onChange={(e, val) => handleInputChange({ target: { name: 'preferredIncomeRange', value: val } })}
-  valueLabelDisplay="on"
-  valueLabelFormat={(val) => `${val} L`}
-  min={0}
-  max={100}
-  step={1}
-  className="mt-4"
-/>
-
-
-        </div>
+        <RangeSliderField
+          label="Preferred Annual Income"
+          value={
+            formData.preferredIncomeRange ||
+            [5, 20]
+          }
+          min={0}
+          max={100}
+          step={1}
+          onChange={(value) =>
+            handleInputChange({
+              target: {
+                name:
+                  "preferredIncomeRange",
+                value,
+              },
+            })
+          }
+          formatValue={(value) =>
+            `₹${value} lakh`
+          }
+        />
 
         <div>
           <Label>Preferred Marital Status</Label>

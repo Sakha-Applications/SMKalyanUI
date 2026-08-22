@@ -1,6 +1,10 @@
 
 import React, { useState } from "react";
 import CollapsibleSection from "../../../shared/components/CollapsibleSection";
+
+import {
+  designClasses,
+} from "../../../shared/styles/designTokens";
 import BasicProfile from "./sections/BasicProfile";
 import EducationJobDetails from "./sections/EducationJobDetails";
 import FamilyDetails from "./sections/FamilyDetails";
@@ -218,17 +222,21 @@ fatherProfessionInput, // This will need to come from ProfilePage state
     <div className="flex flex-col justify-center gap-3 pt-6 sm:flex-row">
       <button
         type="button"
-        className="rounded-lg bg-[#002B55] px-6 py-2.5 font-semibold text-white transition hover:bg-[#001f3d] disabled:cursor-not-allowed disabled:opacity-60"
+        className={`rounded-lg px-6 py-2.5 font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${designClasses.primaryButton}`}
         onClick={handleUpdate}
         disabled={loading}
       >
-        {loading ? "Saving..." : "Save Changes"}
+        {loading
+          ? "Saving..."
+          : "Save Changes"}
       </button>
 
       <button
         type="button"
-        className="rounded-lg border border-[#002B55] bg-white px-6 py-2.5 font-semibold text-[#002B55] transition hover:bg-gray-50"
-        onClick={() => setIsEditing(false)}
+        className={`rounded-lg px-6 py-2.5 font-semibold transition ${designClasses.secondaryButton}`}
+        onClick={() =>
+          setIsEditing(false)
+        }
       >
         Cancel
       </button>

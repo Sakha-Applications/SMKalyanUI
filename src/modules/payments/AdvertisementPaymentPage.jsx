@@ -13,6 +13,8 @@ import {
 } from "react-router-dom";
 
 import MemberLayout from "../../shared/layouts/MemberLayout";
+import AdvertisementPreview from "../../shared/components/AdvertisementPreview";
+
 import {
   designClasses,
 } from "../../shared/styles/designTokens";
@@ -378,8 +380,8 @@ final approval.
             className={`mt-1 text-sm ${designClasses.textSecondary}`}
           >
             Review your advertisement
-and submit the payment
-reference for approval.
+            and submit the payment
+            reference for approval.
           </p>
         </section>
 
@@ -392,35 +394,17 @@ reference for approval.
             Advertisement Preview
           </h2>
 
-          <div
-  className={`mt-3 rounded-xl border p-4 ${designClasses.border} ${designClasses.surfaceMuted}`}
->
-  {advertisementDraft?.advertisementHeading && (
-    <div
-      className={`text-lg font-bold ${
-        advertisementDraft.advertisementHeading ===
-        "Looking for a Bride"
-          ? "text-pink-600"
-          : advertisementDraft.advertisementHeading ===
-              "Looking for a Bridegroom"
-            ? "text-blue-700"
-            : designClasses.textPrimary
-      }`}
-    >
-      {
-        advertisementDraft.advertisementHeading
-      }
-    </div>
-  )}
-
-  <p
-    className={`mt-2 text-sm leading-relaxed ${designClasses.textDark}`}
-  >
-    {
-      advertisementDraft?.advertisementText
-    }
-  </p>
-</div>
+          <div className="mt-3">
+            <AdvertisementPreview
+              heading={
+                advertisementDraft?.advertisementHeading
+              }
+              text={
+                advertisementDraft?.advertisementText
+              }
+              muted
+            />
+          </div>
         </section>
 
         <section
@@ -544,43 +528,46 @@ reference for approval.
                 className={`text-sm ${designClasses.textSecondary}`}
               >
                 Your contribution supports
-the maintenance of Kalyana
-Sakha. Submission does not
-publish the advertisement
-immediately; payment and
-advertisement approval are
-required before publication.
+                the maintenance of Kalyana
+                Sakha. Submission does not
+                publish the advertisement
+                immediately; payment and
+                advertisement approval are
+                required before publication.
               </p>
             </div>
 
             {error && (
-              <p className="text-sm text-red-700">
+              <div
+                className={`rounded-xl p-3 text-sm ${designClasses.statusError}`}
+                role="alert"
+              >
                 {error}
-              </p>
+              </div>
             )}
 
             <div className="flex flex-wrap gap-3">
-  <button
-    type="button"
-    onClick={() =>
-      navigate("/make-preferred")
-    }
-    disabled={submitting}
-    className={`rounded-lg border px-5 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${designClasses.border} ${designClasses.textPrimary}`}
-  >
-    Back to Advertisement
-  </button>
+              <button
+                type="button"
+                onClick={() =>
+                  navigate("/make-preferred")
+                }
+                disabled={submitting}
+                className={`rounded-lg px-5 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${designClasses.secondaryButton}`}
+              >
+                Back to Advertisement
+              </button>
 
-  <button
-    type="submit"
-    disabled={submitting}
-    className={`rounded-lg px-5 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${designClasses.primaryButton}`}
-  >
-    {submitting
-      ? "Submitting..."
-      : "Submit for Approval"}
-  </button>
-</div>
+              <button
+                type="submit"
+                disabled={submitting}
+                className={`rounded-lg px-5 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${designClasses.primaryButton}`}
+              >
+                {submitting
+                  ? "Submitting..."
+                  : "Submit for Approval"}
+              </button>
+            </div>
           </form>
         </section>
       </div>

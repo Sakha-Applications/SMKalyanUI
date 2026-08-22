@@ -147,9 +147,9 @@ function App() {
                     }
                 />
 
-                  {/* NEW: Protected Route for Inbox Page */}
+                  {/* Protected Message Box route */}
                 <Route
-                    path="/inbox" // This is the route path for the Inbox tab
+                    path="/inbox"
                     element={
                         <ProtectedRoute>
                             <ConnectionsPage />

@@ -110,4 +110,22 @@ export const designClasses = {
 
   advertisementEditorBody:
     "mt-2 w-full resize-y border-0 bg-transparent p-0 text-[15px] leading-6 text-[#071226] outline-none focus:ring-0",
+
+  fieldLabel:
+    "mb-1 block text-sm font-medium text-[#071226]",
+
+  fieldHelper:
+    "mt-1 text-xs text-[#667085]",
+
+  fieldInlineText:
+    "text-sm text-[#071226]",
+
+  readOnlyField:
+    "w-full cursor-not-allowed bg-[#F7F5F0]",
+
+  formSectionCard:
+    "rounded-xl border border-[#E4E1D9] bg-white p-4",
+
+  formSectionHeading:
+    "mb-4 border-b border-[#E4E1D9] pb-2 text-lg font-semibold text-[#00264D]",
 };

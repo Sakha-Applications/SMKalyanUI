@@ -85,7 +85,7 @@ const HoroscopeDetails = ({
 
                   {/* Date of Birth - Read-only TextField */}
                   <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className={designClasses.fieldLabel}>
                           Date of Birth
                       </label>
                       <TextField
@@ -108,7 +108,7 @@ const HoroscopeDetails = ({
 
                   {/* Time of Birth - Allow modification */}
                   <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className={designClasses.fieldLabel}>
                           Time of Birth *
                       </label>
                       <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -134,12 +134,13 @@ const HoroscopeDetails = ({
 
                   {/* Current Age - Read-only Input, displaying dynamic age */}
                   <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className={designClasses.fieldLabel}>
                           Current Age
                       </label>
                       <I type="text" value=
                       {profileData?.current_age}
-                      readOnly className="w-full bg-gray-100 cursor-not-allowed" />
+                      readOnly
+className={designClasses.readOnlyField} />
                   </div>
                 </div>
 
@@ -157,7 +158,7 @@ const HoroscopeDetails = ({
 
               {/* Gotra Dropdown */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className={designClasses.fieldLabel}>
                   Gotra *
                 </label>
                 <Select
@@ -174,7 +175,7 @@ const HoroscopeDetails = ({
                   ))}
                 </Select>
                 {formData?.gotra && (
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className={designClasses.fieldHelper}>
                     Selected: {formData.gotra.label}
                   </p>
                 )}
@@ -182,7 +183,7 @@ const HoroscopeDetails = ({
 
               {/* Rashi Dropdown */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className={designClasses.fieldLabel}>
                   Rashi *
                 </label>
                 <Select
@@ -199,7 +200,7 @@ const HoroscopeDetails = ({
                   ))}
                 </Select>
                 {formData?.rashi && (
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className={designClasses.fieldHelper}>
                     Selected: {formData.rashi.label}
                   </p>
                 )}
@@ -207,7 +208,7 @@ const HoroscopeDetails = ({
 
               {/* Nakshatra Dropdown */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className={designClasses.fieldLabel}>
                   Nakshatra *
                 </label>
                 <Select
@@ -224,7 +225,7 @@ const HoroscopeDetails = ({
                   ))}
                 </Select>
                 {formData?.nakshatra && (
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className={designClasses.fieldHelper}>
                     Selected: {formData.nakshatra.label}
                   </p>
                 )}
@@ -232,7 +233,7 @@ const HoroscopeDetails = ({
 
               {/* Charana Pada */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className={designClasses.fieldLabel}>
                   Charana Pada
                 </label>
                 <Select
@@ -252,7 +253,7 @@ const HoroscopeDetails = ({
 
               {/* Sub Caste */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className={designClasses.fieldLabel}>
                   Sub Caste
                 </label>
                 <Select
@@ -272,7 +273,7 @@ const HoroscopeDetails = ({
 
               {/* Guru Matha Autocomplete */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className={designClasses.fieldLabel}>
                   Guru Matha
                 </label>
                 <EnhancedAutocomplete
@@ -289,7 +290,7 @@ const HoroscopeDetails = ({
                   placeholder="Type to search Guru Matha..."
                 />
                 {formData?.guruMatha && (
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className={designClasses.fieldHelper}>
                     Selected: {typeof formData.guruMatha === 'object' ? formData.guruMatha.label : formData.guruMatha}
                   </p>
                 )}

@@ -3,6 +3,9 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Typography, Box, Grid } from "@mui/material";
 import profileService from "../../../services/profileService";
+import {
+  designClasses,
+} from "../../../shared/styles/designTokens";
 
 const FALLBACK_DEFAULT_IMAGE_PATH = "/ProfilePhotos/defaultImage.jpg";
 
@@ -83,12 +86,21 @@ const handleCardClick = (profileId) => {
 };
 
   return (
-    <div className="p-6 bg-gray-50 rounded-lg shadow-inner mt-4">
-      <h2 className="text-xl font-semibold text-gray-800 mb-4">Search Results</h2>
+    <div
+      className={`mt-4 rounded-xl p-5 ${designClasses.surfaceMuted}`}
+    >
+      <h2
+        className={`mb-4 text-xl font-semibold ${designClasses.textPrimary}`}
+      >
+        Search Results
+      </h2>
       
       {loadingPhotos && results && results.length > 0 ? (
-        <div className="flex items-center justify-center p-8 text-indigo-800">
-          <svg className="animate-spin h-8 w-8 mr-3 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <div
+          className={`flex items-center justify-center p-8 ${designClasses.textPrimary}`}
+        >
+          <svg
+  className={`mr-3 h-8 w-8 animate-spin ${designClasses.textAccent}`} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
           </svg>
@@ -116,7 +128,7 @@ const imageUrl = getProfilePhotoUrl(currentProfileId);
               >
 <Box
   onClick={() => handleCardClick(currentProfileId)} 
-  className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden"
+  className={`${designClasses.card} overflow-hidden transition hover:shadow-md`}
   sx={{ 
     cursor: 'pointer', 
     display: 'block'
@@ -141,20 +153,24 @@ const imageUrl = getProfilePhotoUrl(currentProfileId);
 
                   {/* Details Section */}
                   <Box sx={{ p: 2 }}>
-                    <Typography variant="h6" component="div" className="font-semibold text-gray-900 mb-1">
+                    <Typography
+  variant="h6"
+  component="div"
+  className={`mb-1 font-semibold ${designClasses.textPrimary}`}
+>
                       {result.name || 'N/A'}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary" className="text-gray-700">
+                    <Typography variant="body2" color="text.secondary" className={designClasses.textSecondary}>
                       <strong>Age:</strong> {result.current_age || 'N/A'}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary" className="text-gray-700">
+                    <Typography variant="body2" color="text.secondary" className={designClasses.textSecondary}>
                       <strong>Height:</strong> {result.height || 'N/A'}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary" className="text-gray-700">
+                    <Typography variant="body2" color="text.secondary" className={designClasses.textSecondary}>
                       <strong>Location:</strong> {result.current_location || 'N/A'}
                     </Typography>
                     {result.gotra && (
-                      <Typography variant="body2" color="text.secondary" className="text-gray-700">
+                      <Typography variant="body2" color="text.secondary" className={designClasses.textSecondary}>
                         <strong>Gotra:</strong> {result.gotra}
                       </Typography>
                     )}
@@ -170,7 +186,12 @@ const imageUrl = getProfilePhotoUrl(currentProfileId);
           })}
         </Grid>
       ) : (
-        <Typography align="center" className="text-gray-700 mt-4">No results found</Typography>
+        <Typography
+  align="center"
+  className={`mt-4 ${designClasses.textSecondary}`}
+>
+  No matching profiles found.
+</Typography>
       )}
       
     </div>

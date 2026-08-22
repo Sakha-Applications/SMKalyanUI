@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Typography, Button, Box } from "@mui/material";
+import { Box } from "@mui/material";
 import SearchResults from "./components/SearchResults";
 import useApiData from "../../hooks/useApiData";
 import searchService from "../../services/searchService";
@@ -10,6 +10,10 @@ import CountryStateCitySelector from "../../shared/common/CountryStateCitySelect
 import MemberLayout from "../../shared/layouts/MemberLayout";
 import CollapsibleSection from "../../shared/components/CollapsibleSection";
 import RangeSliderField from "../../shared/forms/RangeSliderField";
+
+import {
+  designClasses,
+} from "../../shared/styles/designTokens";
 
 import {
   maritalStatusOptions,
@@ -190,8 +194,11 @@ if (myProfileForResolved) {
     myProfileForResolved
   );
 }
-        } catch (e) {
-          
+        } catch (error) {
+          console.error(
+            "Unable to resolve profile type for search:",
+            error
+          );
         }
       }
     }
@@ -261,19 +268,11 @@ if (heightRangeChanged) {
   payload.heightMax = formatHeightForApi(searchQuery.heightRange[1]);
 }
 
-      // âœ… CRITICAL: send logged-in profile id so backend can fetch myProfileFor from DB
+      // Send the logged-in profile ID so the backend can resolve the member profile type.
       payload.myProfileId = myProfileId;
 
       // Keep this for backward compatibility/debug; backend will not rely on it
       payload.myProfileFor = myProfileFor;
-
-      if (!payload.profileFor) {
-        
-      } else {
-        
-      }
-
-      
 
       // Prefer sessionStorage token (your login stores token there)
       const data = heightRangeChanged
@@ -294,14 +293,32 @@ setSearchResults(data);
 };
 
   if (apiDataLoading) {
-    return <Typography>Loading essential search options...</Typography>;
+    return (
+      <MemberLayout>
+        <div
+          className={`${designClasses.card} p-6`}
+        >
+          <p
+            className={`text-sm ${designClasses.textSecondary}`}
+          >
+            Loading search options...
+          </p>
+        </div>
+      </MemberLayout>
+    );
   }
 
   if (apiDataError) {
     return (
-      <Typography color="error">
-        Error loading search options: {apiDataError.message}
-      </Typography>
+      <MemberLayout>
+        <div
+          className={`rounded-xl p-4 text-sm ${designClasses.statusError}`}
+          role="alert"
+        >
+          Error loading search options:{" "}
+          {apiDataError.message}
+        </div>
+      </MemberLayout>
     );
   }
 
@@ -310,24 +327,40 @@ setSearchResults(data);
     <div className="w-full space-y-6">
       
       <section className="py-8">
-        <div className="max-w-5xl mx-auto bg-white shadow-lg rounded-lg overflow-hidden">
-          <div className="border-b border-[#E4E1D9] p-5 sm:p-6">
-  <h1 className="text-2xl font-bold text-[#071226]">
-    Search Profiles
-  </h1>
+        <div
+          className={`mx-auto max-w-5xl overflow-hidden ${designClasses.card}`}
+        >
+          <div
+            className={`border-b p-5 sm:p-6 ${designClasses.border}`}
+          >
+            <h1
+              className={`text-2xl font-bold ${designClasses.textPrimary}`}
+            >
+              Search Profiles
+            </h1>
 
-  <p className="mt-1 text-sm text-[#667085]">
-    Find suitable profiles using your preferred search criteria.
-  </p>
-</div>
+            <p
+              className={`mt-1 text-sm ${designClasses.textSecondary}`}
+            >
+              Find suitable profiles using
+              your preferred search criteria.
+            </p>
+          </div>
 
           <div className="p-6">
   <div className="mb-4">
-    <h2 className="text-lg font-semibold text-[#071226]">
+    <h2
+      className={`text-lg font-semibold ${designClasses.textPrimary}`}
+    >
       Basic Search
     </h2>
-    <p className="mt-1 text-sm text-[#667085]">
-      Start with the most important criteria. Use Advanced Filters only when needed.
+
+    <p
+      className={`mt-1 text-sm ${designClasses.textSecondary}`}
+    >
+      Start with the most important
+      criteria. Use Advanced Filters only
+      when needed.
     </p>
   </div>
 
@@ -398,7 +431,7 @@ setSearchResults(data);
               />
 
               <StyledFormField
-                label="Gotra Other than"
+                label="Exclude Gotra"
                 name="gotra"
                 value={searchQuery.gotra}
                 onChange={handleChange}
@@ -499,20 +532,34 @@ setSearchResults(data);
   </CollapsibleSection>
 </div>
 
-<Box sx={{ display: "flex", justifyContent: "center", mt: 4, gap: 2 }}>
-              <Button variant="outlined" color="secondary" onClick={handleBackToDashboard}>
+            <div className="mt-6 flex flex-wrap justify-center gap-3">
+              <button
+                type="button"
+                onClick={handleBackToDashboard}
+                className={`rounded-lg px-5 py-2.5 text-sm font-semibold transition ${designClasses.secondaryButton}`}
+              >
                 Back to Dashboard
-              </Button>
+              </button>
 
-              <Button variant="contained" color="primary" onClick={handleSearch} disabled={loading}>
-                {loading ? "Searching..." : "Search"}
-              </Button>
-            </Box>
+              <button
+                type="button"
+                onClick={handleSearch}
+                disabled={loading}
+                className={`rounded-lg px-5 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${designClasses.primaryButton}`}
+              >
+                {loading
+                  ? "Searching..."
+                  : "Search Profiles"}
+              </button>
+            </div>
 
             {error && (
-              <Typography color="error" align="center" sx={{ mt: 2 }}>
+              <div
+                className={`mt-4 rounded-xl p-3 text-sm ${designClasses.statusError}`}
+                role="alert"
+              >
                 {error}
-              </Typography>
+              </div>
             )}
 
             <Box sx={{ mt: 4 }}>

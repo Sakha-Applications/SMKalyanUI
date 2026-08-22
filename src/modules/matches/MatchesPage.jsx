@@ -191,14 +191,15 @@ const MatchesPage = () => {
           <h1
             className={`text-xl font-semibold ${designClasses.textPrimary}`}
           >
-            Suggested Matches
+            Matches
           </h1>
 
           <p
             className={`mt-1 text-sm ${designClasses.textSecondary}`}
           >
-            Profiles matching your
-            partner expectations.
+            Explore profiles selected
+            using your partner
+            expectations.
           </p>
         </section>
 

@@ -6,6 +6,9 @@ import GeographicPreferences from "./sections/GeographicPreferences";
 
 import CollapsibleSection from "../../../shared/components/CollapsibleSection";
 
+import {
+  designClasses,
+} from "../../../shared/styles/designTokens";
 
 const EditMode = ({
   profileData,
@@ -113,10 +116,12 @@ const EditMode = ({
           dietOptions={dietOptions}
         />
       </CollapsibleSection>
-      <div className="flex flex-col justify-end gap-3 border-t border-gray-200 pt-6 sm:flex-row">
+      <div
+  className={`flex flex-col justify-end gap-3 border-t pt-6 sm:flex-row ${designClasses.border}`}
+>
         <button
           type="button"
-          className="rounded-lg border border-[#00264D] bg-white px-6 py-2.5 font-semibold text-[#00264D] transition hover:bg-gray-50"
+          className={`rounded-lg px-6 py-2.5 font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${designClasses.secondaryButton}`}
           onClick={() => setIsEditing(false)}
           disabled={loading}
         >
@@ -125,7 +130,7 @@ const EditMode = ({
 
         <button
           type="button"
-          className="rounded-lg bg-[#00264D] px-6 py-2.5 font-semibold text-white transition hover:bg-[#001D3D] disabled:cursor-not-allowed disabled:opacity-60"
+          className={`rounded-lg px-6 py-2.5 font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${designClasses.primaryButton}`}
           onClick={handleUpdate}
           disabled={loading}
         >

@@ -1,8 +1,13 @@
 import React from 'react';
 import MultiSelectCheckbox from "../../../../shared/common/MultiSelectCheckbox";
-import { RadioGroup } from "../../../../shared/common/FormElements";
-import { Label } from "../../../../shared/common/FormElements"
-import { formatDisplayValue, formatSelectedValues,normalizeDisplayArray } from '../helpers/utils';
+import {
+  formatSelectedValues,
+  normalizeDisplayArray,
+} from "../helpers/utils";
+
+import {
+  designClasses,
+} from "../../../../shared/styles/designTokens";
 
 const CulturalPreferences = ({
   mode = 'view',
@@ -19,17 +24,11 @@ const CulturalPreferences = ({
   setGuruMathaInput = () => {},
   guruMathaLoading = false
 }) => {
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
   const handleMultiChange = (name, values) => {
     setFormData((prev) => ({ ...prev, [name]: values.map(v => v.label || v.value || v) }));
   };
 
   if (mode === 'view') {
-    console.log("Ã°Å¸â€˜â‚¬ profileData.preferred_gotras:", profileData.preferred_gotras);
     return (
       <section>
        <div className="space-y-6">
@@ -41,9 +40,9 @@ const CulturalPreferences = ({
             { label: "Rashi", field: "preferred_rashis" },
            
           ].map(({ label, field }) => (
-            <div key={field} className="bg-gray-50 p-4 rounded-lg">
-              <h4 className="font-semibold text-gray-700 mb-2">{label}</h4>
-              <p className="text-gray-600">
+            <div key={field} className={`rounded-lg p-4 ${designClasses.surfaceMuted}`}>
+              <h4 className={`mb-2 font-semibold ${designClasses.textPrimary}`}>{label}</h4>
+              <p className={designClasses.textSecondary}>
   {normalizeDisplayArray(profileData[field])}
 </p>
 
@@ -56,9 +55,11 @@ const CulturalPreferences = ({
 
   return (
     <section>
-      <h2 className="text-xl font-semibold text-indigo-600 mb-6 pb-2 border-b border-indigo-200">
-        Cultural & Spiritual Expectations
-      </h2>
+      <h2
+  className={designClasses.formSectionHeading}
+>
+  Cultural & Spiritual Expectations
+</h2>
       <div className="space-y-6">
 <MultiSelectCheckbox
   label="Preferred Sub Caste"

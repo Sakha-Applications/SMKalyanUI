@@ -40,7 +40,7 @@ const ReferencesSection = ({
               <div>
                 <label
                   htmlFor="reference1Name"
-                  className="mb-1 block text-sm font-medium text-gray-700"
+                  className={designClasses.fieldLabel}
                 >
                   Reference 1 Name
                 </label>
@@ -57,7 +57,7 @@ const ReferencesSection = ({
               <div>
                 <label
                   htmlFor="reference1PhoneNumber"
-                  className="mb-1 block text-sm font-medium text-gray-700"
+                  className={designClasses.fieldLabel}
                 >
                   Reference 1 Phone
                 </label>
@@ -111,7 +111,7 @@ const ReferencesSection = ({
               <div>
                 <label
                   htmlFor="reference2Name"
-                  className="mb-1 block text-sm font-medium text-gray-700"
+                  className={designClasses.fieldLabel}
                 >
                   Reference 2 Name
                 </label>
@@ -128,7 +128,7 @@ const ReferencesSection = ({
               <div>
                 <label
                   htmlFor="reference2PhoneNumber"
-                  className="mb-1 block text-sm font-medium text-gray-700"
+                  className={designClasses.fieldLabel}
                 >
                   Reference 2 Phone
                 </label>

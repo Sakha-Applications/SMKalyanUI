@@ -1,15 +1,28 @@
 import React, { useState, useEffect } from "react";
-import { Input, Select, TextArea } from "../../../../shared/common/FormElements";
+import { Input } from "../../../../shared/common/FormElements";
 import CountryStateCitySelector from "../../../../shared/common/CountryStateCitySelector"; // For Communication & Residence Address
 import { phoneCountryCodeOptions } from "../../../../shared/config/phoneOptions"; // For phone number country codes
 import { MenuItem, TextField } from '@mui/material'; // For Material-UI Select/TextField for country codes
-import { Country, State } from 'country-state-city'; // For converting ISO codes to names in view mode
+import { Country, State } from "country-state-city";
+
+import {
+  designClasses,
+} from "../../../../shared/styles/designTokens";
 
 
 const DataRow = ({ label, value }) => (
-  <div className="bg-gray-50 p-4 rounded-lg">
-    <p className="text-gray-700">
-      <span className="font-semibold">{label}:</span> {value || '-'}
+  <div
+    className={`rounded-lg p-4 ${designClasses.surfaceMuted}`}
+  >
+    <p
+      className={`text-sm ${designClasses.textSecondary}`}
+    >
+      <span
+        className={`font-semibold ${designClasses.textPrimary}`}
+      >
+        {label}:
+      </span>{" "}
+      {value || "-"}
     </p>
   </div>
 );
@@ -84,7 +97,7 @@ const AddressDetails = ({ profileData, formData = {}, setFormData, mode = "view"
     setCopyChecked(checked);
 
     if (checked) {
-      // ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ Step 1: Update residence fields from communication fields
+      // Copy communication address into residence address.
       setFormData((prev) => ({
         ...prev,
         residenceHouseNo: prev.communicationHouseNo || '',
@@ -103,11 +116,17 @@ const AddressDetails = ({ profileData, formData = {}, setFormData, mode = "view"
 
   return (
     <section className="mb-8">
-      <h2 className="text-xl font-semibold text-indigo-600 mb-4 border-b pb-2 border-indigo-200">
-        Contact & Address Details
-      </h2>
-      <div className="mb-8 p-4 border border-gray-200 rounded-lg shadow-sm bg-white">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4 border-b pb-2 border-gray-300">Contact Information</h3>
+      <h2
+  className={`mb-4 border-b pb-2 text-xl font-semibold ${designClasses.border} ${designClasses.textPrimary}`}
+>
+  Contact & Address Details
+</h2>
+      <div className={`mb-8 ${designClasses.formSectionCard}`}>
+        <h3
+  className={`mb-4 border-b pb-2 text-lg font-semibold ${designClasses.border} ${designClasses.textPrimary}`}
+>
+  Contact Information
+</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {mode === "edit" ? (
             <>
@@ -116,7 +135,7 @@ const AddressDetails = ({ profileData, formData = {}, setFormData, mode = "view"
 
                {/* Phone Number - THIS IS THE SECTION TO CHANGE */}
               <div>
-                <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                <label htmlFor="phoneNumber" className={designClasses.fieldLabel}>Phone Number</label>
                 <div className="flex space-x-2 w-full">
                   {/* Phone Country Code (already made read-only in previous step) */}
                   <TextField
@@ -160,7 +179,7 @@ const AddressDetails = ({ profileData, formData = {}, setFormData, mode = "view"
 
               {/* Alternate Phone */}
               <div>
-                <label htmlFor="alternatePhoneNumber" className="block text-sm font-medium text-gray-700 mb-1">Alternate Phone</label>
+                <label htmlFor="alternatePhoneNumber" className={designClasses.fieldLabel}>Alternate Phone</label>
                 <div className="flex space-x-2 w-full">
                   <TextField
                     select
@@ -195,7 +214,7 @@ const AddressDetails = ({ profileData, formData = {}, setFormData, mode = "view"
 
               {/* Guardian Phone */}
               <div>
-                <label htmlFor="guardianPhoneNumber" className="block text-sm font-medium text-gray-700 mb-1">Guardian Phone</label>
+                <label htmlFor="guardianPhoneNumber" className={designClasses.fieldLabel}>Guardian Phone</label>
                 <div className="flex space-x-2 w-full">
                   <TextField
                     select
@@ -243,25 +262,31 @@ const AddressDetails = ({ profileData, formData = {}, setFormData, mode = "view"
       </div>
 
       {/* Communication Address Section */}
-      <div className="mb-8 p-4 border border-gray-200 rounded-lg shadow-sm bg-white">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4 border-b pb-2 border-gray-300">Communication Address</h3>
+      <div
+  className={`mb-8 rounded-lg border p-4 ${designClasses.border} ${designClasses.surface}`}
+>
+        <h3
+  className={designClasses.formSectionHeading}
+>
+  Communication Address
+</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {mode === "edit" ? (
             <>
               <div>
-                <label htmlFor="communicationHouseNo" className="block text-sm font-medium text-gray-700 mb-1">House No</label>
+                <label htmlFor="communicationHouseNo" className={designClasses.fieldLabel}>House No</label>
                 <Input name="communicationHouseNo" value={formData.communicationHouseNo || ''} onChange={handleChange} />
               </div>
               <div>
-                <label htmlFor="communicationStreet" className="block text-sm font-medium text-gray-700 mb-1">Street</label>
+                <label htmlFor="communicationStreet" className={designClasses.fieldLabel}>Street</label>
                 <Input name="communicationStreet" value={formData.communicationStreet || ''} onChange={handleChange} />
               </div>
               <div>
-                <label htmlFor="communicationArea" className="block text-sm font-medium text-gray-700 mb-1">Area</label>
+                <label htmlFor="communicationArea" className={designClasses.fieldLabel}>Area</label>
                 <Input name="communicationArea" value={formData.communicationArea || ''} onChange={handleChange} />
               </div>
               <div>
-                <label htmlFor="communicationPIN" className="block text-sm font-medium text-gray-700 mb-1">PIN Code</label>
+                <label htmlFor="communicationPIN" className={designClasses.fieldLabel}>PIN Code</label>
                 <Input name="communicationPIN" value={formData.communicationPIN || ''} onChange={handleChange} />
               </div>
               <div className="md:col-span-2">
@@ -297,8 +322,12 @@ const AddressDetails = ({ profileData, formData = {}, setFormData, mode = "view"
       </div>
 
       {/* Residence Address Section */}
-      <div className="mb-8 p-4 border border-gray-200 rounded-lg shadow-sm bg-white">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4 border-b pb-2 border-gray-300">Residence Address</h3>
+      <div className={`mb-8 ${designClasses.formSectionCard}`}>
+        <h3
+  className={designClasses.formSectionHeading}
+>
+  Residence Address
+</h3>
         {mode === "edit" && (
           <div className="flex items-center space-x-2 mb-4">
             <input
@@ -306,9 +335,12 @@ const AddressDetails = ({ profileData, formData = {}, setFormData, mode = "view"
               id="copyResidenceAddress"
               checked={copyChecked}
               onChange={handleCopyAddress}
-              className="form-checkbox h-4 w-4 text-indigo-600 transition duration-150 ease-in-out"
+              className={`form-checkbox h-4 w-4 transition duration-150 ease-in-out ${designClasses.textAccent}`}
             />
-            <label htmlFor="copyResidenceAddress" className="text-sm text-gray-700">
+            <label
+  htmlFor="copyResidenceAddress"
+  className={designClasses.fieldInlineText}
+>
               Copy from Communication Address if residence address is same
             </label>
           </div>
@@ -318,19 +350,19 @@ const AddressDetails = ({ profileData, formData = {}, setFormData, mode = "view"
           {mode === "edit" ? (
             <>
               <div>
-                <label htmlFor="residenceHouseNo" className="block text-sm font-medium text-gray-700 mb-1">House No</label>
+                <label htmlFor="residenceHouseNo" className={designClasses.fieldLabel}>House No</label>
                 <Input name="residenceHouseNo" value={formData.residenceHouseNo || ''} onChange={handleChange} />
               </div>
               <div>
-                <label htmlFor="residenceStreet" className="block text-sm font-medium text-gray-700 mb-1">Street</label>
+                <label htmlFor="residenceStreet" className={designClasses.fieldLabel}>Street</label>
                 <Input name="residenceStreet" value={formData.residenceStreet || ''} onChange={handleChange} />
               </div>
               <div>
-                <label htmlFor="residenceArea" className="block text-sm font-medium text-gray-700 mb-1">Area</label>
+                <label htmlFor="residenceArea" className={designClasses.fieldLabel}>Area</label>
                 <Input name="residenceArea" value={formData.residenceArea || ''} onChange={handleChange} />
               </div>
               <div>
-                <label htmlFor="residencePIN" className="block text-sm font-medium text-gray-700 mb-1">PIN Code</label>
+                <label htmlFor="residencePIN" className={designClasses.fieldLabel}>PIN Code</label>
                 <Input name="residencePIN" value={formData.residencePIN || ''} onChange={handleChange} />
               </div>
               <div className="md:col-span-2">

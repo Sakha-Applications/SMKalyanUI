@@ -338,11 +338,10 @@ const RegistrationFeePaymentPage = () => {
 
         {memberError && (
           <section
-            className={`${designClasses.card} p-5`}
+            className={`rounded-xl p-4 text-sm ${designClasses.statusError}`}
+            role="alert"
           >
-            <p className="text-sm text-red-700">
-              {memberError}
-            </p>
+            {memberError}
           </section>
         )}
 
@@ -514,9 +513,12 @@ const RegistrationFeePaymentPage = () => {
             </div>
 
             {submitError && (
-              <p className="text-sm text-red-700">
+              <div
+                className={`rounded-xl p-3 text-sm ${designClasses.statusError}`}
+                role="alert"
+              >
                 {submitError}
-              </p>
+              </div>
             )}
 
             <button

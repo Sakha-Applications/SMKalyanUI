@@ -1,10 +1,13 @@
 import React from 'react';
 import MultiSelectCheckbox from '../../../../shared/common/MultiSelectCheckbox';
 import MultiCountrySelector from '../../../../shared/common/MultiCountrySelector';
-import { RadioGroup } from '../../../../shared/common/FormElements';
-import { Label } from '../../../../shared/common/FormElements';
-import { formatDisplayValue, formatSelectedValues, normalizeDisplayArray } from '../helpers/utils';
-
+import {
+  formatSelectedValues,
+  normalizeDisplayArray,
+} from "../helpers/utils";
+import {
+  designClasses,
+} from "../../../../shared/styles/designTokens";
 import MultiCountryStateCitySelector from '../../../../shared/common/MultiCountryStateCitySelector';
 import FullWidthHobbiesGrid from '../../../../shared/components/FullWidthHobbiesGrid';
 
@@ -14,18 +17,13 @@ const GeographicPreferences = ({
   profileData = {},
   formData = {},
   setFormData = () => {},
-  editModeActive,  // Ã¢Å“â€¦ Fixed here
+  editModeActive,
   professionOptions = [],
   professionInput = '',
   setProfessionInput = () => {},
   professionLoading = false,
   dietOptions = []
 }) => {
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
   const handleMultiChange = (name, values) => {
     setFormData((prev) => ({
       ...prev,
@@ -48,7 +46,6 @@ const GeographicPreferences = ({
 
 
   if (mode === 'view') {
-    console.log("Ã°Å¸â€˜â‚¬ profileData.preferred_gotras:", profileData.preferred_gotras);
     return (
       <section>
         
@@ -61,9 +58,9 @@ const GeographicPreferences = ({
 { label: "Preferred Diet", field: "preferred_diet" },
 { label: "Preferred Hobbies", field: "preferred_hobbies" },
           ].map(({ label, field }) => (
-            <div key={field} className="bg-gray-50 p-4 rounded-lg">
-              <h4 className="font-semibold text-gray-700 mb-2">{label}</h4>
-              <p className="text-gray-600">{normalizeDisplayArray(profileData[field], field)}</p>
+            <div key={field} className={`rounded-lg p-4 ${designClasses.surfaceMuted}`}>
+              <h4 className={`mb-2 font-semibold ${designClasses.textPrimary}`}>{label}</h4>
+              <p className={designClasses.textSecondary}>{normalizeDisplayArray(profileData[field], field)}</p>
 
             </div>
           ))}
@@ -74,9 +71,11 @@ const GeographicPreferences = ({
 
   return (
     <section>
-      <h2 className="text-xl font-semibold text-indigo-600 mb-6 pb-2 border-b border-indigo-200">
-        Geographic & Lifestyle Expectations
-      </h2>
+      <h2
+  className={designClasses.formSectionHeading}
+>
+  Geographic & Lifestyle Expectations
+</h2>
       <div className="space-y-6">
 
 <MultiCountrySelector

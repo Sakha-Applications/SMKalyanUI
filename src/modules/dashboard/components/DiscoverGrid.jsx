@@ -57,31 +57,33 @@ const DiscoverGrid = () => {
         setError("");
 
         const data =
-  await dashboardDiscoveryService.getDiscoverySummary();
+          await dashboardDiscoveryService.getDiscoverySummary();
 
-if (!active) return;
+        if (!active) {
+          return;
+        }
 
-setCounts({
-  RECENT: Number(
-    data?.recentlyJoined ?? 0
-  ),
+        setCounts({
+          RECENT: Number(
+            data?.recentlyJoined ?? 0
+          ),
 
-  SAME_CITY: Number(
-    data?.sameCity ?? 0
-  ),
+          SAME_CITY: Number(
+            data?.sameCity ?? 0
+          ),
 
-  SAME_MOTHER_TONGUE: Number(
-    data?.sameMotherTongue ?? 0
-  ),
+          SAME_MOTHER_TONGUE: Number(
+            data?.sameMotherTongue ?? 0
+          ),
 
-  GOTRA: Number(
-    data?.compatibleGotra ?? 0
-  ),
+          GOTRA: Number(
+            data?.compatibleGotra ?? 0
+          ),
 
-  INTERNATIONAL: Number(
-    data?.international ?? 0
-  ),
-});
+          INTERNATIONAL: Number(
+            data?.international ?? 0
+          ),
+        });
       } catch (err) {
         console.error(
           "[DiscoverGrid] Failed to load discovery counts:",
@@ -124,7 +126,9 @@ setCounts({
       </div>
 
       {error && (
-        <div className="mb-3 text-sm text-red-600">
+        <div
+          className={`mb-3 rounded-lg border px-3 py-2 text-sm ${designClasses.statusError}`}
+        >
           {error}
         </div>
       )}
@@ -132,39 +136,39 @@ setCounts({
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {discoveryItems.map((item) => (
           <button
-  key={item.type}
-  type="button"
-  onClick={() => {
-    if (item.path) {
-      navigate(item.path);
-    }
-  }}
-  className={`${designClasses.surface} ${designClasses.border} rounded-xl border px-4 py-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md`}
->
-  <div className="flex items-center justify-between gap-3">
-    <div
-      className={`text-sm font-semibold ${designClasses.textPrimary}`}
-    >
-      {item.label}
-    </div>
+            key={item.type}
+            type="button"
+            onClick={() => {
+              if (item.path) {
+                navigate(item.path);
+              }
+            }}
+            className={`${designClasses.card} px-4 py-3 text-left transition hover:-translate-y-0.5 hover:shadow-md`}
+          >
+            <div className="flex items-center justify-between gap-3">
+              <div
+                className={`text-sm font-semibold ${designClasses.textPrimary}`}
+              >
+                {item.label}
+              </div>
 
-    <div
-      className={`shrink-0 text-lg font-semibold ${designClasses.textPrimary}`}
-    >
-      {item.browseOnly
-        ? "Browse"
-        : loading
-          ? "—"
-          : counts[item.type] ?? 0}
-    </div>
-  </div>
+              <div
+                className={`shrink-0 text-lg font-semibold ${designClasses.textPrimary}`}
+              >
+                {item.browseOnly
+                  ? "Browse"
+                  : loading
+                    ? "—"
+                    : counts[item.type] ?? 0}
+              </div>
+            </div>
 
-  <div
-    className={`mt-1 text-xs leading-5 ${designClasses.textSecondary}`}
-  >
-    {item.description}
-  </div>
-</button>
+            <div
+              className={`mt-1 text-xs leading-5 ${designClasses.textSecondary}`}
+            >
+              {item.description}
+            </div>
+          </button>
         ))}
       </div>
     </section>

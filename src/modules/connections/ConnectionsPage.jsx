@@ -38,8 +38,27 @@ const formatDate = (value) => {
 };
 
 const InvitationStatus = ({ status }) => {
+  const normalizedStatus =
+    normalizeStatus(status);
+
   const label =
-    normalizeStatus(status) || "UNKNOWN";
+    normalizedStatus === "PENDING"
+      ? "Pending"
+      : normalizedStatus === "ACCEPTED"
+        ? "Accepted"
+        : normalizedStatus === "REJECTED"
+          ? "Not Proceeding"
+          : normalizedStatus === "DECLINED"
+            ? "Not Proceeding"
+            : normalizedStatus
+              ? normalizedStatus
+                  .toLowerCase()
+                  .replace(
+                    /\b\w/g,
+                    (character) =>
+                      character.toUpperCase()
+                  )
+              : "Status unavailable";
 
   return (
     <span
@@ -67,8 +86,8 @@ const InvitationCard = ({
     : invitation.invitee_name;
 
   const directionLabel = received
-    ? "From"
-    : "To";
+    ? "Interest from"
+    : "Interest sent to";
 
   const message =
     invitation.inviter_message ||
@@ -221,7 +240,9 @@ const ConnectionsPage = () => {
           profileResponse?.profileStatus ||
           currentProfile?.profile_status ||
           currentProfile?.profileStatus ||
-          profileStatus ||
+          sessionStorage.getItem(
+            "profileStatus"
+          ) ||
           "";
 
         setProfileData(currentProfile);
@@ -324,7 +345,6 @@ const ConnectionsPage = () => {
   }, [
     profileId,
     navigate,
-    profileStatus,
   ]);
 
   const normalizedProfileStatus =
@@ -356,7 +376,7 @@ const ConnectionsPage = () => {
           <p
             className={`text-sm ${designClasses.textSecondary}`}
           >
-            Loading Message Box...
+            Loading Message Box…
           </p>
         </div>
       </MemberLayout>
@@ -397,8 +417,9 @@ const ConnectionsPage = () => {
               <p
                 className={`mt-1 text-sm ${designClasses.textSecondary}`}
               >
-                Review received and sent
-                connection requests.
+                Review interests received
+                from members and interests
+                you have sent.
               </p>
             </div>
 
@@ -432,22 +453,21 @@ const ConnectionsPage = () => {
                 <h2
                   className={`text-lg font-semibold ${designClasses.textDark}`}
                 >
-                  Received
+                  Received Interests
                 </h2>
 
                 <p
                   className={`mt-1 text-sm ${designClasses.textSecondary}`}
                 >
-                  Connection requests
-                  received from other
-                  members.
+                  Interests received from
+                  other members.
                 </p>
               </div>
 
               <div className="space-y-3">
                 {receivedInvitations.length ===
                 0 ? (
-                  <EmptyState message="You have no received connection requests at the moment." />
+                  <EmptyState message="You have no received interests at the moment." />
                 ) : (
                   receivedInvitations.map(
                     (invitation) => (
@@ -476,22 +496,21 @@ const ConnectionsPage = () => {
                 <h2
                   className={`text-lg font-semibold ${designClasses.textDark}`}
                 >
-                  Sent
+                  Sent Interests
                 </h2>
 
                 <p
                   className={`mt-1 text-sm ${designClasses.textSecondary}`}
                 >
-                  Connection requests
-                  you have sent to other
-                  members.
+                  Interests you have sent
+                  to other members.
                 </p>
               </div>
 
               <div className="space-y-3">
                 {sentInvitations.length ===
                 0 ? (
-                  <EmptyState message="You have not sent any connection requests yet." />
+                  <EmptyState message="You have not sent any interests yet." />
                 ) : (
                   sentInvitations.map(
                     (invitation) => (

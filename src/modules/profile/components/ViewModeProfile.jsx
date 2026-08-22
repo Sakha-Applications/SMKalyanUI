@@ -3,6 +3,10 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import CollapsibleSection from "../../../shared/components/CollapsibleSection";
 
+import {
+  designClasses,
+} from "../../../shared/styles/designTokens";
+
 import BasicProfile from "./sections/BasicProfile";
 import AddressDetails from "./sections/AddressDetails";
 import EducationJobDetails from "./sections/EducationJobDetails";
@@ -90,24 +94,27 @@ const ViewModeProfile = ({
   </CollapsibleSection>
 </div>
 
-      {/* Action Buttons */}
       <div className="flex flex-col justify-center gap-3 pt-6 sm:flex-row">
-  <button
-    type="button"
-    className="rounded-lg bg-[#002B55] px-6 py-2.5 font-semibold text-white transition hover:bg-[#001f3d]"
-    onClick={() => setIsEditing(true)}
-  >
-    Ã¢Å“ÂÃ¯Â¸Â Edit Your Profile
-  </button>
+        <button
+          type="button"
+          className={`rounded-lg px-6 py-2.5 font-semibold transition ${designClasses.primaryButton}`}
+          onClick={() =>
+            setIsEditing(true)
+          }
+        >
+          Edit Profile
+        </button>
 
-  <button
-    type="button"
-    className="rounded-lg border border-[#002B55] bg-white px-6 py-2.5 font-semibold text-[#002B55] transition hover:bg-gray-50"
-    onClick={() => navigate("/dashboard")}
-  >
-     Ã¢ÂÅ’ Back to Dashboard
-  </button>
-</div>
+        <button
+          type="button"
+          className={`rounded-lg px-6 py-2.5 font-semibold transition ${designClasses.secondaryButton}`}
+          onClick={() =>
+            navigate("/dashboard")
+          }
+        >
+          Back to Dashboard
+        </button>
+      </div>
     </div>
   );
 };

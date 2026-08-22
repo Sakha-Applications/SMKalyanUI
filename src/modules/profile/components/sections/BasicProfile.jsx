@@ -5,10 +5,23 @@ import EnhancedAutocomplete from "../helpers/EnhancedAutocomplete";
 import { Country, State } from "country-state-city";
 import FullWidthHobbiesGrid from "../../../../shared/components/FullWidthHobbiesGrid";
 
+import {
+  designClasses,
+} from "../../../../shared/styles/designTokens";
+
 const DataRow = ({ label, value }) => (
-  <div className="bg-gray-50 p-4 rounded-lg">
-    <p className="text-gray-700">
-      <span className="font-semibold">{label}:</span> {value || "-"}
+  <div
+    className={`rounded-lg p-4 ${designClasses.surfaceMuted}`}
+  >
+    <p
+      className={`text-sm ${designClasses.textSecondary}`}
+    >
+      <span
+        className={`font-semibold ${designClasses.textPrimary}`}
+      >
+        {label}:
+      </span>{" "}
+      {value || "-"}
     </p>
   </div>
 );
@@ -106,7 +119,7 @@ const BasicProfile = ({
                 <div>
                   <label
                     htmlFor="howDidYouKnow"
-                    className="block text-sm font-medium text-gray-700 mb-1"
+                    className={`mb-1 block text-sm font-medium ${designClasses.textPrimary}`}
                   >
                     How Did You Know
                   </label>
@@ -127,31 +140,39 @@ const BasicProfile = ({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className={`mb-1 block text-sm font-medium ${designClasses.textPrimary}`}>
                     Share Details on Platform
                   </label>
                   <div className="flex items-center space-x-4">
                     <label className="inline-flex items-center">
                       <input
                         type="radio"
-                        className="form-radio h-4 w-4 text-indigo-600"
+                        className={`form-radio h-4 w-4 ${designClasses.textAccent}`}
                         name="shareDetailsOnPlatform"
                         value="Yes"
                         checked={formData?.shareDetailsOnPlatform === "Yes"}
                         onChange={handleChange}
                       />
-                      <span className="ml-2 text-gray-700">Yes</span>
+                      <span
+  className={`ml-2 ${designClasses.textDark}`}
+>
+  Yes
+</span>
                     </label>
                     <label className="inline-flex items-center">
                       <input
                         type="radio"
-                        className="form-radio h-4 w-4 text-indigo-600"
+                        className={`form-radio h-4 w-4 ${designClasses.textAccent}`}
                         name="shareDetailsOnPlatform"
                         value="No"
                         checked={formData?.shareDetailsOnPlatform === "No"}
                         onChange={handleChange}
                       />
-                      <span className="ml-2 text-gray-700">No</span>
+                      <span
+  className={`ml-2 ${designClasses.textDark}`}
+>
+  No
+</span>
                     </label>
                   </div>
                 </div>
@@ -261,7 +282,7 @@ const BasicProfile = ({
               <div>
                 <label
                   htmlFor="motherTongue"
-                  className="block text-sm font-medium text-gray-700 mb-1"
+                  className={`mb-1 block text-sm font-medium ${designClasses.textPrimary}`}
                 >
                   Mother Tongue
                 </label>
@@ -284,7 +305,7 @@ const BasicProfile = ({
               <div>
                 <label
                   htmlFor="marriedStatus"
-                  className="block text-sm font-medium text-gray-700 mb-1"
+                  className={`mb-1 block text-sm font-medium ${designClasses.textPrimary}`}
                 >
                   Married Status
                 </label>
@@ -306,7 +327,7 @@ const BasicProfile = ({
 
               {/* Height */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className={`mb-1 block text-sm font-medium ${designClasses.textPrimary}`}>
                   Height
                 </label>
                 <div className="flex space-x-2">
@@ -343,7 +364,7 @@ const BasicProfile = ({
               <div>
                 <label
                   htmlFor="profileCategory"
-                  className="block text-sm font-medium text-gray-700 mb-1"
+                  className={`mb-1 block text-sm font-medium ${designClasses.textPrimary}`}
                 >
                   Bride/Groom Category
                 </label>
@@ -361,7 +382,7 @@ const BasicProfile = ({
                 </Select>
               </div>
 
-              {/* Hobbies ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“ now using FullWidthHobbiesGrid */}
+              {/* Hobbies now use the shared FullWidthHobbiesGrid. */}
               <FullWidthHobbiesGrid
                 label="Hobbies"
                 fieldName="hobbies"
@@ -373,7 +394,7 @@ const BasicProfile = ({
               <div className="md:col-span-2">
                 <label
                   htmlFor="aboutBrideGroom"
-                  className="block text-sm font-medium text-gray-700 mb-1"
+                  className={`mb-1 block text-sm font-medium ${designClasses.textPrimary}`}
                 >
                   About Bride/Groom
                 </label>

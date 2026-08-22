@@ -33,7 +33,7 @@ export const normalizeDisplayArray = (arr, fieldName = "") => {
 
     return values.length ? values.join(", ") : "-";
   } catch (err) {
-    console.error("Ã°Å¸â€ºâ€˜ normalizeDisplayArray error:", err);
+    console.error("normalizeDisplayArray error:", err);
     return "-";
   }
 };

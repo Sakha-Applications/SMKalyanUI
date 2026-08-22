@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import { Input, Select } from "../../../../shared/common/FormElements";
 import EnhancedAutocomplete from "../helpers/EnhancedAutocomplete";
 import { designClasses } from "../../../../shared/styles/designTokens";
@@ -137,7 +137,7 @@ const FamilyDetails = ({
             <>
               {/* Father's Name */}
               <div>
-                <label htmlFor="fatherName" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="fatherName" className={designClasses.fieldLabel}>
                   Father's Name
                 </label>
                 <Input
@@ -150,7 +150,7 @@ const FamilyDetails = ({
 
               {/* Father's Profession - Enhanced Autocomplete */}
               <div>
-                <label htmlFor="fatherProfession" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="fatherProfession" className={designClasses.fieldLabel}>
                   Father's Profession
                 </label>
                 <EnhancedAutocomplete
@@ -171,7 +171,7 @@ const FamilyDetails = ({
 
               {/* Mother's Name */}
               <div>
-                <label htmlFor="motherName" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="motherName" className={designClasses.fieldLabel}>
                   Mother's Name
                 </label>
                 <Input
@@ -184,7 +184,7 @@ const FamilyDetails = ({
 
               {/* Mother's Profession - Enhanced Autocomplete */}
               <div>
-                <label htmlFor="motherProfession" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="motherProfession" className={designClasses.fieldLabel}>
                   Mother's Profession
                 </label>
                 <EnhancedAutocomplete
@@ -205,7 +205,7 @@ const FamilyDetails = ({
 
               {/* No. of Brothers */}
               <div>
-                <label htmlFor="noOfBrothers" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="noOfBrothers" className={designClasses.fieldLabel}>
                   No. of Brothers
                 </label>
                 <Select name="noOfBrothers" value={formData?.noOfBrothers || ''} onChange={handleChange} className="w-full">
@@ -222,7 +222,7 @@ const FamilyDetails = ({
 
               {/* No. of Sisters */}
               <div>
-                <label htmlFor="noOfSisters" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="noOfSisters" className={designClasses.fieldLabel}>
                   No. of Sisters
                 </label>
                 <Select name="noOfSisters" value={formData?.noOfSisters || ''} onChange={handleChange} className="w-full">
@@ -239,7 +239,7 @@ const FamilyDetails = ({
 
               {/* Family Status */}
               <div>
-                <label htmlFor="familyStatus" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="familyStatus" className={designClasses.fieldLabel}>
                   Family Status
                 </label>
                 <Select name="familyStatus" value={formData?.familyStatus || ''} onChange={handleChange} className="w-full">
@@ -253,7 +253,7 @@ const FamilyDetails = ({
 
               {/* Family Type */}
               <div>
-                <label htmlFor="familyType" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="familyType" className={designClasses.fieldLabel}>
                   Family Type
                 </label>
                 <Select name="familyType" value={formData?.familyType || ''} onChange={handleChange} className="w-full">
@@ -266,7 +266,7 @@ const FamilyDetails = ({
 
               {/* Family Values */}
               <div>
-                <label htmlFor="familyValues" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="familyValues" className={designClasses.fieldLabel}>
                   Family Values
                 </label>
                 <Select name="familyValues" value={formData?.familyValues || ''} onChange={handleChange} className="w-full">

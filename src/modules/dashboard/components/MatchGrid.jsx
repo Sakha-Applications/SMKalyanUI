@@ -1,19 +1,18 @@
-// src/components/dashboard/MatchGrid.jsx
-// This file functionally acts as the "Matches" component.
+// Shared match-results grid used by Dashboard and Matches.
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Typography, Box } from '@mui/material';
+import {
+  designClasses,
+} from "../../../shared/styles/designTokens";
 import { useNavigate } from 'react-router-dom';
 import profileService from "../../../services/profileService";
 import dashboardDiscoveryService from "../../../services/dashboardDiscoveryService";
 
-// --- NEW IMPORTS ---
-import ProfileCard from './ProfileCard/ProfileCard';
-import styles from './MatchGrid.module.css';
-// --- END NEW IMPORTS ---
+import ProfileCard from "./ProfileCard/ProfileCard";
+import styles from "./MatchGrid.module.css";
 
 const FALLBACK_DEFAULT_IMAGE_PATH = '/ProfilePhotos/defaultImage.jpg';
-const VISIBLE_COUNT = 20; // Step-1: prevent loading too many profiles/photos at once
+const VISIBLE_COUNT = 20;
 
 const Matches = ({ profileId }) => {
   const navigate = useNavigate();
@@ -27,24 +26,36 @@ const Matches = ({ profileId }) => {
   const [profilePhotoUrls, setProfilePhotoUrls] = useState({});
   const noPhotoCacheRef = React.useRef(new Set());
 
-const [loadingPhotos, setLoadingPhotos] = useState(false);
+  const [
+    loadingPhotos,
+    setLoadingPhotos,
+  ] = useState(false);
 
-const statusU = (
-  sessionStorage.getItem("profileStatus") || ""
-)
-  .toString()
-  .trim()
-  .toUpperCase();
+  const statusU = (
+    sessionStorage.getItem(
+      "profileStatus"
+    ) || ""
+  )
+    .toString()
+    .trim()
+    .toUpperCase();
 
-const approved = statusU === "APPROVED";
+  const approved =
+    statusU === "APPROVED";
 
   // --- Step 1: Fetch Logged-in User's Profile and Preferences ---
   useEffect(() => {
     if (!approved) {
-  setError("Your profile is under review. Matches will be available once your profile is approved.");
-  setLoadingUserPreferences(false);
-  return;
-}
+      setError(
+        "Your profile is under review. Matches will be available once your profile is approved."
+      );
+
+      setLoadingUserPreferences(
+        false
+      );
+
+      return;
+    }
 
     const fetchUserPreferences = async () => {
       if (!profileId) {
@@ -53,33 +64,41 @@ const approved = statusU === "APPROVED";
         return;
       }
 
-     setLoadingUserPreferences(true);
-setError(null);
+      setLoadingUserPreferences(
+        true
+      );
 
-try {
-  const data =
-    await profileService.getMyProfile();
+      setError(null);
 
-  setUserProfileData(data);
-} catch (err) {
-  console.error(
-    "Unable to load match preferences:",
-    err
-  );
+      try {
+        const data =
+          await profileService.getMyProfile();
 
-  if (err?.response?.status === 401) {
-    navigate("/login");
-    return;
-  }
+        setUserProfileData(data);
+      } catch (err) {
+        console.error(
+          "Unable to load match preferences:",
+          err
+        );
 
-  setError(
-    err?.response?.data?.error ||
-      err?.response?.data?.message ||
-      "Failed to load your preferences."
-  );
-} finally {
-  setLoadingUserPreferences(false);
-}
+        if (
+          err?.response?.status ===
+          401
+        ) {
+          navigate("/login");
+          return;
+        }
+
+        setError(
+          err?.response?.data?.error ||
+            err?.response?.data?.message ||
+            "Failed to load your preferences."
+        );
+      } finally {
+        setLoadingUserPreferences(
+          false
+        );
+      }
     };
 
     fetchUserPreferences();
@@ -152,29 +171,34 @@ try {
         };
 
         const data =
-  await dashboardDiscoveryService.getMatches(
-    searchQuery
-  );
+          await dashboardDiscoveryService.getMatches(
+            searchQuery
+          );
 
-setMatchedProfiles(
-  Array.isArray(data) ? data : []
-);
-  } catch (err) {
-  console.error(
-    "Unable to load matches:",
-    err
-  );
+        setMatchedProfiles(
+          Array.isArray(data)
+            ? data
+            : []
+        );
+      } catch (err) {
+        console.error(
+          "Unable to load matches:",
+          err
+        );
 
-  if (err?.response?.status === 401) {
-    navigate("/login");
-    return;
-  }
+        if (
+          err?.response?.status ===
+          401
+        ) {
+          navigate("/login");
+          return;
+        }
 
-  setError(
-    err?.response?.data?.error ||
-      err?.response?.data?.message ||
-      "Failed to find matches. Please try again."
-  );
+        setError(
+          err?.response?.data?.error ||
+            err?.response?.data?.message ||
+            "Failed to find matches. Please try again."
+        );
       } finally {
         setLoadingMatches(false);
       }
@@ -282,54 +306,69 @@ try {
   if (loadingUserPreferences) {
     return (
       <div className="flex items-center justify-center py-8">
-        <Typography variant="h6" className="text-indigo-800">
-          Loading your preferences to find matches...
-        </Typography>
+        <p
+          className={`text-sm ${designClasses.textSecondary}`}
+        >
+          Loading your preferences to
+          find matches...
+        </p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex items-center justify-center py-8">
-        <Typography color="error" variant="h6">
-          Error: {error}
-        </Typography>
+      <div
+        className={`rounded-xl p-4 text-sm ${designClasses.statusError}`}
+        role="alert"
+      >
+        {error}
       </div>
     );
   }
 
 return (
   <>
-    {/* STEP-2: Show spinner ONLY while matches are loading (do not block UI for photos) */}
     {loadingMatches ? (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 4 }}>
+      <div className="flex items-center justify-center gap-3 py-8">
         <svg
-          className="animate-spin h-8 w-8 text-indigo-500"
+          className={`h-8 w-8 animate-spin ${designClasses.textAccent}`}
           xmlns="http://www.w3.org/2000/svg"
           fill="none"
           viewBox="0 0 24 24"
+          aria-hidden="true"
         >
-          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+          <circle
+            className="opacity-25"
+            cx="12"
+            cy="12"
+            r="10"
+            stroke="currentColor"
+            strokeWidth="4"
+          />
+
           <path
             className="opacity-75"
             fill="currentColor"
             d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-          ></path>
+          />
         </svg>
 
-        <Typography variant="body1" sx={{ ml: 2, color: 'text.secondary' }}>
-          Finding your perfect matches...
-        </Typography>
-      </Box>
+        <p
+          className={`text-sm ${designClasses.textSecondary}`}
+        >
+          Finding suitable matches...
+        </p>
+      </div>
     ) : matchedProfiles.length > 0 ? (
       <div className={styles.cardsContainer}>
-        {/* Optional: small indicator (non-blocking) */}
         {loadingPhotos && (
-          <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '6px 0' }}>
-            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+          <div className="w-full py-1.5 text-center">
+            <p
+              className={`text-xs ${designClasses.textSecondary}`}
+            >
               Loading photos...
-            </Typography>
+            </p>
           </div>
         )}
 
@@ -343,9 +382,13 @@ return (
         ))}
       </div>
     ) : (
-      <Typography align="center" className="text-gray-700 py-4">
-        No matches found based on your preferences.
-      </Typography>
+      <div
+        className={`py-6 text-center text-sm ${designClasses.textSecondary}`}
+      >
+        No matching profiles found
+        based on your partner
+        preferences.
+      </div>
     )}
   </>
 );
