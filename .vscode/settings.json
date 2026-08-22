@@ -1,0 +1,24 @@
+{
+  "files.encoding": "utf8",
+  "files.eol": "\n",
+  "[javascript]": {
+    "files.encoding": "utf8"
+  },
+  "[javascriptreact]": {
+    "files.encoding": "utf8"
+  },
+  "[typescript]": {
+    "files.encoding": "utf8"
+  },
+  "[typescriptreact]": {
+    "files.encoding": "utf8"
+  },
+  "[json]": {
+    "files.encoding": "utf8"
+  },
+  "files.trimFinalNewlines": true,
+  "files.insertFinalNewline": true,
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode"
+}
+
