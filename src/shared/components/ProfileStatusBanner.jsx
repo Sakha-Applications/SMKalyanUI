@@ -68,6 +68,8 @@ const awaitingApproval =
         <div className="min-w-0">
           <h2 className={designClasses.statusTitle}>
             {awaitingApproval
+              ? "Registration fee submitted"
+              : readyForRegistrationFee
               ? "Profile information: 100% complete"
               : `Your profile is ${safePercentage}% complete`}
           </h2>
@@ -76,12 +78,15 @@ const awaitingApproval =
             className={`mt-1 text-sm ${designClasses.statusText}`}
           >
             {awaitingApproval
-              ? "Your profile information is complete and is awaiting approval. Restricted member features will become available after approval."
-              : "Complete the remaining profile information and submit it for review."}
+              ? "Your registration fee payment has been submitted and is awaiting verification. Your profile will proceed for review after payment verification."
+              : readyForRegistrationFee
+              ? "Your required profile information is complete. Please pay the Registration Fee to continue with profile verification and approval."
+              : "Complete the remaining required profile information to continue with registration."}
           </p>
         </div>
 
-        {!awaitingApproval && (
+        {!awaitingApproval &&
+          !readyForRegistrationFee && (
           <div
             className={`shrink-0 text-sm font-semibold ${designClasses.textAccent}`}
           >
@@ -90,7 +95,8 @@ const awaitingApproval =
         )}
       </div>
 
-      {!awaitingApproval && (
+      {!awaitingApproval &&
+        !readyForRegistrationFee && (
         <>
           <div
             className={`mt-3 h-2 w-full overflow-hidden rounded-full ${designClasses.progressTrack}`}
@@ -161,6 +167,18 @@ const awaitingApproval =
           )}
         </>
       )}
+
+      {readyForRegistrationFee &&
+        showAction && (
+          <div className="mt-4">
+            <Link
+              to="/donate"
+              className={`inline-flex items-center rounded-lg px-4 py-2 text-sm font-semibold transition ${designClasses.primaryButton}`}
+            >
+              Pay Registration Fee
+            </Link>
+          </div>
+        )}
 
       <div
         className={`mt-3 border-t pt-3 text-xs ${designClasses.border} ${designClasses.statusText}`}

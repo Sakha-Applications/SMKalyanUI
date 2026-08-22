@@ -66,6 +66,7 @@ export const PROFILE_COMPLETION_SECTIONS = [
           "profile_for",
         ]
       ),
+
       field(
         "name",
         "Name"
@@ -79,6 +80,7 @@ export const PROFILE_COMPLETION_SECTIONS = [
           "date_of_birth",
         ]
       ),
+
       field(
         "motherTongue",
         "Mother Tongue",
@@ -86,7 +88,16 @@ export const PROFILE_COMPLETION_SECTIONS = [
           "mother_tongue",
         ]
       ),
-            field(
+
+      field(
+        "nativePlace",
+        "Native Place",
+        [
+          "native_place",
+        ]
+      ),
+
+      field(
         "currentLocation",
         "Residing City",
         [
@@ -97,6 +108,7 @@ export const PROFILE_COMPLETION_SECTIONS = [
           "current_city",
         ]
       ),
+
       field(
         "marriedStatus",
         "Marital Status",
@@ -105,6 +117,7 @@ export const PROFILE_COMPLETION_SECTIONS = [
           "maritalStatus",
         ]
       ),
+
       field(
         "height",
         "Height",
@@ -115,6 +128,15 @@ export const PROFILE_COMPLETION_SECTIONS = [
           "height_inches",
         ]
       ),
+
+      field(
+        "profileCategory",
+        "Bride/Groom Category",
+        [
+          "profile_category",
+        ]
+      ),
+
       field(
         "aboutBrideGroom",
         "About Yourself",
@@ -135,10 +157,12 @@ export const PROFILE_COMPLETION_SECTIONS = [
         "education",
         "Education"
       ),
+
       field(
         "profession",
         "Profession"
       ),
+
       field(
         "workingStatus",
         "Working Status",
@@ -146,11 +170,74 @@ export const PROFILE_COMPLETION_SECTIONS = [
           "working_status",
         ]
       ),
+
       field(
         "annualIncome",
         "Annual Income",
         [
           "annual_income",
+        ]
+      ),
+    ],
+  },
+
+  {
+    id: "family",
+    title: "Family Details",
+    fields: [
+      field(
+        "fatherName",
+        "Father's Name",
+        [
+          "father_name",
+        ]
+      ),
+
+      field(
+        "motherName",
+        "Mother's Name",
+        [
+          "mother_name",
+        ]
+      ),
+
+      field(
+        "noOfBrothers",
+        "Number of Brothers",
+        [
+          "no_of_brothers",
+        ]
+      ),
+
+      field(
+        "noOfSisters",
+        "Number of Sisters",
+        [
+          "no_of_sisters",
+        ]
+      ),
+
+      field(
+        "familyStatus",
+        "Family Status",
+        [
+          "family_status",
+        ]
+      ),
+
+      field(
+        "familyType",
+        "Family Type",
+        [
+          "family_type",
+        ]
+      ),
+
+      field(
+        "familyValues",
+        "Family Values",
+        [
+          "family_values",
         ]
       ),
     ],
@@ -163,6 +250,40 @@ export const PROFILE_COMPLETION_SECTIONS = [
       field(
         "gotra",
         "Gotra"
+      ),
+
+      field(
+        "rashi",
+        "Rashi"
+      ),
+
+      field(
+        "nakshatra",
+        "Nakshatra"
+      ),
+
+      field(
+        "charanaPada",
+        "Charana / Pada",
+        [
+          "charana_pada",
+        ]
+      ),
+
+      field(
+        "subCaste",
+        "Sub Caste",
+        [
+          "sub_caste",
+        ]
+      ),
+
+      field(
+        "guruMatha",
+        "Guru Matha",
+        [
+          "guru_matha",
+        ]
       ),
     ],
   },
@@ -179,11 +300,70 @@ export const PROFILE_COMPLETION_SECTIONS = [
           "phone_number",
         ]
       ),
+
       field(
         "email",
         "Email Address",
         [
           "email_id",
+        ]
+      ),
+
+      field(
+        "communicationAddress",
+        "Communication Address",
+        [
+          "communication_address",
+        ]
+      ),
+
+      field(
+        "residenceAddress",
+        "Residence Address",
+        [
+          "residence_address",
+        ]
+      ),
+    ],
+  },
+
+  {
+    id: "references",
+    title: "References",
+    fields: [
+      field(
+        "reference1Name",
+        "Reference 1 Name",
+        [
+          "reference1_name",
+        ]
+      ),
+
+      field(
+        "reference1Phone",
+        "Reference 1 Phone",
+        [
+          "reference1_phone",
+          "reference1PhoneNumber",
+          "reference1_phone_number",
+        ]
+      ),
+
+      field(
+        "reference2Name",
+        "Reference 2 Name",
+        [
+          "reference2_name",
+        ]
+      ),
+
+      field(
+        "reference2Phone",
+        "Reference 2 Phone",
+        [
+          "reference2_phone",
+          "reference2PhoneNumber",
+          "reference2_phone_number",
         ]
       ),
     ],
