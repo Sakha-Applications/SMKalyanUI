@@ -70,10 +70,7 @@ export const PROFILE_COMPLETION_SECTIONS = [
         "name",
         "Name"
       ),
-      field(
-        "gender",
-        "Gender"
-      ),
+
       field(
         "dob",
         "Date of Birth",
@@ -89,12 +86,15 @@ export const PROFILE_COMPLETION_SECTIONS = [
           "mother_tongue",
         ]
       ),
-      field(
+            field(
         "currentLocation",
         "Residing City",
         [
           "current_location",
           "residingCity",
+          "residing_city",
+          "currentCity",
+          "current_city",
         ]
       ),
       field(
@@ -106,16 +106,12 @@ export const PROFILE_COMPLETION_SECTIONS = [
         ]
       ),
       field(
-        "heightFeet",
-        "Height - Feet",
+        "height",
+        "Height",
         [
+          "heightFeet",
           "height_feet",
-        ]
-      ),
-      field(
-        "heightInches",
-        "Height - Inches",
-        [
+          "heightInches",
           "height_inches",
         ]
       ),
@@ -125,6 +121,7 @@ export const PROFILE_COMPLETION_SECTIONS = [
         [
           "about_bride_groom",
           "aboutYourself",
+          "about_yourself",
         ]
       ),
     ],

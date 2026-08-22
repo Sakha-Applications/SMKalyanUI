@@ -295,6 +295,9 @@ const backendProfileData = {
   profileFor:
     submissionData.profileFor,
 
+  gender:
+    submissionData.gender,
+
   motherTongue:
     submissionData.motherTongue,
 

@@ -272,9 +272,19 @@ const residenceAddressDetails =
             return [];
           })(),
 
-          profileCreatedFor: enriched.profile_created_for || '',
-          profileFor: enriched.profile_for || '',
-          profileStatus: enriched.profile_status || '',
+          profileCreatedFor:
+  enriched.profile_created_for || "",
+
+profileFor:
+  enriched.profile_for || "",
+
+gender:
+  enriched.gender ||
+  enriched.sex ||
+  "",
+
+profileStatus:
+  enriched.profile_status || "",
           marriedStatus: enriched.married_status || enriched.marriedStatus || '',
           profileCategory: enriched.profile_category || enriched.profileCategory || '',
           profileCategoryNeed: enriched.profile_category_need || enriched.profileCategoryNeed || '',
@@ -346,10 +356,22 @@ const residenceAddressDetails =
 
           // --- ALL OTHER formData fields (snake_case to camelCase mapping) ---
           profileId: enriched.profile_id,
-          name: enriched.name || '',
-          profileCreatedFor: enriched.profile_created_for || '',
-          profileFor: enriched.profile_for || '',
-          dob: enriched.dob || '', // Ensure DOB is just 'YYYY-MM-DD'
+          name:
+  enriched.name || "",
+
+profileCreatedFor:
+  enriched.profile_created_for || "",
+
+profileFor:
+  enriched.profile_for || "",
+
+gender:
+  enriched.gender ||
+  enriched.sex ||
+  "",
+
+dob:
+  enriched.dob || "",
           timeOfBirth: enriched.time_of_birth || enriched.timeOfBirth || '',
           currentAge: enriched.current_age || '',
           subCaste: enriched.sub_caste || '',
@@ -759,9 +781,10 @@ const handleUpdate = async () => {
     const {
       profileId,
       userId,
-      name,
+         name,
       profileCreatedFor,
       profileFor,
+      gender,
       dob,
       timeOfBirth,
       placeOfBirth,
@@ -867,8 +890,12 @@ reference2PhoneCountryCode,
       profile_id: profileId,
       user_id: userId,
       name,
-      profile_created_for: profileCreatedFor,
-      profile_for: profileFor,
+      profile_created_for:
+        profileCreatedFor,
+      profile_for:
+        profileFor,
+      gender:
+        gender || null,
       dob,
       time_of_birth: timeOfBirth,
       place_of_birth: placeOfBirth,

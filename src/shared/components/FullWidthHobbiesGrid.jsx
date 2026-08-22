@@ -6,9 +6,37 @@ import {
   spiritualActivityOptions,
 } from "../config/hobbyOptions";
 
+import {
+  designClasses,
+} from "../styles/designTokens";
+
 const FullWidthHobbiesGrid = ({ label = "Hobbies", fieldName, formData, handleChange }) => {
-  // Ensure formData[fieldName] is always an array
-  const current = Array.isArray(formData[fieldName]) ? formData[fieldName] : [];
+  const normalizeHobbyValue = (value) => {
+    if (
+      typeof value === "object" &&
+      value !== null
+    ) {
+      return String(
+        value.label ??
+          value.value ??
+          value.name ??
+          ""
+      ).trim();
+    }
+
+    return String(
+      value ?? ""
+    ).trim();
+  };
+
+  // Always work with plain hobby labels.
+  const current = Array.isArray(
+    formData?.[fieldName]
+  )
+    ? formData[fieldName]
+        .map(normalizeHobbyValue)
+        .filter(Boolean)
+    : [];
 
   // Utility to toggle selection
   const toggle = (itemLabel, isChecked) => {
@@ -16,8 +44,12 @@ const FullWidthHobbiesGrid = ({ label = "Hobbies", fieldName, formData, handleCh
       ? current.filter((h) => String(h).trim().toLowerCase() !== itemLabel.toLowerCase())
       : [...current, itemLabel];
 
-    const norm = (x) => String(x).trim().toLowerCase();
-    const pick = (x) => String(x).trim();
+    const norm = (x) =>
+      normalizeHobbyValue(x)
+        .toLowerCase();
+
+    const pick = (x) =>
+      normalizeHobbyValue(x);
 
     const uniqueValues = [...new Map(next.map((v) => [norm(v), pick(v)])).values()];
 
@@ -28,25 +60,38 @@ const FullWidthHobbiesGrid = ({ label = "Hobbies", fieldName, formData, handleCh
 
   return (
     <div className="md:col-span-2">
-      <label className="mb-2 block font-semibold text-gray-700">{label}</label>
+      <label
+  className={`mb-2 block font-semibold ${designClasses.textPrimary}`}
+>
+  {label}
+</label>
 
-      <div className="border rounded-lg p-3 bg-white max-h-64 overflow-y-auto">
+      <div
+  className={`max-h-64 overflow-y-auto rounded-lg border p-3 ${designClasses.border} ${designClasses.surface}`}
+>
         <div className="grid grid-cols-2 gap-6">
           
           {/* ---------- COLUMN 1 ---------- */}
           <div>
-            <div className="font-semibold text-gray-700 mb-2">General Hobbies</div>
+            <div
+  className={`mb-2 font-semibold ${designClasses.textPrimary}`}
+>General Hobbies</div>
             <div className="space-y-1">
               {generalHobbyOptions.map((opt, idx) => {
                 const itemLabel = String(opt.label ?? opt).trim();
                 const isChecked = current
-                  .map((h) => String(h).trim().toLowerCase())
-                  .includes(itemLabel.toLowerCase());
+  .map((h) =>
+    normalizeHobbyValue(h)
+      .toLowerCase()
+  )
+  .includes(
+    itemLabel.toLowerCase()
+  );
 
                 return (
                   <label
                     key={idx}
-                    className="flex items-start space-x-2 text-sm cursor-pointer rounded-md px-2 py-1 hover:bg-pink-50"
+                    className={`flex cursor-pointer items-start space-x-2 rounded-md px-2 py-1 text-sm ${designClasses.textPrimary}`}
                   >
                     <input
                       type="checkbox"
@@ -63,18 +108,25 @@ const FullWidthHobbiesGrid = ({ label = "Hobbies", fieldName, formData, handleCh
 
           {/* ---------- COLUMN 2 ---------- */}
           <div>
-            <div className="font-semibold text-gray-700 mb-2">Spiritual & Activities</div>
+            <div
+  className={`mb-2 font-semibold ${designClasses.textPrimary}`}
+>Spiritual & Activities</div>
             <div className="space-y-1">
               {spiritualActivityOptions.map((opt, idx) => {
                 const itemLabel = String(opt.label ?? opt).trim();
                 const isChecked = current
-                  .map((h) => String(h).trim().toLowerCase())
-                  .includes(itemLabel.toLowerCase());
+  .map((h) =>
+    normalizeHobbyValue(h)
+      .toLowerCase()
+  )
+  .includes(
+    itemLabel.toLowerCase()
+  );
 
                 return (
                   <label
                     key={idx}
-                    className="flex items-start space-x-2 text-sm cursor-pointer rounded-md px-2 py-1 hover:bg-pink-50"
+                    className={`flex cursor-pointer items-start space-x-2 rounded-md px-2 py-1 text-sm ${designClasses.textPrimary}`}
                   >
                     <input
                       type="checkbox"

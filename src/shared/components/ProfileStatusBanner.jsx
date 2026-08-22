@@ -46,10 +46,17 @@ const ProfileStatusBanner = ({
     100
   );
 
-  const awaitingApproval =
-    isComplete && status !== "APPROVED";
+  const readyForRegistrationFee =
+  isComplete &&
+  status === "DRAFT";
 
-  const containerClass = awaitingApproval
+const awaitingApproval =
+  isComplete &&
+  status === "PAYMENT_SUBMITTED";
+
+  const containerClass =
+  readyForRegistrationFee ||
+  awaitingApproval
     ? designClasses.statusReview
     : designClasses.statusWarning;
 
@@ -108,17 +115,37 @@ const ProfileStatusBanner = ({
                 attention:
               </p>
 
-              <ul
-                className={`mt-1 list-disc space-y-0.5 pl-5 text-sm ${designClasses.statusText}`}
-              >
+              <div className="mt-2 space-y-2">
                 {pendingSections.map(
                   (section) => (
-                    <li key={section.id}>
-                      {section.title}
-                    </li>
+                    <div
+                      key={section.id}
+                      className="text-sm"
+                    >
+                      <div
+                        className={`font-semibold ${designClasses.textDark}`}
+                      >
+                        {section.title}
+                      </div>
+
+                      {section.missingFields?.length >
+                        0 && (
+                        <div
+                          className={`mt-0.5 ${designClasses.statusText}`}
+                        >
+                          Missing:{" "}
+                          {section.missingFields
+                            .map(
+                              (item) =>
+                                item.label
+                            )
+                            .join(", ")}
+                        </div>
+                      )}
+                    </div>
                   )
                 )}
-              </ul>
+              </div>
             </div>
           )}
 

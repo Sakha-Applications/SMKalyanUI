@@ -3,9 +3,20 @@ import { Link } from "react-router-dom";
 import { designClasses } from "../../../shared/styles/designTokens";
 
 const secondaryLinks = [
-  { to: "/renew-profile", label: "Recharge Profile" },
-  { to: "/make-preferred", label: "Advertise Your Profile", requiresApproval: true },
-  { to: "/donate", label: "Registration Fee" },
+  {
+    to: "/renew-profile",
+    label: "Recharge Profile",
+  },
+  {
+    to: "/make-preferred",
+    label: "Advertise Your Profile",
+    requiresApproval: true,
+  },
+  {
+    to: "/donate",
+    label: "Registration Fee",
+    requiresCompleteProfile: true,
+  },
 ];
 
 const normalizeStatus = (status) =>
@@ -13,17 +24,25 @@ const normalizeStatus = (status) =>
     ? status.trim().toUpperCase()
     : "";
 
-const blockedMessage =
+const approvalBlockedMessage =
   "Your profile is under review. This feature will be available once your profile is approved.";
+
+const completionBlockedMessage =
+  "Please complete all required profile information before paying the Registration Fee.";
 
 const SecondaryNavBar = ({
   profileStatus = "",
+  profileCompletion = null,
 }) => {
   const approved =
     normalizeStatus(
       profileStatus
     ) === "APPROVED";
 
+  const profileComplete =
+  Boolean(
+    profileCompletion?.isComplete
+  );
   return (
   <div className="mb-3 flex flex-wrap items-center justify-end gap-2">
     <span
@@ -34,8 +53,14 @@ const SecondaryNavBar = ({
 
     {secondaryLinks.map((item) => {
       const locked =
-        item.requiresApproval &&
-        !approved;
+  (
+    item.requiresApproval &&
+    !approved
+  ) ||
+  (
+    item.requiresCompleteProfile &&
+    !profileComplete
+  );
 
       return (
         <Link
@@ -43,9 +68,22 @@ const SecondaryNavBar = ({
           to={locked ? "#" : item.to}
           onClick={(event) => {
             if (locked) {
-              event.preventDefault();
-              window.alert(blockedMessage);
-            }
+  event.preventDefault();
+
+  if (
+    item.requiresCompleteProfile &&
+    !profileComplete
+  ) {
+    window.alert(
+      completionBlockedMessage
+    );
+    return;
+  }
+
+  window.alert(
+    approvalBlockedMessage
+  );
+}
           }}
           className={`rounded-lg px-3 py-2 text-sm font-medium transition ${
             locked

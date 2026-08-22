@@ -98,6 +98,7 @@ const Dashboard = () => {
                 <div className="mb-2">
           <SecondaryNavBar
   profileStatus={profileStatus}
+  profileCompletion={profileCompletion}
 />
         </div>
 

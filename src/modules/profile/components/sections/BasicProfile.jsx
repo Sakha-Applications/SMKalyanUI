@@ -39,6 +39,37 @@ const getStateName = (stateIsoCode, countryIsoCode) => {
   return stateObj ? stateObj.name : stateIsoCode;
 };
 
+const getDisplayGender = (profileData = {}) => {
+  if (profileData.gender) {
+    return profileData.gender;
+  }
+
+  if (profileData.sex) {
+    return profileData.sex;
+  }
+
+  const profileFor = String(
+    profileData.profile_for ||
+    profileData.profileFor ||
+    ""
+  )
+    .trim()
+    .toLowerCase();
+
+  if (
+    profileFor === "bridegroom" ||
+    profileFor === "groom"
+  ) {
+    return "Male";
+  }
+
+  if (profileFor === "bride") {
+    return "Female";
+  }
+
+  return "-";
+};
+
 const howDidYouKnowOptions = [
   "Online Advertisement",
   "Friend/Family Referral",
@@ -113,6 +144,7 @@ const BasicProfile = ({
                   label="Profile For"
                   value={profileData?.profile_for || "-"}
                 />
+                
               </div>
 
               <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -198,7 +230,7 @@ const BasicProfile = ({
             </>
           ) : (
             <>
-              <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+              <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
                 <DataRow
                   label="Profile Status"
                   value={profileData.profile_status || "-"}
@@ -212,9 +244,14 @@ const BasicProfile = ({
                   value={profileData?.current_age || "-"}
                 />
                 <DataRow
-                  label="Profile For"
-                  value={profileData?.profile_for || "-"}
-                />
+  label="Profile For"
+  value={profileData?.profile_for || "-"}
+/>
+
+<DataRow
+  label="Gender"
+  value={getDisplayGender(profileData)}
+/>
               </div>
 
               <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">

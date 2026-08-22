@@ -9,9 +9,28 @@ const RangeSliderField = ({
   onChange,
   formatValue = (item) => item,
 }) => {
-  const safeValue = Array.isArray(value)
-    ? value
-    : [min, max];
+  const normalizeRange = (rangeValue) => {
+    const source = Array.isArray(rangeValue)
+      ? rangeValue
+      : [];
+
+    const first = Number(source[0]);
+    const second = Number(source[1]);
+
+    const safeFirst = Number.isFinite(first)
+      ? Math.min(Math.max(first, min), max)
+      : min;
+
+    const safeSecond = Number.isFinite(second)
+      ? Math.min(Math.max(second, min), max)
+      : max;
+
+    return safeFirst <= safeSecond
+      ? [safeFirst, safeSecond]
+      : [safeSecond, safeFirst];
+  };
+
+  const safeValue = normalizeRange(value);
 
   return (
     <div>

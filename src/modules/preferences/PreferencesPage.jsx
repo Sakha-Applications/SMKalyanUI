@@ -15,6 +15,64 @@ import {
   dietOptions,
 } from "../../shared/config/profileOptions";
 import { Country, State } from 'country-state-city';
+
+import {
+  preferredAgeRangeConfig,
+  preferredHeightRangeConfig,
+  preferredIncomeRangeConfig,
+} from "../../shared/config/profileOptions";
+
+const parseStoredRange = (
+  value,
+  defaultValue
+) => {
+  const defaults = Array.isArray(defaultValue)
+    ? [...defaultValue]
+    : [];
+
+  if (
+    Array.isArray(value) &&
+    value.length >= 2
+  ) {
+    const parsed = value
+      .slice(0, 2)
+      .map(Number);
+
+    if (
+      parsed.every(Number.isFinite)
+    ) {
+      return parsed;
+    }
+  }
+
+  if (
+    typeof value === "string"
+  ) {
+    const parsed = value
+      .split(",")
+      .map((item) =>
+        Number(item.trim())
+      )
+      .filter(Number.isFinite);
+
+    if (parsed.length >= 2) {
+      return parsed.slice(0, 2);
+    }
+
+    if (
+      parsed.length === 1 &&
+      defaults.length === 2
+    ) {
+      return [
+        parsed[0],
+        defaults[1],
+      ];
+    }
+  }
+
+  return defaults;
+};
+
 const PartnerPreferencesPage = () => {
   const [profileData, setProfileData] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -78,9 +136,20 @@ if (data) {
   
   // Basic preferences
   expectations: enriched.expectations || '',
-  ageRange: enriched.age_range?.split(',').map(Number) || [25, 35],
-  heightRange: enriched.height_range?.split(',').map(Number) || [150, 180],
-  preferredIncomeRange: enriched.preferred_income_range?.split(',').map(Number) || [5, 20],
+  ageRange: parseStoredRange(
+    enriched.age_range,
+    preferredAgeRangeConfig.defaultValue
+  ),
+
+  heightRange: parseStoredRange(
+    enriched.height_range,
+    preferredHeightRangeConfig.defaultValue
+  ),
+
+  preferredIncomeRange: parseStoredRange(
+    enriched.preferred_income_range,
+    preferredIncomeRangeConfig.defaultValue
+  ),
   preferredMaritalStatus: enriched.preferred_marital_status || '',
   preferredBrideGroomCategory: enriched.preferred_bride_groom_category || '',
   
