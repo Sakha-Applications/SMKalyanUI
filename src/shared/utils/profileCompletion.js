@@ -1,4 +1,4 @@
-﻿const isMeaningfulValue = (value) => {
+const isMeaningfulValue = (value) => {
   if (value === null || value === undefined) {
     return false;
   }
