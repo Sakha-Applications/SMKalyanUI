@@ -209,13 +209,6 @@ const AdvertisementSection = ({
   advertisement?.display_summary ||
   advertisement?.transaction_details ||
   "Matrimonial advertisement.";
-
-const advertisementHeading =
-  advertisement?.advertisement_heading ||
-  advertisement?.advertisementHeading ||
-  advertisement?.heading ||
-  "";
-
             return (
               <article
                 key={
@@ -233,24 +226,8 @@ const advertisementHeading =
   </div>
 
   <div className="min-w-0 flex-1">
-    {advertisementHeading && (
-      <div
-        className={`text-base font-bold ${
-          advertisementHeading ===
-          "Looking for a Bride"
-            ? "text-pink-600"
-            : advertisementHeading ===
-                "Looking for a Bridegroom"
-              ? "text-blue-700"
-              : designClasses.textPrimary
-        }`}
-      >
-        {advertisementHeading}
-      </div>
-    )}
-
     <h3
-      className={`mt-1 text-base font-semibold ${designClasses.textPrimary}`}
+      className={`text-base font-semibold ${designClasses.textPrimary}`}
     >
       {name}
     </h3>

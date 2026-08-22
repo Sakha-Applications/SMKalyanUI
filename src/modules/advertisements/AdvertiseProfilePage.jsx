@@ -9,6 +9,8 @@ import {
   designClasses,
 } from "../../shared/styles/designTokens";
 
+import AdvertisementPreview from "../../shared/components/AdvertisementPreview";
+
 import profileService from "../../services/profileService";
 
 const firstValue = (...values) =>
@@ -83,27 +85,6 @@ const displayValue = (value) => {
   return values.length > 0
     ? values.join(", ")
     : "-";
-};
-
-const formatRange = (
-  value,
-  {
-    prefix = "",
-    suffix = "",
-  } = {}
-) => {
-  const values =
-    asDisplayList(value);
-
-  if (values.length === 0) {
-    return "";
-  }
-
-  if (values.length === 1) {
-    return `${prefix}${values[0]}${suffix}`;
-  }
-
-  return `${prefix}${values[0]} to ${prefix}${values[1]}${suffix}`;
 };
 
 const displayGotra = (value) => {
@@ -434,32 +415,24 @@ const buildAdvertisementText = (
     );
   }
 
-  const advertisementHeading =
-    normalizedLookingFor === "bride"
-      ? "Looking for a Bride"
-      : normalizedLookingFor === "groom" ||
-          normalizedLookingFor === "bridegroom"
-        ? "Looking for a Bridegroom"
-        : "Looking for a Life Partner";
-
   let generated =
     `${candidateLabel} is ${mainParts.join(
       ", "
     )}.`;
 
   if (hobbies.length > 0) {
-  const hobbiesText =
-    hobbies.length === 1
-      ? hobbies[0]
-      : hobbies.length === 2
-        ? `${hobbies[0]} and ${hobbies[1]}`
-        : `${hobbies
-            .slice(0, -1)
-            .join(", ")}, and ${hobbies.at(-1)}`;
+    const hobbiesText =
+      hobbies.length === 1
+        ? hobbies[0]
+        : hobbies.length === 2
+          ? `${hobbies[0]} and ${hobbies[1]}`
+          : `${hobbies
+              .slice(0, -1)
+              .join(", ")}, and ${hobbies.at(-1)}`;
 
-  generated +=
-    ` ${subjectPronoun} enjoys ${hobbiesText}.`;
-}
+    generated +=
+      ` ${subjectPronoun} enjoys ${hobbiesText}.`;
+  }
 
   const preferenceParts = [];
 
@@ -643,19 +616,19 @@ const buildAdvertisementText = (
   }
 
   const expectations =
-  cleanExpectationsText(
-    profile.expectations
-  );
+    cleanExpectationsText(
+      profile.expectations
+    );
 
   if (expectations) {
-  generated +=
-    ` Seeking a life partner ${expectations.replace(
-      /[.!?]+$/,
-      ""
-    )}.`;
-} else if (
-  preferenceParts.length > 0
-) {
+    generated +=
+      ` Seeking a life partner ${expectations.replace(
+        /[.!?]+$/,
+        ""
+      )}.`;
+  } else if (
+    preferenceParts.length > 0
+  ) {
     generated +=
       ` Seeking a compatible life partner with ${preferenceParts.join(
         ", "
@@ -1140,33 +1113,13 @@ const AdvertiseProfilePage = () => {
             </p>
           </div>
 
-          <div
-            className={`rounded-xl border px-4 py-4 ${designClasses.border} ${designClasses.surface}`}
-          >
-            <div
-              className={`text-lg font-bold ${
-                advertisementHeading === "Looking for a Bride"
-                  ? "text-pink-600"
-                  : advertisementHeading === "Looking for a Bridegroom"
-                    ? "text-blue-700"
-                    : designClasses.textPrimary
-              }`}
-            >
-              {advertisementHeading}
-            </div>
-
-            <textarea
-              value={advertisementText}
-              onChange={(event) =>
-                setAdvertisementText(
-                  event.target.value
-                )
-              }
-              rows={7}
-              aria-label="Advertisement"
-              className={`mt-2 w-full resize-y border-0 bg-transparent p-0 text-[15px] leading-6 outline-none focus:ring-0 ${designClasses.textDark}`}
-            />
-          </div>
+          <AdvertisementPreview
+            heading={advertisementHeading}
+            text={advertisementText}
+            editable
+            onChange={setAdvertisementText}
+            rows={7}
+          />
 
           <div className="mt-4 flex flex-wrap gap-3">
             <button
