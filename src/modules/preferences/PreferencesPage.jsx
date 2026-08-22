@@ -21,6 +21,7 @@ const PartnerPreferencesPage = () => {
   const [formData, setFormData] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [errors, setErrors] = useState({});
   const [showErrorDialog, setShowErrorDialog] = useState(false);
 
   const [educationInput, setEducationInput] = useState('');

@@ -1,6 +1,6 @@
 import React from 'react';
 import MultiSelectCheckbox from "../../../../shared/common/MultiSelectCheckbox";
-import { normalizeDisplayArray } from '../helpers/utils';
+import { formatDisplayValue, formatSelectedValues, normalizeDisplayArray } from '../helpers/utils';
 
 const CulturalPreferences = ({
   mode = 'view',

@@ -1,7 +1,7 @@
 import React from 'react';
 import MultiSelectCheckbox from '../../../../shared/common/MultiSelectCheckbox';
 import MultiCountrySelector from '../../../../shared/common/MultiCountrySelector';
-import { normalizeDisplayArray } from '../helpers/utils';
+import { formatDisplayValue, formatSelectedValues, normalizeDisplayArray } from '../helpers/utils';
 
 import MultiCountryStateCitySelector from '../../../../shared/common/MultiCountryStateCitySelector';
 import FullWidthHobbiesGrid from '../../../../shared/components/FullWidthHobbiesGrid';

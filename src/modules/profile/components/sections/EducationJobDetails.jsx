@@ -78,8 +78,7 @@ const EducationJobDetails = ({
         }
       }
     }
-     }
-   }, [mode, formData?.education, formData?.profession, setEducationInput, setProfessionInput, educationInput, professionInput]);
+  }, [mode, formData?.education, formData?.profession, setEducationInput, setProfessionInput, educationInput, professionInput]);
 
   const handleEducationChange = (selectedValue) => {
     setFormData(prev => ({
