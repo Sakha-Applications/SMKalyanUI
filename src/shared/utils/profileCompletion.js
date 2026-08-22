@@ -1,4 +1,4 @@
-﻿const isMeaningfulValue = (value) => {
+const isMeaningfulValue = (value) => {
   if (value === null || value === undefined) {
     return false;
   }
@@ -51,8 +51,6 @@ const field = (
  * - confirmPassword
  * - declarationAccepted
  *
- * Those are account/registration requirements, not matrimonial
- * profile completeness requirements.
  */
 export const PROFILE_COMPLETION_SECTIONS = [
   {

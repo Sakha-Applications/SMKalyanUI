@@ -22,7 +22,7 @@ const GeographicPreferences = ({
   professionInput = '',
   setProfessionInput = () => {},
   professionLoading = false,
-  dietOptions = []
+   dietOptions = []
 }) => {
   const handleMultiChange = (name, values) => {
     setFormData((prev) => ({
@@ -35,14 +35,14 @@ const GeographicPreferences = ({
     }));
   };
 
-  const handleHobbyChange = (e) => {
-    const { name, value } = e.target;
+   const handleHobbyChange = (e) => {
+     const { name, value } = e.target;
 
-    setFormData((prev) => ({
-      ...prev,
-      [name]: Array.isArray(value) ? value : [],
-    }));
-  };
+     setFormData((prev) => ({
+       ...prev,
+       [name]: Array.isArray(value) ? value : [],
+     }));
+   };
 
 
   if (mode === 'view') {

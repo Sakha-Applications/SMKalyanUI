@@ -121,9 +121,9 @@ if (data) {
     }
   };
 
-  useEffect(() => {
-    fetchUserProfile();
-  }, []);
+   useEffect(() => {
+     fetchUserProfile();
+   }, [fetchUserProfile]);
 
   useEffect(() => {
     const delay = setTimeout(async () => {
@@ -141,9 +141,9 @@ if (data) {
           setEducationLoading(false);
         }
       }
-    }, 300);
-    return () => clearTimeout(delay);
-  }, [educationInput]);
+     }, 300);
+     return () => clearTimeout(delay);
+   }, [educationInput, searchEducation]);
 
   useEffect(() => {
     const delay = setTimeout(async () => {
@@ -161,9 +161,9 @@ if (data) {
           setMotherTongueLoading(false);
         }
       }
-    }, 300);
-    return () => clearTimeout(delay);
-  }, [motherTongueInput]);
+     }, 300);
+     return () => clearTimeout(delay);
+   }, [motherTongueInput, searchMotherTongues]);
 
   useEffect(() => {
     const delay = setTimeout(async () => {
@@ -181,9 +181,9 @@ if (data) {
           setGuruMathaLoading(false);
         }
       }
-    }, 300);
-    return () => clearTimeout(delay);
-  }, [guruMathaInput]);
+     }, 300);
+     return () => clearTimeout(delay);
+   }, [guruMathaInput, searchGuruMatha]);
 
   useEffect(() => {
     const delay = setTimeout(async () => {
@@ -201,9 +201,9 @@ if (data) {
           setProfessionLoading(false);
         }
       }
-    }, 300);
-    return () => clearTimeout(delay);
-  }, [professionInput]);
+     }, 300);
+     return () => clearTimeout(delay);
+   }, [professionInput, searchProfessions]);
 
 const handleUpdate = async () => {
   setLoading(true);

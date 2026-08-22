@@ -1,5 +1,6 @@
 import React from 'react';
 import MultiSelectCheckbox from "../../../../shared/common/MultiSelectCheckbox";
+import { formatDisplayValue, formatSelectedValues, normalizeDisplayArray } from '../helpers/utils';
 import {
   formatSelectedValues,
   normalizeDisplayArray,
@@ -22,7 +23,7 @@ const CulturalPreferences = ({
   manglikOptions = [],
   guruMathaInput = '',
   setGuruMathaInput = () => {},
-  guruMathaLoading = false
+   guruMathaLoading = false
 }) => {
   const handleMultiChange = (name, values) => {
     setFormData((prev) => ({ ...prev, [name]: values.map(v => v.label || v.value || v) }));
