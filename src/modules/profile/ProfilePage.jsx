@@ -18,27 +18,6 @@ import ViewModeProfile from './components/ViewModeProfile';
 import MemberLayout from "../../shared/layouts/MemberLayout";
 import { designClasses } from "../../shared/styles/designTokens";
 
-// ADD THIS HELPER FUNCTION
-const calculateAge = (dobString) => {
-  if (!dobString) {
-    return '';
-  }
-  try {
-    // Parse DOB string (e.g., '1997-04-26T18:30:00.000Z' -> '1997-04-26')
-    const dobDate = new Date(dobString.split('T')[0]);
-    const today = new Date();
-
-    let age = today.getFullYear() - dobDate.getFullYear();
-    const m = today.getMonth() - dobDate.getMonth();
-    if (m < 0 || (m === 0 && today.getDate() < dobDate.getDate())) {
-      age--;
-    }
-    return `${age} years`; // Displaying only years as requested for simplicity
-  } catch (e) {
-    console.error("Error calculating age:", e);
-    return '';
-  }
-};
 
 // ADD THESE TWO HELPER FUNCTIONS (if not already present and correct)
 const getCountryName = (isoCode) => {

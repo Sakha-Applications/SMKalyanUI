@@ -1,8 +1,6 @@
 import React from 'react';
 import MultiSelectCheckbox from "../../../../shared/common/MultiSelectCheckbox";
-import { RadioGroup } from "../../../../shared/common/FormElements";
-import { Label } from "../../../../shared/common/FormElements"
-import { formatDisplayValue, formatSelectedValues,normalizeDisplayArray } from '../helpers/utils';
+import { normalizeDisplayArray } from '../helpers/utils';
 
 const CulturalPreferences = ({
   mode = 'view',
@@ -17,16 +15,11 @@ const CulturalPreferences = ({
   manglikOptions = [],
   guruMathaInput = '',
   setGuruMathaInput = () => {},
-  guruMathaLoading = false
+   guruMathaLoading = false
 }) => {
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleMultiChange = (name, values) => {
-    setFormData((prev) => ({ ...prev, [name]: values.map(v => v.label || v.value || v) }));
-  };
+   const handleMultiChange = (name, values) => {
+     setFormData((prev) => ({ ...prev, [name]: values.map(v => v.label || v.value || v) }));
+   };
 
   if (mode === 'view') {
     console.log("Ã°Å¸â€˜â‚¬ profileData.preferred_gotras:", profileData.preferred_gotras);

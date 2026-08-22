@@ -61,7 +61,7 @@ const ProfileCard = ({ profile, imageUrl, onCardClick }) => {
       <div className={styles.photoContainer}>
         <img
           src={currentPhotoSrc}
-          alt={`Photo of ${name || 'Profile'}`}
+          alt={name || 'Profile'}
           className={styles.profilePhoto}
           onError={(e) => {
             e.target.onerror = null; // Prevent infinite loop on error

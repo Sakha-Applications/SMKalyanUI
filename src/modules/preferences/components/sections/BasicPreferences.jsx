@@ -3,7 +3,6 @@ import { Slider } from '@mui/material';
 import { Label, TextArea, Select } from "../../../../shared/common/FormElements";
 import MultiSelectCheckbox from "../../../../shared/common/MultiSelectCheckbox";
 
-import { RadioGroup } from '../../../../shared/common/FormElements';
 
 
 import { cmToFeetInches, formatDisplayValue, formatSelectedValues } from '../helpers/utils';

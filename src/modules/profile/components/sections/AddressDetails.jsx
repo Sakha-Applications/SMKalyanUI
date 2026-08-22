@@ -34,7 +34,7 @@ const AddressDetails = ({ profileData, formData = {}, setFormData, mode = "view"
 
   // Effect to manage the "Copy Address" checkbox state when formData changes
   // This ensures the checkbox is unchecked if user manually changes residence fields after copying
-// Initialize copyChecked state only once when component mounts or profileData changes
+  // Initialize copyChecked state only once when component mounts or profileData changes
   // This prevents the infinite loop caused by `setCopyChecked` within the effect's dependencies.
   useEffect(() => {
     // Only set the initial state of copyChecked if in edit mode
@@ -65,8 +65,7 @@ const AddressDetails = ({ profileData, formData = {}, setFormData, mode = "view"
       formData.communicationCountry, formData.communicationState, formData.communicationCity,
       formData.residenceHouseNo, formData.residenceStreet, formData.residenceArea, formData.residencePIN,
       formData.residenceCountry, formData.residenceState, formData.residenceCity
-      // Removed copyChecked from dependencies to break the potential loop
-  ]);
+   ]);
 
 
   const handleChange = (e) => {

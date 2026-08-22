@@ -448,6 +448,8 @@ const AdvertisementSpotlight = ({
     advertisementText,
     currentIndex,
     reducedMotion,
+    paused,
+    manuallyPaused,
   ]);
 
   useEffect(() => {

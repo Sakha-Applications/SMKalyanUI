@@ -333,7 +333,7 @@ useEffect(() => {
   const pid = profileData.profile_id || profileData.profileId;
   if (!pid) {
     console.warn("[ViewOtherProfilePage] profileData missing profile_id/profileId. Using fallback photo.");
-    setPhotos([{ id: null, fullUrl: fallbackImageUrl, blobName: "" }]);
+    setPhotos([{ id: null, fullUrl: FALLBACK_DEFAULT_IMAGE_PATH, blobName: "" }]);
     setActiveIndex(0);
     setPhotosError("");
     return;
@@ -376,7 +376,7 @@ useEffect(() => {
     return {
       id: idVal ?? filename ?? Math.random(),
       blobName: filename,
-      fullUrl: fullUrl || fallbackImageUrl,
+      fullUrl: fullUrl || FALLBACK_DEFAULT_IMAGE_PATH,
     };
   };
 
@@ -421,7 +421,7 @@ useEffect(() => {
     setPhotos([
       {
         id: null,
-        fullUrl: fallbackImageUrl,
+        fullUrl: FALLBACK_DEFAULT_IMAGE_PATH,
         blobName: "",
       },
     ]);
@@ -432,8 +432,8 @@ useEffect(() => {
   }
     } catch (err) {
       if (cancelled) return;
-      console.error("Ã¢ÂÅ’ [ViewOtherProfilePage] Failed to load photos:", err);
-      setPhotos([{ id: null, fullUrl: fallbackImageUrl, blobName: "" }]);
+      console.error("Ã¢ÂÅ' [ViewOtherProfilePage] Failed to load photos:", err);
+      setPhotos([{ id: null, fullUrl: FALLBACK_DEFAULT_IMAGE_PATH, blobName: "" }]);
       setPhotosError("Failed to load photos.");
     } finally {
       if (!cancelled) setPhotosLoading(false);
@@ -469,7 +469,7 @@ setActiveSection("contact");
       setSnackbarOpen(true);
 
     } catch (err) {
-      console.error("Ã¢ÂÅ’ [ViewOtherProfilePage] Error unlocking contact details:", err);
+      console.error("Ã¢ÂÅ' [ViewOtherProfilePage] Error unlocking contact details:", err);
 
       if (err.response?.status === 403) {
         const data = err.response.data || {};
@@ -621,7 +621,7 @@ setActiveSection("contact");
                   <img
                     src={
                       photos[activeIndex]?.fullUrl ||
-                      fallbackImageUrl
+                      FALLBACK_DEFAULT_IMAGE_PATH
                     }
                     alt="Profile"
                     className="h-80 w-full rounded-xl border object-cover"
@@ -648,7 +648,7 @@ setActiveSection("contact");
                         title={`Photo ${index + 1}`}
                       >
                         <img
-                          src={photo.fullUrl || fallbackImageUrl}
+                          src={photo.fullUrl || FALLBACK_DEFAULT_IMAGE_PATH}
                           alt={`Profile ${index + 1}`}
                           className="h-full w-full object-cover"
                         />

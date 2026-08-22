@@ -1,9 +1,7 @@
 import React from 'react';
 import MultiSelectCheckbox from '../../../../shared/common/MultiSelectCheckbox';
 import MultiCountrySelector from '../../../../shared/common/MultiCountrySelector';
-import { RadioGroup } from '../../../../shared/common/FormElements';
-import { Label } from '../../../../shared/common/FormElements';
-import { formatDisplayValue, formatSelectedValues, normalizeDisplayArray } from '../helpers/utils';
+import { normalizeDisplayArray } from '../helpers/utils';
 
 import MultiCountryStateCitySelector from '../../../../shared/common/MultiCountryStateCitySelector';
 import FullWidthHobbiesGrid from '../../../../shared/components/FullWidthHobbiesGrid';
@@ -19,32 +17,27 @@ const GeographicPreferences = ({
   professionInput = '',
   setProfessionInput = () => {},
   professionLoading = false,
-  dietOptions = []
+   dietOptions = []
 }) => {
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
+   const handleMultiChange = (name, values) => {
+     setFormData((prev) => ({
+       ...prev,
+       [name]: values.map((v) =>
+         typeof v === "object" && v !== null
+           ? v
+           : { label: v, value: v }
+       ),
+     }));
+   };
 
-  const handleMultiChange = (name, values) => {
-    setFormData((prev) => ({
-      ...prev,
-      [name]: values.map((v) =>
-        typeof v === "object" && v !== null
-          ? v
-          : { label: v, value: v }
-      ),
-    }));
-  };
+   const handleHobbyChange = (e) => {
+     const { name, value } = e.target;
 
-  const handleHobbyChange = (e) => {
-    const { name, value } = e.target;
-
-    setFormData((prev) => ({
-      ...prev,
-      [name]: Array.isArray(value) ? value : [],
-    }));
-  };
+     setFormData((prev) => ({
+       ...prev,
+       [name]: Array.isArray(value) ? value : [],
+     }));
+   };
 
 
   if (mode === 'view') {

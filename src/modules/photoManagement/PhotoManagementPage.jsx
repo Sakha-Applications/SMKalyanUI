@@ -8,7 +8,6 @@ import {
   Checkbox,
   CircularProgress,
   FormControlLabel,
-  MenuItem,
   TextField,
 } from "@mui/material";
 
@@ -34,19 +33,14 @@ const ERROR_PLACEHOLDER =
   "/assets/image-error.png";
 
 const PhotoManagementPage = () => {
-  const [
-    loggedInEmail,
-    setLoggedInEmail,
-  ] = useState("");
-
-  const [
-    searchCriteria,
-    setSearchCriteria,
-  ] = useState({
-    profileId: "",
-    email: "",
-    phone: "",
-  });
+   const [
+     searchCriteria,
+     setSearchCriteria,
+   ] = useState({
+     profileId: "",
+     email: "",
+     phone: "",
+   });
 
   const [
     profileData,
@@ -131,27 +125,23 @@ const PhotoManagementPage = () => {
     };
   }, []);
 
-  useEffect(() => {
-    const emailFromStorage =
-      sessionStorage.getItem(
-        "userEmail"
-      );
+   useEffect(() => {
+     const emailFromStorage =
+       sessionStorage.getItem(
+         "userEmail"
+       );
 
-    if (!emailFromStorage) {
-      return;
-    }
+     if (!emailFromStorage) {
+       return;
+     }
 
-    setLoggedInEmail(
-      emailFromStorage
-    );
-
-    setSearchCriteria(
-      (previous) => ({
-        ...previous,
-        email: emailFromStorage,
-      })
-    );
-  }, []);
+     setSearchCriteria(
+       (previous) => ({
+         ...previous,
+         email: emailFromStorage,
+       })
+     );
+   }, []);
 
   const resetProfileState = () => {
     setProfileData(null);
@@ -165,26 +155,22 @@ const PhotoManagementPage = () => {
     setFailedImages(new Set());
   };
 
-  const handleSearchCriteriaChangeLocal =
-    (event) => {
-      const {
-        name,
-        value,
-      } = event.target;
+   const handleSearchCriteriaChangeLocal =
+     (event) => {
+       const {
+         name,
+         value,
+       } = event.target;
 
-      if (name === "email") {
-        setLoggedInEmail(value);
-      }
+       setSearchCriteria(
+         (previous) => ({
+           ...previous,
+           [name]: value,
+         })
+       );
 
-      setSearchCriteria(
-        (previous) => ({
-          ...previous,
-          [name]: value,
-        })
-      );
-
-      resetProfileState();
-    };
+       resetProfileState();
+     };
 
   const handleSearchProfileLocal =
     async () => {
@@ -405,11 +391,8 @@ const PhotoManagementPage = () => {
           DEFAULT_PLACEHOLDER
       );
 
-      setHasErrored(false);
-    }, [
-      src,
-      failedImages,
-    ]);
+       setHasErrored(false);
+     }, [src]);
 
     const handleError = () => {
       if (

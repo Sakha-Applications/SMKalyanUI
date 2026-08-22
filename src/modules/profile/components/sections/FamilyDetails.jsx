@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import { Input, Select } from "../../../../shared/common/FormElements";
 import EnhancedAutocomplete from "../helpers/EnhancedAutocomplete";
 import { designClasses } from "../../../../shared/styles/designTokens";
@@ -96,39 +96,39 @@ const FamilyDetails = ({
     
   };
 
-  // Fixed useEffect to prevent circular dependencies
-  useEffect(() => {
-    if (mode !== "edit") return;
+   // Fixed useEffect to prevent circular dependencies
+   useEffect(() => {
+     if (mode !== "edit") return;
 
-    // Only initialize if the input is empty or significantly different
-    const initializeProfessionInputs = () => {
-      // Initialize father's profession input
-      if (formData?.fatherProfession && !fatherProfessionInput) {
-        const fatherDisplayValue = getDisplayValue(formData.fatherProfession);
-        setFatherProfessionInput(fatherDisplayValue);
-      }
+     // Only initialize if the input is empty or significantly different
+     const initializeProfessionInputs = () => {
+       // Initialize father's profession input
+       if (formData?.fatherProfession && !fatherProfessionInput) {
+         const fatherDisplayValue = getDisplayValue(formData.fatherProfession);
+         setFatherProfessionInput(fatherDisplayValue);
+       }
 
-      // Initialize mother's profession input
-      if (formData?.motherProfession && !motherProfessionInput) {
-        const motherDisplayValue = getDisplayValue(formData.motherProfession);
-        setMotherProfessionInput(motherDisplayValue);
-      }
-    };
+       // Initialize mother's profession input
+       if (formData?.motherProfession && !motherProfessionInput) {
+         const motherDisplayValue = getDisplayValue(formData.motherProfession);
+         setMotherProfessionInput(motherDisplayValue);
+       }
+     };
 
-    initializeProfessionInputs();
-  }, [mode, formData?.fatherProfession, formData?.motherProfession]); // Removed input values and setters from dependencies
+     initializeProfessionInputs();
+   }, [mode, formData?.fatherProfession, formData?.motherProfession, fatherProfessionInput, motherProfessionInput, setFatherProfessionInput, setMotherProfessionInput]);
 
-  // Separate effect to handle clearing inputs when form data is cleared
-  useEffect(() => {
-    if (mode === "edit") {
-      if (!formData?.fatherProfession && fatherProfessionInput) {
-        setFatherProfessionInput('');
-      }
-      if (!formData?.motherProfession && motherProfessionInput) {
-        setMotherProfessionInput('');
-      }
-    }
-  }, [formData?.fatherProfession, formData?.motherProfession, mode]);
+   // Separate effect to handle clearing inputs when form data is cleared
+   useEffect(() => {
+     if (mode === "edit") {
+       if (!formData?.fatherProfession && fatherProfessionInput) {
+         setFatherProfessionInput('');
+       }
+       if (!formData?.motherProfession && motherProfessionInput) {
+         setMotherProfessionInput('');
+       }
+     }
+   }, [formData?.fatherProfession, formData?.motherProfession, mode, fatherProfessionInput, motherProfessionInput, setFatherProfessionInput, setMotherProfessionInput]);
 
   return (
     <div className="space-y-4">
