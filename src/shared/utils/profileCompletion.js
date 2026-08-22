@@ -51,8 +51,6 @@ const field = (
  * - confirmPassword
  * - declarationAccepted
  *
- * Those are account/registration requirements, not matrimonial
- * profile completeness requirements.
  */
 export const PROFILE_COMPLETION_SECTIONS = [
   {
