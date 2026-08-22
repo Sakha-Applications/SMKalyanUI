@@ -17,6 +17,9 @@ export const designTokens = {
     success: "#237A57",
     warning: "#B7791F",
     error: "#B42318",
+
+    advertisementBride: "#DB2777",
+    advertisementBridegroom: "#1D4ED8",
   },
 
   radius: {
@@ -45,6 +48,9 @@ export const designClasses = {
 
   textAccent: "text-[#D79A1E]",
   bgAccent: "bg-[#D79A1E]",
+  bgAccentSoft: "bg-[#FFF4D6]",
+
+  textSuccess: "text-[#237A57]",
 
   border: "border-[#E4E1D9]",
 
@@ -83,4 +89,25 @@ export const designClasses = {
 
   card:
     "rounded-2xl border border-[#E4E1D9] bg-white shadow-sm",
+
+  advertisementEditor:
+    "rounded-xl border border-[#E4E1D9] bg-white px-4 py-4",
+
+  advertisementPreview:
+    "rounded-xl border border-[#E4E1D9] bg-[#F7F5F0] p-4",
+
+  advertisementHeading:
+    "text-lg font-bold",
+
+  advertisementBrideHeading:
+    "text-[#DB2777]",
+
+  advertisementBridegroomHeading:
+    "text-[#1D4ED8]",
+
+  advertisementBody:
+    "mt-2 text-sm leading-relaxed text-[#071226]",
+
+  advertisementEditorBody:
+    "mt-2 w-full resize-y border-0 bg-transparent p-0 text-[15px] leading-6 text-[#071226] outline-none focus:ring-0",
 };

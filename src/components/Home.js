@@ -1,169 +1,354 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { FaUserPlus, FaSearch, FaCamera, FaArrowRight } from 'react-icons/fa';
-import AdvertisementSection from "../modules/advertisements/AdvertisementSection";
+import React from "react";
+import {
+  Link,
+} from "react-router-dom";
 
-// Import the image
-import backgroundImage from '../assets/Image/kalayan_bg_img.png'; // Adjust the path as needed
+import {
+  ArrowRight,
+  Heart,
+  Search,
+  ShieldCheck,
+  Sparkles,
+  UserPlus,
+  Users,
+} from "lucide-react";
 
-export default function Home() {
-  // For demo purposes - in a real app, this would come from auth context or props
-  const userProfileId = null; // Set to null for guests, or get from sessionStorage if logged in
+import BrandHeader from "../shared/layouts/BrandHeader";
+import BrandFooter from "../shared/layouts/BrandFooter";
 
-  return (
-    <div className="bg-gray-50 font-sans antialiased min-h-screen">
-      {/* Navigation Bar */}
-      <nav className="bg-white shadow-md py-4">
-        <div className="container mx-auto flex justify-between items-center px-6">
-          <Link to="/home" className="text-xl font-bold text-indigo-700">
-            Sarvamool - Kalyana Sakha Home Page
-          </Link>
-          <div className="space-x-4">
-            <Link to="/home" className="text-gray-700 hover:text-indigo-500">Home</Link>
-            <Link to="/about" className="text-gray-700 hover:text-indigo-500">About</Link>
-            <Link
-              to="/login"
-              className="bg-indigo-500 text-white py-2 px-4 rounded-md hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-400"
-            >
-              Login
-            </Link>
-          </div>
-        </div>
-      </nav>
+import {
+  designClasses,
+} from "../shared/styles/designTokens";
 
-      {/* Main Content Section with Preferred Profiles */}
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex flex-col lg:flex-row gap-6">
-          {/* Left Side - Preferred Profiles Section */}
-          <div className="w-full lg:w-1/3 xl:w-1/4">
-            <AdvertisementSection 
-              showTicker={true}
-              showCards={true}
-              tickerLimit={6}
-              cardsLimit={4}
-              userProfileId={userProfileId}
-            />
-          </div>
+import backgroundImage from "../assets/Image/kalayan_bg_img.png";
 
-          {/* Right Side - Main Content */}
-          <div className="w-full lg:w-2/3 xl:w-3/4">
-            {/* Hero Section */}
-            <section
-              className="py-16 relative bg-indigo-50 rounded-lg shadow-lg mb-8"
-              style={{
-                backgroundImage: `url(${backgroundImage})`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-                minHeight: '350px',
-              }}
-            >
-              {/* Optional: Add an overlay */}
-              <div className="absolute inset-0 bg-indigo-50 opacity-20 rounded-lg"></div>
-              
-              {/* Main text container */}
-              <div className="px-6 relative z-10">
-                <h1 className="text-3xl lg:text-4xl font-extrabold text-indigo-900 mb-6 leading-tight">
-                  Welcome to Kalyan Sakha <br />
-                  Connect with Your Perfect Match
-                </h1>
-                <p className="text-lg text-gray-700 mb-8 opacity-80">
-                  Discover genuine connections within our supportive and trusted profiles.
-                </p>
-                <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
-                  <Link
-                    to="/profile-register"
-                    className="bg-green-500 hover:bg-green-600 text-white py-2 px-6 rounded-md text-lg font-semibold shadow-md flex items-center justify-center"
-                  >
-                    <FaUserPlus className="mr-2" /> Register Now
-                  </Link>
-                  <Link
-                    to="/login"
-                    className="bg-blue-500 hover:bg-blue-600 text-white py-3 px-6 rounded-md text-lg font-semibold shadow-md text-center"
-                  >
-                    Login
-                  </Link>
-                </div>
-              </div>
-            </section>
-            {/* How We Help You Connect Section */}
-            <section className="py-6 bg-white rounded-lg shadow-lg mb-8">
-              <div className="px-6">
-                <h2 className="text-2xl font-semibold text-gray-800 mb-8 text-center">How We Help You to Connect</h2>
-                <div className="grid md:grid-cols-2 gap-6">
-                  {/* Create Your Profile Box */}
-                  <div className="bg-white rounded-lg p-6 border border-gray-200 hover:shadow-lg transition-shadow duration-300">
-                    <div className="w-12 h-12 rounded-full bg-indigo-100 text-indigo-500 flex items-center justify-center mb-4">
-                      <FaUserPlus className="text-2xl" />
-                    </div>
-                    <h3 className="text-lg font-semibold text-gray-700 mb-2">Create Your Profile</h3>
-                    <p className="text-gray-600 text-sm mb-4">Share your details and preferences to find compatible matches.</p>
-                    <Link to="/profile-register" className="inline-flex items-center text-indigo-500 hover:text-indigo-700 text-sm font-medium">
-                      Join Now <FaArrowRight className="ml-2" />
-                    </Link>
-                  </div>
-
-                  {/* Discover Profiles Box */}
-                  <div className="bg-white rounded-lg p-6 border border-gray-200 hover:shadow-lg transition-shadow duration-300">
-                    <div className="w-12 h-12 rounded-full bg-blue-100 text-blue-500 flex items-center justify-center mb-4">
-                      <FaSearch className="text-2xl" />
-                    </div>
-                    <h3 className="text-lg font-semibold text-gray-700 mb-2">Discover Profiles</h3>
-                    <p className="text-gray-600 text-sm mb-4">Browse through diverse profiles and find someone special.</p>
-                    <Link to="/profile-search" className="inline-flex items-center text-blue-500 hover:text-blue-700 text-sm font-medium">
-                      Browse <FaArrowRight className="ml-2" />
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            {/* Trust and Connection Section */}
-            <section className="bg-indigo-50 rounded-lg shadow-lg p-8">
-              <div className="text-center">
-                <h2 className="text-2xl font-semibold text-indigo-700 mb-6">A Foundation of Trust and Connection</h2>
-                <div className="max-w-2xl mx-auto">
-                  <p className="text-md text-gray-700 leading-relaxed mb-6 opacity-80">
-                    Building a community where trust and genuine connections thrive. We focus on creating a safe and supportive environment for everyone.
-                  </p>
-                  
-                  {/* Stats Section */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
-                    <div className="bg-white rounded-lg shadow p-4 text-center">
-                      <div className="text-3xl font-bold text-indigo-600 mb-2">5,280</div>
-                      <h3 className="text-sm font-medium text-gray-700">Active Profiles</h3>
-                    </div>
-                    <div className="bg-white rounded-lg shadow p-4 text-center">
-                      <div className="text-3xl font-bold text-green-600 mb-2">1,620</div>
-                      <h3 className="text-sm font-medium text-gray-700">Successful Matches</h3>
-                    </div>
-                    <div className="bg-white rounded-lg shadow p-4 text-center">
-                      <div className="text-3xl font-bold text-orange-600 mb-2">148</div>
-                      <h3 className="text-sm font-medium text-gray-700">New Members</h3>
-                      <p className="text-xs text-gray-500">this month</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </section>
-          </div>
-        </div>
+const JourneyCard = ({
+  icon: Icon,
+  step,
+  title,
+  description,
+}) => (
+  <div
+    className={`${designClasses.card} relative p-5 sm:p-6`}
+  >
+    <div className="flex items-start gap-4">
+      <div
+        className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${designClasses.bgAccentSoft}`}
+      >
+        <Icon
+          className={`h-5 w-5 ${designClasses.textAccent}`}
+        />
       </div>
 
-      {/* Footer */}
-      <footer className="bg-white shadow-inner py-6 text-center text-gray-700 text-sm mt-12">
-        <div className="container mx-auto px-6">
-          <div className="flex justify-center space-x-4 mb-2">
-            <Link to="/" className="hover:text-indigo-500">Home</Link>
-            <Link to="/about" className="hover:text-indigo-500">About Us</Link>
-            <Link to="/register" className="hover:text-indigo-500">Register</Link>
-            <Link to="/login" className="hover:text-indigo-500">Login</Link>
-            <Link to="/contact" className="hover:text-indigo-500">Contact</Link>
-          </div>
-          <p className="mb-1">Email: support@sarvamoola.org</p>
-          <p>Phone: +31 12345 67890</p>
-          <p className="mt-2">&copy; {new Date().getFullYear()} ProfileConnect. All rights reserved.</p>
+      <div>
+        <div
+          className={`text-xs font-semibold uppercase tracking-[0.14em] ${designClasses.textAccent}`}
+        >
+          Step {step}
         </div>
-      </footer>
+
+        <h3
+          className={`mt-1 text-base font-semibold ${designClasses.textPrimary}`}
+        >
+          {title}
+        </h3>
+
+        <p
+          className={`mt-2 text-sm leading-6 ${designClasses.textSecondary}`}
+        >
+          {description}
+        </p>
+      </div>
+    </div>
+  </div>
+);
+
+const TrustItem = ({
+  icon: Icon,
+  title,
+  description,
+}) => (
+  <div className="flex items-start gap-3">
+    <div
+      className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${designClasses.bgAccentSoft}`}
+    >
+      <Icon
+        className={`h-4 w-4 ${designClasses.textAccent}`}
+      />
+    </div>
+
+    <div>
+      <h3
+        className={`text-sm font-semibold ${designClasses.textPrimary}`}
+      >
+        {title}
+      </h3>
+
+      <p
+        className={`mt-1 text-sm leading-6 ${designClasses.textSecondary}`}
+      >
+        {description}
+      </p>
+    </div>
+  </div>
+);
+
+export default function Home() {
+  return (
+    <div
+      className={`min-h-screen ${designClasses.page}`}
+    >
+      <BrandHeader />
+
+      <main>
+        {/* Hero */}
+        <section className="mx-auto max-w-7xl px-4 pt-5 sm:px-6 lg:px-8">
+          <div
+            className="relative min-h-[470px] overflow-hidden rounded-[24px] border border-[#E4E1D9] bg-white shadow-sm"
+            style={{
+              backgroundImage: `url(${backgroundImage})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+            }}
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-white via-white/95 to-white/45" />
+
+            <div className="relative z-10 flex min-h-[470px] items-center px-6 py-12 sm:px-10 lg:px-14">
+              <div className="max-w-2xl">
+                <div
+                  className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold ${designClasses.bgAccentSoft} ${designClasses.textAccent}`}
+                >
+                  <Sparkles className="h-4 w-4" />
+                  A trusted matrimonial community
+                </div>
+
+                <h1
+                  className={`mt-5 text-4xl font-bold leading-tight tracking-tight sm:text-5xl lg:text-[54px] ${designClasses.textPrimary}`}
+                >
+                  Meaningful connections.
+                  <span
+                    className={`mt-1 block ${designClasses.textAccent}`}
+                  >
+                    Rooted in shared values.
+                  </span>
+                </h1>
+
+                <p
+                  className={`mt-5 max-w-xl text-base leading-7 sm:text-lg ${designClasses.textSecondary}`}
+                >
+                  Kalyana Sakha brings families
+                  and individuals together through
+                  thoughtfully created profiles,
+                  partner preferences and a
+                  community-focused matrimonial
+                  experience.
+                </p>
+
+                <div className="mt-7 flex flex-wrap gap-3">
+                  <Link
+                    to="/profile-register"
+                    className={`inline-flex items-center justify-center gap-2 rounded-lg px-5 py-3 text-sm font-semibold ${designClasses.primaryButton}`}
+                  >
+                    <UserPlus className="h-4 w-4" />
+                    Create Your Profile
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+
+                  <Link
+                    to="/login"
+                    className={`inline-flex items-center justify-center rounded-lg px-5 py-3 text-sm font-semibold ${designClasses.secondaryButton}`}
+                  >
+                    Member Login
+                  </Link>
+                </div>
+
+                <div
+                  className={`mt-7 flex flex-wrap gap-x-6 gap-y-2 text-sm ${designClasses.textSecondary}`}
+                >
+                  <span className="inline-flex items-center gap-2">
+                    <ShieldCheck
+                      className={`h-4 w-4 ${designClasses.textSuccess}`}
+                    />
+                    Profile-focused community
+                  </span>
+
+                  <span className="inline-flex items-center gap-2">
+                    <Heart
+                      className={`h-4 w-4 ${designClasses.textAccent}`}
+                    />
+                    Family-oriented connections
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Introduction */}
+        <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+          <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+            <div>
+              <div
+                className={`text-sm font-semibold uppercase tracking-[0.16em] ${designClasses.textAccent}`}
+              >
+                Kalyana Sakha
+              </div>
+
+              <h2
+                className={`mt-2 text-3xl font-bold tracking-tight ${designClasses.textPrimary}`}
+              >
+                A simpler way to begin
+                a meaningful search
+              </h2>
+
+              <p
+                className={`mt-4 max-w-xl text-base leading-7 ${designClasses.textSecondary}`}
+              >
+                Create a complete profile,
+                describe what matters to you,
+                and discover compatible members
+                through a clear and respectful
+                matrimonial journey.
+              </p>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <TrustItem
+                icon={ShieldCheck}
+                title="Thoughtful profiles"
+                description="Profiles bring together personal, family, cultural and professional information in one place."
+              />
+
+              <TrustItem
+                icon={Search}
+                title="Focused discovery"
+                description="Search and partner preferences help members concentrate on relevant matrimonial profiles."
+              />
+
+              <TrustItem
+                icon={Users}
+                title="Community centred"
+                description="Designed around genuine matrimonial connections within the Kalyana Sakha community."
+              />
+
+              <TrustItem
+                icon={Heart}
+                title="Respectful interaction"
+                description="A structured member journey keeps profile discovery and communication simple and purposeful."
+              />
+            </div>
+          </div>
+        </section>
+
+        {/* Journey */}
+        <section
+          className={`border-y ${designClasses.border} ${designClasses.surfaceMuted}`}
+        >
+          <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+            <div className="text-center">
+              <div
+                className={`text-sm font-semibold uppercase tracking-[0.16em] ${designClasses.textAccent}`}
+              >
+                Getting Started
+              </div>
+
+              <h2
+                className={`mt-2 text-2xl font-bold sm:text-3xl ${designClasses.textPrimary}`}
+              >
+                Your matrimonial journey,
+                made simple
+              </h2>
+
+              <p
+                className={`mx-auto mt-3 max-w-2xl text-sm leading-6 ${designClasses.textSecondary}`}
+              >
+                Start with your profile and
+                preferences, then discover
+                members who may be compatible
+                with you.
+              </p>
+            </div>
+
+            <div className="mt-7 grid gap-4 md:grid-cols-3">
+              <JourneyCard
+                icon={UserPlus}
+                step="1"
+                title="Create your profile"
+                description="Share your personal, family, cultural and professional details."
+              />
+
+              <JourneyCard
+                icon={Heart}
+                step="2"
+                title="Set partner preferences"
+                description="Tell us the qualities and preferences that matter in your search."
+              />
+
+              <JourneyCard
+                icon={Search}
+                step="3"
+                title="Discover profiles"
+                description="Explore relevant profiles and take the next step when you find a meaningful connection."
+              />
+            </div>
+
+            <div className="mt-7 text-center">
+              <Link
+                to="/profile-register"
+                className={`inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold ${designClasses.primaryButton}`}
+              >
+                Start Your Profile
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        {/* Closing CTA */}
+        <section className="mx-auto max-w-7xl px-4 pb-12 sm:px-6 lg:px-8">
+          <div
+            className={`${designClasses.card} overflow-hidden`}
+          >
+            <div className="grid gap-6 p-6 sm:p-8 lg:grid-cols-[1fr_auto] lg:items-center">
+              <div>
+                <h2
+                  className={`text-2xl font-bold ${designClasses.textPrimary}`}
+                >
+                  Ready to begin your search?
+                </h2>
+
+                <p
+                  className={`mt-2 max-w-2xl text-sm leading-6 ${designClasses.textSecondary}`}
+                >
+                  Create your Kalyana Sakha
+                  profile and take the first
+                  step toward finding a
+                  compatible life partner.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap gap-3">
+                <Link
+                  to="/profile-register"
+                  className={`inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold ${designClasses.primaryButton}`}
+                >
+                  Register Now
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+
+                <Link
+                  to="/login"
+                  className={`inline-flex items-center rounded-lg px-5 py-2.5 text-sm font-semibold ${designClasses.secondaryButton}`}
+                >
+                  Member Login
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <BrandFooter />
     </div>
   );
 }

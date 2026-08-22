@@ -1,9 +1,12 @@
 import kalyanaLogo from "../../assets/branding/kalyana-sakha-logo.png";
 import sarvamoolaLogo from "../../assets/branding/sarvamoola-foundation-logo.png";
 
+import AdvertisementSpotlight from "../components/AdvertisementSpotlight";
+
 const BrandHeader = ({ compact = false }) => {
   return (
-    <header className="border-b border-amber-400/20 bg-[#00264d]">
+    <>
+      <header className="border-b border-amber-400/20 bg-[#00264d]">
       <div
         className={`mx-auto flex max-w-7xl items-center justify-between gap-6 px-4 sm:px-6 lg:px-8 ${
           compact ? "py-3" : "py-4"
@@ -31,7 +34,10 @@ const BrandHeader = ({ compact = false }) => {
           />
         </div>
       </div>
-    </header>
+      </header>
+
+      <AdvertisementSpotlight />
+    </>
   );
 };
 

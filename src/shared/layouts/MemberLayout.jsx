@@ -5,6 +5,8 @@ import sarvamoolaLogo from "../../assets/branding/sarvamoola-foundation-logo.png
 
 import { designClasses } from "../styles/designTokens";
 
+import AdvertisementSpotlight from "../components/AdvertisementSpotlight";
+
 const memberLinks = [
   { to: "/dashboard", label: "Dashboard" },
   { to: "/all-matches", label: "Matches", requiresApproval: true },
@@ -139,6 +141,8 @@ const MemberLayout = ({
     </div>
   </div>
 </header>
+
+      <AdvertisementSpotlight />
 
       <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-4 sm:px-6 lg:px-8">
         {children}
