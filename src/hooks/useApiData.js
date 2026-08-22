@@ -333,7 +333,7 @@ const useApiData = (endpoint) => {
                 if (Array.isArray(res.data)) {
                   const transformed = transformer(res.data);
                   setter(transformed);
-                  console.log(`✓ Loaded ${name}:`, transformed.length, "items");
+                  
                 } else {
                   console.warn(`Invalid ${name} response format:`, res.data);
                 }

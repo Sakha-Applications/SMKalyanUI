@@ -41,9 +41,7 @@ export const handlePhoneFieldChange = (prevData, name, value) => {
       
       // Combine the fields - only if number exists
       const combinedValue = number ? `${code}${number}` : '';
-      
-      console.log(`📞 Combining ${codeField}(${code}) + ${numberField}(${number}) = ${combinedField}(${combinedValue})`);
-      
+                  
       return { [combinedField]: combinedValue };
     }
   }

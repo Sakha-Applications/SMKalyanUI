@@ -132,7 +132,6 @@ placeOfBirth: "",
   const generateProfileId = (name, phone) => {
     // Ensure we have valid inputs
     if (!name || !phone || typeof name !== 'string' || typeof phone !== 'string') {
-      console.log('❌ generateProfileId: Invalid inputs', { name, phone });
       return null;
     }
     
@@ -140,10 +139,6 @@ placeOfBirth: "",
     const trimmedPhone = phone.trim();
     
     if (trimmedName.length < 2 || trimmedPhone.length < 5) {
-      console.log('❌ generateProfileId: Insufficient length', { 
-        nameLength: trimmedName.length, 
-        phoneLength: trimmedPhone.length 
-      });
       return null;
     }
     
@@ -151,7 +146,6 @@ placeOfBirth: "",
     const phoneDigits = trimmedPhone.replace(/\D/g, '');
     
     if (phoneDigits.length < 5) {
-      console.log('❌ generateProfileId: Not enough phone digits', { phoneDigits });
       return null;
     }
     
@@ -167,9 +161,8 @@ placeOfBirth: "",
     }
     
     const generatedId = `${namePrefix}${randomDigits}`;
-    console.log('✅ generateProfileId: Generated', generatedId);
-    return generatedId;
-  };
+      return generatedId;
+    };
 
   function formatTime(time) {
     if (!time) return "";
@@ -235,15 +228,13 @@ placeOfBirth: "",
         if (name === "phoneCountryCode" || name === "phoneNumber") {
           const currentName = newData.name;
           const currentPhone = newData.phone;
-
-          console.log('🔄 Phone field changed:', { name, value, currentName, currentPhone });
-
+          
           if (currentName && currentPhone && currentPhone.length > 5) {
             const newProfileId = generateProfileId(currentName, currentPhone);
             if (newProfileId) {
               newData.profileId = newProfileId;
-              console.log('✅ ProfileId updated after phone change:', newProfileId);
-            }
+
+              }
           }
         }
 
@@ -280,13 +271,11 @@ placeOfBirth: "",
       // Auto-generate profileId when name changes
       if (name === "name") {
         const currentPhone = newData.phone;
-        console.log('🔄 Name changed:', { value, currentPhone });
-
         if (value && currentPhone && currentPhone.length > 5) {
           const newProfileId = generateProfileId(value, currentPhone);
           if (newProfileId) {
             newData.profileId = newProfileId;
-            console.log('✅ ProfileId updated after name change:', newProfileId);
+            
           }
         }
       }

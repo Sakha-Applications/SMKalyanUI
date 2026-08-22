@@ -1,4 +1,4 @@
-// src/components/common/MultiCountryStateCitySelector.js
+// Shared country, state and city selector.
 import React, { useEffect, useState } from 'react';
 import { Country, State, City } from 'country-state-city';
 import { Label } from './FormElements';
@@ -107,11 +107,32 @@ useEffect(() => {
   const handleAddEntry = () => {
     if (selectedCountry || selectedState || selectedCity) {
       const newEntry = {
-  country: selectedCountry?.label || '.',
-  state: selectedState?.label || '.',
-  city: selectedCity?.label || '.',
-  label: `${selectedCountry?.label || '.'} / ${selectedState?.label || '.'} / ${selectedCity?.label || '.'}`,
-  value: `${selectedCountry?.label || '.'}/${selectedState?.label || '.'}/${selectedCity?.label || '.'}`
+  country: selectedCountry?.value || "",
+  state: selectedState?.value || "",
+  city: selectedCity?.value || "",
+
+  countryLabel:
+    selectedCountry?.label || "",
+  stateLabel:
+    selectedState?.label || "",
+  cityLabel:
+    selectedCity?.label || "",
+
+  label: [
+    selectedCountry?.label,
+    selectedState?.label,
+    selectedCity?.label,
+  ]
+    .filter(Boolean)
+    .join(" / "),
+
+  value: [
+    selectedCountry?.label,
+    selectedState?.label,
+    selectedCity?.label,
+  ]
+    .filter(Boolean)
+    .join("/"),
 };
 
       const updated = [...entries, newEntry];

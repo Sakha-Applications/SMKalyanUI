@@ -381,7 +381,7 @@ useEffect(() => {
   };
 
   const loadCarousel = async () => {
-    console.log(`[ViewOtherProfilePage] Loading carousel photos for profileId: ${pid}`);
+    
     setPhotosLoading(true);
     setPhotosError("");
     setBrokenUrls(new Set());
@@ -524,7 +524,7 @@ setActiveSection("contact");
       <div className="min-h-screen flex flex-col items-center justify-center gap-3">
         <Typography variant="h6" color="error">{error}</Typography>
         <button
-          className="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600"
+          className={`rounded-lg px-6 py-2 font-semibold transition ${designClasses.secondaryButton}`}
           onClick={handleReturn}
         >
           Close and Return
@@ -540,7 +540,7 @@ setActiveSection("contact");
 
         <button
           type="button"
-          className="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600"
+          className={`rounded-lg px-6 py-2 font-semibold transition ${designClasses.secondaryButton}`}
           onClick={handleReturn}
         >
           Close and Return
@@ -612,9 +612,12 @@ setActiveSection("contact");
             </div>
 
             {photosError ? (
-              <div className="text-sm text-red-600">
-                {photosError}
-              </div>
+              <div
+  className={`rounded-lg p-3 text-sm ${designClasses.statusError}`}
+  role="alert"
+>
+  {photosError}
+</div>
             ) : (
               <div className="flex flex-col items-center">
                 <div className="w-full max-w-md">
@@ -642,8 +645,8 @@ setActiveSection("contact");
                         onClick={() => setActiveIndex(index)}
                         className={`h-14 w-14 overflow-hidden rounded-lg border ${
                           index === activeIndex
-                            ? "border-[#002B55]"
-                            : "border-gray-300"
+                            ? "border-[#D79A1E]"
+                            : designClasses.border
                         }`}
                         title={`Photo ${index + 1}`}
                       >
@@ -772,7 +775,7 @@ setActiveSection("contact");
           <div className="mt-4 flex flex-col justify-end gap-3 sm:flex-row">
             <button
               type="button"
-              className="rounded-lg border border-[#002B55] bg-white px-6 py-2.5 font-semibold text-[#002B55] transition hover:bg-gray-50"
+              className={`rounded-lg px-6 py-2.5 font-semibold transition ${designClasses.secondaryButton}`}
               onClick={handleReturn}
             >
               Back
@@ -780,7 +783,7 @@ setActiveSection("contact");
 
             <button
               type="button"
-              className="rounded-lg bg-[#002B55] px-6 py-2.5 font-semibold text-white transition hover:bg-[#001f3d] disabled:cursor-not-allowed disabled:opacity-60"
+              className={`rounded-lg px-6 py-2.5 font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${designClasses.primaryButton}`}
               onClick={handleSendInvitation}
               disabled={isSendingInvitation}
             >

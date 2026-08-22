@@ -683,21 +683,6 @@ if (photoUploadFailed) {
 window.alert(
   successLines.join("\n")
 );
-
-console.log(
-  "Simplified registration completed successfully:",
-  {
-    profileId:
-      createdProfileId,
-    profileStatus:
-      "DRAFT",
-    authenticated: true,
-    photoUploaded:
-      !submissionData.photo ||
-      !photoUploadFailed,
-  }
-);
-
 navigate(
   "/dashboard",
   {

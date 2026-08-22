@@ -1,4 +1,4 @@
-// src/components/common/FullWidthHobbiesGrid.jsx
+// Shared full-width hobbies grid.
 
 import React from "react";
 import {

@@ -13,10 +13,10 @@ export const getUsers = async () => {
 
 // ✅ New function to add a profile
 export const addProfile = async (profile) => {
-    console.log("Sending profile data to backend:", profile);
+    
     return axios.post(`${API_URL}/addProfile`, profile) 
     .then(response => {
-        console.log("Response from backend:", response.data);
+        
         return response.data;
     })
     .catch(error => {

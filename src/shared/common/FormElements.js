@@ -1,4 +1,4 @@
-// src/components/common/FormElements.js
+// Shared form elements.
 // Contains reusable UI components for forms.
 
 import React from 'react';

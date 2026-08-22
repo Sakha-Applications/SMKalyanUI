@@ -122,88 +122,171 @@ if (data) {
   };
 
    useEffect(() => {
-     fetchUserProfile();
-   }, [fetchUserProfile]);
+  fetchUserProfile();
+
+  // Load the member profile once when this page opens.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, []);
 
   useEffect(() => {
+    if (educationInput.length < 2) {
+      setEducationOptions([]);
+      setEducationLoading(false);
+      return undefined;
+    }
+
     const delay = setTimeout(async () => {
-      if (educationInput.length >= 2) {
-        setEducationLoading(true);
-        try {
-          const results = await searchEducation(educationInput);
-          setEducationOptions(results.map(item => ({
-            label: item.label || item.name || item,
-            value: item.label || item.name || item
-          })));
-        } catch {
-          setEducationOptions([]);
-        } finally {
-          setEducationLoading(false);
-        }
+      setEducationLoading(true);
+
+      try {
+        const results =
+          await searchEducation(
+            educationInput
+          );
+
+        setEducationOptions(
+          (results || []).map((item) => ({
+            label:
+              item.label ||
+              item.name ||
+              item,
+            value:
+              item.label ||
+              item.name ||
+              item,
+          }))
+        );
+      } catch {
+        setEducationOptions([]);
+      } finally {
+        setEducationLoading(false);
       }
-     }, 300);
-     return () => clearTimeout(delay);
-   }, [educationInput, searchEducation]);
+    }, 300);
+
+    return () =>
+      clearTimeout(delay);
+
+    // Search function comes from useApiData;
+    // rerun only when the typed value changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [educationInput]);
 
   useEffect(() => {
+    if (
+      motherTongueInput.length < 2
+    ) {
+      setMotherTongueOptions([]);
+      setMotherTongueLoading(false);
+      return undefined;
+    }
+
     const delay = setTimeout(async () => {
-      if (motherTongueInput.length >= 2) {
-        setMotherTongueLoading(true);
-        try {
-          const results = await searchMotherTongues(motherTongueInput);
-          setMotherTongueOptions(results.map(item => ({
-            label: item.mother_tongue || item.label || item,
-            value: item.mother_tongue || item.label || item
-          })));
-        } catch {
-          setMotherTongueOptions([]);
-        } finally {
-          setMotherTongueLoading(false);
-        }
+      setMotherTongueLoading(true);
+
+      try {
+        const results =
+          await searchMotherTongues(
+            motherTongueInput
+          );
+
+        setMotherTongueOptions(
+          (results || []).map((item) => ({
+            label:
+              item.mother_tongue ||
+              item.label ||
+              item,
+            value:
+              item.mother_tongue ||
+              item.label ||
+              item,
+          }))
+        );
+      } catch {
+        setMotherTongueOptions([]);
+      } finally {
+        setMotherTongueLoading(false);
       }
-     }, 300);
-     return () => clearTimeout(delay);
-   }, [motherTongueInput, searchMotherTongues]);
+    }, 300);
+
+    return () =>
+      clearTimeout(delay);
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [motherTongueInput]);
 
   useEffect(() => {
+    if (guruMathaInput.length < 2) {
+      setGuruMathaOptions([]);
+      setGuruMathaLoading(false);
+      return undefined;
+    }
+
     const delay = setTimeout(async () => {
-      if (guruMathaInput.length >= 2) {
-        setGuruMathaLoading(true);
-        try {
-          const results = await searchGuruMatha(guruMathaInput);
-          setGuruMathaOptions(results.map(item => ({
-            label: item.label || item,
-            value: item.label || item
-          })));
-        } catch {
-          setGuruMathaOptions([]);
-        } finally {
-          setGuruMathaLoading(false);
-        }
+      setGuruMathaLoading(true);
+
+      try {
+        const results =
+          await searchGuruMatha(
+            guruMathaInput
+          );
+
+        setGuruMathaOptions(
+          (results || []).map((item) => ({
+            label:
+              item.label || item,
+            value:
+              item.label || item,
+          }))
+        );
+      } catch {
+        setGuruMathaOptions([]);
+      } finally {
+        setGuruMathaLoading(false);
       }
-     }, 300);
-     return () => clearTimeout(delay);
-   }, [guruMathaInput, searchGuruMatha]);
+    }, 300);
+
+    return () =>
+      clearTimeout(delay);
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [guruMathaInput]);
 
   useEffect(() => {
+    if (professionInput.length < 2) {
+      setProfessionOptions([]);
+      setProfessionLoading(false);
+      return undefined;
+    }
+
     const delay = setTimeout(async () => {
-      if (professionInput.length >= 2) {
-        setProfessionLoading(true);
-        try {
-          const results = await searchProfessions(professionInput);
-          setProfessionOptions(results.map(item => ({
-            label: item.label || item,
-            value: item.label || item
-          })));
-        } catch {
-          setProfessionOptions([]);
-        } finally {
-          setProfessionLoading(false);
-        }
+      setProfessionLoading(true);
+
+      try {
+        const results =
+          await searchProfessions(
+            professionInput
+          );
+
+        setProfessionOptions(
+          (results || []).map((item) => ({
+            label:
+              item.label || item,
+            value:
+              item.label || item,
+          }))
+        );
+      } catch {
+        setProfessionOptions([]);
+      } finally {
+        setProfessionLoading(false);
       }
-     }, 300);
-     return () => clearTimeout(delay);
-   }, [professionInput, searchProfessions]);
+    }, 300);
+
+    return () =>
+      clearTimeout(delay);
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [professionInput]);
 
 const handleUpdate = async () => {
   setLoading(true);

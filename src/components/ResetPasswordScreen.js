@@ -1,6 +1,18 @@
-import React, { useState } from 'react';
-import { useNavigate, useLocation, Link } from 'react-router-dom';
-import getBaseUrl from '../utils/GetUrl';
+import React, { useState } from "react";
+import {
+  Link,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
+
+import getBaseUrl from "../utils/GetUrl";
+
+import BrandHeader from "../shared/layouts/BrandHeader";
+import BrandFooter from "../shared/layouts/BrandFooter";
+
+import {
+  designClasses,
+} from "../shared/styles/designTokens";
 
 function ResetPasswordScreen() {
     const location = useLocation();
@@ -52,73 +64,135 @@ function ResetPasswordScreen() {
         }
     };
 
-    return (
-        <div className="flex justify-center items-center min-h-screen bg-gradient-to-b from-blue-100 to-indigo-100">
-            <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
-                <h2 className="text-2xl font-bold text-center text-indigo-800 mb-6">Reset Password</h2>
-                
-                {error && (
-                    <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6">
-                        {error}
+     return (
+        <div
+          className={`flex min-h-screen flex-col ${designClasses.page}`}
+        >
+            <BrandHeader compact />
+
+            <main className="flex flex-1 items-center justify-center px-4 py-10 sm:px-6">
+                <section
+                  className={`${designClasses.card} w-full max-w-md p-6 sm:p-8`}
+                >
+                    <div className="mb-6 text-center">
+                        <h1
+                          className={`text-2xl font-semibold ${designClasses.textPrimary}`}
+                        >
+                            Reset Password
+                        </h1>
+
+                        <p
+                          className={`mt-2 text-sm ${designClasses.textSecondary}`}
+                        >
+                            Set a new password for
+                            your Kalyana Sakha
+                            account.
+                        </p>
                     </div>
-                )}
-                
-                {successMessage && (
-                    <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-6">
-                        {successMessage}
-                        <p className="mt-2 text-sm">Redirecting to login page...</p>
-                    </div>
-                )}
-                
-                <div className="space-y-6">
-                    <div className="form-group">
-                        <label className="block text-gray-700 font-medium mb-2">User ID:</label>
-                        <input
-                            type="text"
-                            value={userId || ''}
-                            disabled
-                            className="w-full px-4 py-2 border border-gray-300 rounded-md bg-gray-100"
-                        />
-                        <p className="text-sm text-gray-500 mt-1">Your user ID cannot be changed</p>
-                    </div>
-                    
-                    <div className="form-group">
-                        <label className="block text-gray-700 font-medium mb-2">New Password:</label>
-                        <input
-                            type="password"
-                            value={newPassword}
-                            onChange={(e) => setNewPassword(e.target.value)}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+
+                    {error && (
+                        <div
+                          className={`mb-4 rounded-xl p-3 text-sm ${designClasses.statusError}`}
+                          role="alert"
+                        >
+                            {error}
+                        </div>
+                    )}
+
+                    {successMessage && (
+                        <div
+                          className={`mb-4 rounded-xl p-3 text-sm ${designClasses.statusSuccess}`}
+                        >
+                            {successMessage}
+
+                            <p
+                              className={`mt-1 text-xs ${designClasses.textSecondary}`}
+                            >
+                                Redirecting to login...
+                            </p>
+                        </div>
+                    )}
+
+                    <div className="space-y-4">
+                        <div>
+                            <label
+                              className={designClasses.fieldLabel}
+                            >
+                                User ID
+                            </label>
+
+                            <input
+                                type="text"
+                                value={userId || ""}
+                                disabled
+                                className={`w-full rounded-lg border px-3 py-2.5 ${designClasses.border} ${designClasses.readOnlyField} ${designClasses.textSecondary}`}
+                            />
+                        </div>
+
+                        <div>
+                            <label
+                              className={designClasses.fieldLabel}
+                            >
+                                New Password
+                            </label>
+
+                            <input
+                                type="password"
+                                value={newPassword}
+                                onChange={(e) =>
+                                  setNewPassword(
+                                    e.target.value
+                                  )
+                                }
+                                disabled={isLoading}
+                                className={`w-full rounded-lg border px-3 py-2.5 outline-none transition focus:ring-2 focus:ring-[#D79A1E]/30 ${designClasses.border} ${designClasses.surface} ${designClasses.textDark}`}
+                            />
+                        </div>
+
+                        <div>
+                            <label
+                              className={designClasses.fieldLabel}
+                            >
+                                Confirm New Password
+                            </label>
+
+                            <input
+                                type="password"
+                                value={confirmNewPassword}
+                                onChange={(e) =>
+                                  setConfirmNewPassword(
+                                    e.target.value
+                                  )
+                                }
+                                disabled={isLoading}
+                                className={`w-full rounded-lg border px-3 py-2.5 outline-none transition focus:ring-2 focus:ring-[#D79A1E]/30 ${designClasses.border} ${designClasses.surface} ${designClasses.textDark}`}
+                            />
+                        </div>
+
+                        <button
+                            type="button"
+                            onClick={handleResetPassword}
                             disabled={isLoading}
-                        />
+                            className={`w-full rounded-lg px-4 py-2.5 font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${designClasses.primaryButton}`}
+                        >
+                            {isLoading
+                              ? "Processing..."
+                              : "Change Password"}
+                        </button>
+
+                        <div className="text-center">
+                            <Link
+                                to="/login"
+                                className={`text-sm font-semibold ${designClasses.textPrimary}`}
+                            >
+                                Back to Login
+                            </Link>
+                        </div>
                     </div>
-                    
-                    <div className="form-group">
-                        <label className="block text-gray-700 font-medium mb-2">Confirm New Password:</label>
-                        <input
-                            type="password"
-                            value={confirmNewPassword}
-                            onChange={(e) => setConfirmNewPassword(e.target.value)}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                            disabled={isLoading}
-                        />
-                    </div>
-                    
-                    <button
-                        onClick={handleResetPassword}
-                        disabled={isLoading}
-                        className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-md transition duration-300 disabled:bg-indigo-400"
-                    >
-                        {isLoading ? 'Processing...' : 'Change Password'}
-                    </button>
-                    
-                    <div className="text-center mt-4">
-                        <Link to="/login" className="text-indigo-600 hover:text-indigo-800">
-                            Back to Login
-                        </Link>
-                    </div>
-                </div>
-            </div>
+                </section>
+            </main>
+
+            <BrandFooter />
         </div>
     );
 }

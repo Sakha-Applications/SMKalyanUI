@@ -1,6 +1,5 @@
 import React from 'react';
 import MultiSelectCheckbox from "../../../../shared/common/MultiSelectCheckbox";
-import { formatDisplayValue, formatSelectedValues, normalizeDisplayArray } from '../helpers/utils';
 import {
   formatSelectedValues,
   normalizeDisplayArray,

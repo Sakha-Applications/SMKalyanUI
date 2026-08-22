@@ -558,13 +558,13 @@ reference1PhoneCountryCode: reference1PhoneDetails.code,
   useEffect(() => {
   const delay = setTimeout(async () => {
     if (skipNextProfessionSearch.current) {
-      console.log("SKIPPING profession search due to flag");
+      
       skipNextProfessionSearch.current = false;
       return;
     }
 
     if (professionInput.length >= 2) {
-       console.log("Profession search triggered for:", professionInput);
+       
       setProfessionLoading(true);
       try {
         const results = await searchProfessions(professionInput);
@@ -599,7 +599,7 @@ useEffect(() => {
       setDesignationLoading(true);
       try {
         const results = await searchDesignations(designationInput);
-         console.log("Ã°Å¸â€Â Raw Designation API results:", results);
+         
         setDesignationOptions(results.map(item => ({
 
           label: item.DesignationName || item.label || item.name || String(item), // Make robust like Profession
@@ -818,11 +818,11 @@ const handleUpdate = async () => {
       residence_state,
       residence_city,
       nativePlace,
-      native_place_state,
-      native_place_country,
+      nativePlaceState,
+      nativePlaceCountry,
       currentLocation,
-      current_location_state,
-      current_location_country,
+      currentLocationState,
+      currentLocationCountry,
       fatherName,
       fatherProfession,
       motherName,
@@ -947,12 +947,13 @@ communication_address: [
     return countryObj ? countryObj.isoCode : residenceCountry || null;
   })(),
 
-      native_place: nativePlace,
-      native_place_state,
-      native_place_country,
-      current_location: currentLocation,
-      current_location_state,
-      current_location_country,
+      native_place: nativePlace || null,
+      native_place_state: nativePlaceState || null,
+      native_place_country: nativePlaceCountry || null,
+
+      current_location: currentLocation || null,
+      current_location_state: currentLocationState || null,
+      current_location_country: currentLocationCountry || null,
       father_name: fatherName,
       father_profession: fatherProfession,
       mother_name: motherName,

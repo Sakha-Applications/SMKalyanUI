@@ -1,4 +1,4 @@
-// src/components/common/MultiSelectCheckbox.js
+// Shared multi-select checkbox control.
 import React from 'react';
 import { Autocomplete, Checkbox, TextField } from '@mui/material';
 

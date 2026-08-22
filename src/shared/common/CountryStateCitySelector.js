@@ -1,4 +1,4 @@
-// src/components/common/CountryStateCitySelector.js
+// Shared country, state and city selector.
 // testing git commit detection
 import React, { useState, useEffect } from 'react';
 import { Country, State, City } from 'country-state-city';
@@ -13,12 +13,6 @@ const CountryStateCitySelector = ({
   labelPrefix = 'Residing'
 }) => {
 
-  // Debug logs to see received props and internal state changes
-  console.log(`DEBUG_CSC: ${labelPrefix} - formData received:`, formData);
-  console.log(`DEBUG_CSC: ${labelPrefix} - countryField value:`, formData[countryField]);
-  console.log(`DEBUG_CSC: ${labelPrefix} - stateField value:`, formData[stateField]);
-  console.log(`DEBUG_CSC: ${labelPrefix} - cityField value:`, formData[cityField]);
-
   const [countries] = useState(Country.getAllCountries());
   const [states, setStates] = useState([]);
   const [cities, setCities] = useState([]);
@@ -30,7 +24,7 @@ const CountryStateCitySelector = ({
   useEffect(() => {
     const countryCode = formData[countryField];
     const stateCode = formData[stateField];
-    console.log(`DEBUG_CSC: ${labelPrefix} - useEffect[formData]: countryCode=${countryCode}, stateCode=${stateCode}`);
+    
     if (countryCode) {
       const country = Country.getCountryByCode(countryCode);
       setSelectedCountry(country);
@@ -45,11 +39,16 @@ const CountryStateCitySelector = ({
       setSelectedCountry(null); // Reset country if countryCode is not present
       setSelectedState(null); // Also reset state
     }
-  }, [formData, countryField, stateField, labelPrefix]);
+  }, [
+    formData[countryField],
+    formData[stateField],
+    countryField,
+    stateField,
+  ]);
 
   // Effect to populate states when selectedCountry changes
   useEffect(() => {
-    console.log(`DEBUG_CSC: ${labelPrefix} - useEffect[selectedCountry]:`, selectedCountry);
+    
     if (selectedCountry) {
       setStates(State.getStatesOfCountry(selectedCountry.isoCode));
     } else {
@@ -60,7 +59,7 @@ const CountryStateCitySelector = ({
 
   // Effect to populate cities when selectedState changes
   useEffect(() => {
-    console.log(`DEBUG_CSC: ${labelPrefix} - useEffect[selectedState]:`, selectedState);
+    
     if (selectedState && selectedCountry) {
       setCities(City.getCitiesOfState(selectedCountry.isoCode, selectedState.isoCode));
     } else {
@@ -68,30 +67,9 @@ const CountryStateCitySelector = ({
     }
   }, [selectedState, selectedCountry, labelPrefix]);
 
-    // --- START OF NEW CODE ---
-    // ADDITION: This new useEffect hook listens for changes in the formData prop.
-    // Its purpose is to correctly populate the states and cities dropdowns
-    // when the user navigates back to this page with data already selected.
-    useEffect(() => {
-      const countryCode = formData[countryField];
-      const stateCode = formData[stateField];
-
-      // If a country code exists in the form data, fetch and set the corresponding states.
-      if (countryCode) {
-        setStates(State.getStatesOfCountry(countryCode));
-      }
-
-      // If both a country code and a state code exist, fetch and set the corresponding cities.
-      if (countryCode && stateCode) {
-        setCities(City.getCitiesOfState(countryCode, stateCode));
-      }
-  }, [formData, countryField, stateField]); // This effect runs when formData changes.
-  // --- END OF NEW CODE ---
-
-
   const handleCountryChange = (e) => {
     const countryCode = e.target.value;
-    console.log(`DEBUG_CSC: ${labelPrefix} - handleCountryChange: countryCode=${countryCode}`);
+    
     const country = Country.getCountryByCode(countryCode);
     setSelectedCountry(country);
     setSelectedState(null); // Reset state selection
@@ -104,7 +82,7 @@ const CountryStateCitySelector = ({
 
   const handleStateChange = (e) => {
     const stateCode = e.target.value;
-    console.log(`DEBUG_CSC: ${labelPrefix} - handleStateChange: stateCode=${stateCode}`);
+    
     if (selectedCountry) {
       const allStates = State.getStatesOfCountry(selectedCountry.isoCode);
       const state = allStates.find(s => s.isoCode === stateCode);
@@ -118,7 +96,7 @@ const CountryStateCitySelector = ({
 
   // Generic handler for city, just propagates up
   const handleCityChange = (e) => {
-    console.log(`DEBUG_CSC: ${labelPrefix} - handleCityChange: value=${e.target.value}`);
+    
     handleChange(e);
   };
 

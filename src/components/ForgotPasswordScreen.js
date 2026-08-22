@@ -1,7 +1,17 @@
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom'; // Import Link
-import BackHomeButton from '../hooks/BackHomeButton'; // Import BackHomeButton (adjust path if needed)
-import getBaseUrl from '../utils/GetUrl';
+import React, { useState } from "react";
+import {
+  Link,
+  useNavigate,
+} from "react-router-dom";
+
+import getBaseUrl from "../utils/GetUrl";
+
+import BrandHeader from "../shared/layouts/BrandHeader";
+import BrandFooter from "../shared/layouts/BrandFooter";
+
+import {
+  designClasses,
+} from "../shared/styles/designTokens";
 
 const ForgotPasswordScreen = () => {
   const [userIdOrEmail, setUserIdOrEmail] = useState('');
@@ -41,66 +51,99 @@ const ForgotPasswordScreen = () => {
     }
   };
 
-  return (
-    <div className="bg-gray-50 font-sans antialiased min-h-screen">
-      {/* Navigation Bar */}
-      <nav className="bg-white shadow-md py-4">
-        <div className="container mx-auto flex justify-between items-center px-6">
-          <Link to="/" className="text-xl font-bold text-indigo-700">
-            ProfileConnect {/* Or your app name */}
-          </Link>
-          <div>
-            <Link to="/login" className="text-gray-700 hover:text-indigo-500 mr-4">
+    return (
+    <div
+      className={`flex min-h-screen flex-col ${designClasses.page}`}
+    >
+      <BrandHeader compact />
+
+      <main className="flex flex-1 items-center justify-center px-4 py-10 sm:px-6">
+        <section
+          className={`${designClasses.card} w-full max-w-md p-6 sm:p-8`}
+        >
+          <div className="mb-6 text-center">
+            <h1
+              className={`text-2xl font-semibold ${designClasses.textPrimary}`}
+            >
+              Forgot Password
+            </h1>
+
+            <p
+              className={`mt-2 text-sm leading-6 ${designClasses.textSecondary}`}
+            >
+              Enter your User ID or email
+              address to begin the password
+              reset process.
+            </p>
+          </div>
+
+          {message && (
+            <div
+              className={`mb-4 rounded-xl p-3 text-sm ${designClasses.statusSuccess}`}
+            >
+              {message}
+            </div>
+          )}
+
+          {error && (
+            <div
+              className={`mb-4 rounded-xl p-3 text-sm ${designClasses.statusError}`}
+              role="alert"
+            >
+              {error}
+            </div>
+          )}
+
+          <form
+            onSubmit={handleSubmit}
+            className="space-y-4"
+          >
+            <div>
+              <label
+                htmlFor="userIdOrEmail"
+                className={designClasses.fieldLabel}
+              >
+                User ID or Email
+              </label>
+
+              <input
+                type="text"
+                id="userIdOrEmail"
+                value={userIdOrEmail}
+                onChange={(e) =>
+                  setUserIdOrEmail(
+                    e.target.value
+                  )
+                }
+                required
+                disabled={isLoading}
+                className={`w-full rounded-lg border px-3 py-2.5 outline-none transition focus:ring-2 focus:ring-[#D79A1E]/30 ${designClasses.border} ${designClasses.surface} ${designClasses.textDark}`}
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={isLoading}
+              className={`w-full rounded-lg px-4 py-2.5 font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${designClasses.primaryButton}`}
+            >
+              {isLoading
+                ? "Sending..."
+                : "Continue"}
+            </button>
+          </form>
+
+          <div className="mt-5 text-center">
+            <Link
+              to="/login"
+              className={`text-sm font-semibold ${designClasses.textPrimary}`}
+            >
               Back to Login
             </Link>
-            <BackHomeButton /> {/* Use the BackHomeButton */}
           </div>
-        </div>
-      </nav>
+        </section>
+      </main>
 
-      {/* Main Content Section - Forgot Password Form */}
-      <section className="py-16">
-        <div className="container mx-auto px-6">
-          <div className="max-w-md mx-auto bg-white shadow-md rounded-lg p-8">
-            <h2 className="text-2xl font-semibold text-gray-800 mb-6 text-center">Forgot Your Password?</h2>
-            <p className="text-gray-700 mb-4 text-center">
-              Enter your User ID or email address below to initiate the password reset process.
-            </p>
-            {message && <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4">{message}</div>}
-            {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">{error}</div>}
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label htmlFor="userIdOrEmail" className="block text-gray-700 text-sm font-bold mb-2">
-                  User ID or Email:
-                </label>
-                <input
-                  type="text"
-                  id="userIdOrEmail"
-                  value={userIdOrEmail}
-                  onChange={(e) => setUserIdOrEmail(e.target.value)}
-                  required
-                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                  disabled={isLoading}
-                />
-              </div>
-              <button
-                type="submit"
-                className="bg-indigo-500 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full"
-                disabled={isLoading}
-              >
-                {isLoading ? 'Sending...' : 'Initiate Reset'}
-              </button>
-            </form>
-          </div>
-        </div>
-      </section>
-
-      {/* Footer (Optional) */}
-      <footer className="bg-white shadow-inner py-6 text-center text-gray-700 text-sm">
-        <div className="container mx-auto px-6">
-          <p className="mt-2">&copy; {new Date().getFullYear()} ProfileConnect. All rights reserved.</p>
-        </div>
-      </footer>
+      <BrandFooter />
     </div>
   );
 };

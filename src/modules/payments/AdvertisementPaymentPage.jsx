@@ -332,10 +332,10 @@ const AdvertisementPaymentPage = () => {
               className={`mt-1 text-sm ${designClasses.statusText}`}
             >
               Your advertisement and
-  payment details have been
-  submitted successfully.
-  They are pending payment
-  and advertisement approval.
+              payment details have been
+              submitted successfully.
+              They are pending payment
+              and advertisement approval.
             </p>
           </section>
 
@@ -352,11 +352,11 @@ const AdvertisementPaymentPage = () => {
               className={`mt-2 text-sm ${designClasses.textSecondary}`}
             >
               The payment and
-advertisement text will be
-reviewed before publication.
-The advertisement may be
-edited during review before
-final approval.
+              advertisement text will be
+              reviewed before publication.
+              The advertisement may be
+              edited during review before
+              final approval.
             </p>
           </section>
         </div>

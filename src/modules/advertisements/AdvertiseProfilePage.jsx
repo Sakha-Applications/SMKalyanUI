@@ -4,6 +4,10 @@ import {
   useState,
 } from "react";
 
+import {
+  useNavigate,
+} from "react-router-dom";
+
 import MemberLayout from "../../shared/layouts/MemberLayout";
 import {
   designClasses,
@@ -670,6 +674,8 @@ const DetailItem = ({
   </div>
 );
 const AdvertiseProfilePage = () => {
+  const navigate =
+    useNavigate();
   const [
     loading,
     setLoading,
@@ -795,12 +801,8 @@ const AdvertiseProfilePage = () => {
   const handleContinue =
     () => {
       /*
-       * Payment / submission workflow
-       * will be connected in the next
-       * implementation step.
-       *
-       * Keep the completed draft locally
-       * for the next screen.
+       * Store the completed advertisement
+       * draft for the payment screen.
        */
       sessionStorage.setItem(
         "advertisementDraft",
@@ -846,8 +848,9 @@ const AdvertiseProfilePage = () => {
         })
       );
 
-      window.location.href =
-        "/preferred-payment";
+      navigate(
+        "/preferred-payment"
+      );
     };
 
   if (loading) {
