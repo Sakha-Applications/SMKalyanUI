@@ -921,7 +921,6 @@ const AdvertisementSpotlight = ({
                     </span>
                   </div>
 
-
                 </div>
 
                 {compactDetails.length >
