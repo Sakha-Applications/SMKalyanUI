@@ -5,7 +5,9 @@ import {
 import { useNavigate } from "react-router-dom";
 
 import invitationService from "../../services/invitationService";
+import advertisementResponseService from "../../services/advertisementResponseService";
 import registrationService from "../../services/registrationService";
+import profileService from "../../services/profileService";
 
 import MemberLayout from "../../shared/layouts/MemberLayout";
 import RestrictedFeatureState from "../../shared/components/RestrictedFeatureState";
@@ -42,23 +44,37 @@ const InvitationStatus = ({ status }) => {
     normalizeStatus(status);
 
   const label =
-    normalizedStatus === "PENDING"
-      ? "Pending"
-      : normalizedStatus === "ACCEPTED"
-        ? "Accepted"
-        : normalizedStatus === "REJECTED"
-          ? "Not Proceeding"
-          : normalizedStatus === "DECLINED"
-            ? "Not Proceeding"
-            : normalizedStatus
-              ? normalizedStatus
-                  .toLowerCase()
-                  .replace(
-                    /\b\w/g,
-                    (character) =>
-                      character.toUpperCase()
-                  )
-              : "Status unavailable";
+    normalizedStatus === "NEW"
+      ? "New"
+      : normalizedStatus === "PENDING"
+        ? "Pending"
+        : normalizedStatus === "ACCEPTED"
+          ? "Accepted"
+          : normalizedStatus === "SHORTLISTED"
+            ? "Shortlisted"
+            : normalizedStatus === "HOLD"
+              ? "On Hold"
+              : normalizedStatus === "MUTUAL"
+                ? "Mutual Interest"
+                : normalizedStatus === "NOT_INTERESTED"
+                  ? "Not Interested"
+                  : normalizedStatus === "REJECTED"
+                    ? "Not Proceeding"
+                    : normalizedStatus === "DECLINED"
+                      ? "Not Proceeding"
+                      : normalizedStatus
+                        ? normalizedStatus
+                            .toLowerCase()
+                            .replace(
+                              /_/g,
+                              " "
+                            )
+                            .replace(
+                              /\b\w/g,
+                              (character) =>
+                                character.toUpperCase()
+                            )
+                        : "Status unavailable";
 
   return (
     <span
@@ -163,6 +179,328 @@ const InvitationCard = ({
   );
 };
 
+const AdvertisementResponseCard = ({
+  response,
+  direction,
+  onViewProfile,
+  onViewContactDetails,
+  onUpdateStatus,
+  onRequestContact,
+  actionLoading,
+  contactActionLoading,
+  contactRequestStatusByProfile
+}) => {
+  const received =
+    direction === "received";
+
+  const profileId =
+    received
+      ? response.responder_profile_id
+      : response.owner_profile_id;
+
+  const profileName =
+    received
+      ? response.responder_name
+      : response.owner_name;
+
+  const responseType =
+    String(
+      response.response_type || ""
+    ).toUpperCase();
+
+  const typeLabel =
+    responseType === "APPLY"
+      ? "Application"
+      : "Interest";
+
+  const remarks =
+    response.responder_remarks ||
+    "";
+
+  const status =
+    response.response_status ||
+    "NEW";
+  const normalizedResponseStatus =
+    normalizeStatus(status);
+
+  const contactTargetProfileId =
+    received
+      ? response.responder_profile_id
+      : response.owner_profile_id;
+
+  const contactRequestStatus =
+    normalizeStatus(
+      contactRequestStatusByProfile[
+        String(
+          contactTargetProfileId || ""
+        )
+      ] || ""
+    );
+
+  const contactRequestPending =
+    contactRequestStatus ===
+      "PENDING";
+
+  const contactAccessApproved =
+    contactRequestStatus ===
+      "APPROVED";
+
+  const clarificationRequired =
+    contactRequestStatus ===
+      "CLARIFICATION_REQUIRED";
+
+  return (
+    <article
+      className={`${designClasses.card} p-4`}
+    >
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <h3
+                className={`text-base font-semibold ${designClasses.textDark}`}
+              >
+                {received
+                  ? `${typeLabel} from`
+                  : `${typeLabel} sent to`}{" "}
+                {profileName ||
+                  profileId ||
+                  "Member"}
+              </h3>
+
+              <InvitationStatus
+                status={status}
+              />
+            </div>
+
+            {profileId && (
+              <p
+                className={`mt-1 text-xs ${designClasses.textSecondary}`}
+              >
+                Profile ID: {profileId}
+              </p>
+            )}
+
+            {received && (
+              <p
+                className={`mt-2 text-xs ${designClasses.textSecondary}`}
+              >
+                {response.current_age
+                  ? `${response.current_age} yrs · `
+                  : ""}
+                {response.education || ""}
+                {response.profession
+                  ? ` · ${response.profession}`
+                  : ""}
+                {response.current_location
+                  ? ` · ${response.current_location}`
+                  : ""}
+              </p>
+            )}
+
+            {!received && (
+              <p
+                className={`mt-2 text-xs ${designClasses.textSecondary}`}
+              >
+                {response.owner_current_age
+                  ? `${response.owner_current_age} yrs · `
+                  : ""}
+                {response.owner_education || ""}
+                {response.owner_profession
+                  ? ` · ${response.owner_profession}`
+                  : ""}
+                {response.owner_current_location
+                  ? ` · ${response.owner_current_location}`
+                  : ""}
+              </p>
+            )}
+
+            {remarks && (
+              <p
+                className={`mt-3 text-sm italic ${designClasses.textSecondary}`}
+              >
+                “{remarks}”
+              </p>
+            )}
+
+            {response.owner_remarks && (
+              <p
+                className={`mt-2 text-xs ${designClasses.textSecondary}`}
+              >
+                Owner remarks:{" "}
+                {response.owner_remarks}
+              </p>
+            )}
+
+            {response.created_at && (
+              <p
+                className={`mt-3 text-xs ${designClasses.textSecondary}`}
+              >
+                {received
+                  ? "Received"
+                  : "Sent"}
+                :{" "}
+                {formatDate(
+                  response.created_at
+                )}
+              </p>
+            )}
+          </div>
+
+          {profileId && (
+            <button
+              type="button"
+              onClick={() =>
+                onViewProfile(
+                  profileId
+                )
+              }
+              className={`shrink-0 rounded-lg px-4 py-2 text-sm font-semibold transition ${designClasses.secondaryButton}`}
+            >
+              View Profile
+            </button>
+          )}
+        </div>
+
+        {received &&
+          normalizedResponseStatus !==
+            "MUTUAL" && (
+          <div
+            className={`flex flex-wrap gap-2 border-t pt-3 ${designClasses.border}`}
+          >
+            <button
+              type="button"
+              disabled={
+                actionLoading ===
+                  response.id ||
+                normalizedResponseStatus ===
+                  "SHORTLISTED"
+              }
+              onClick={() =>
+                onUpdateStatus(
+                  response,
+                  "SHORTLISTED"
+                )
+              }
+              className={`rounded-lg px-3 py-2 text-xs font-semibold ${designClasses.primaryButton} disabled:cursor-not-allowed disabled:opacity-50`}
+            >
+              {normalizedResponseStatus ===
+              "SHORTLISTED"
+                ? "Shortlisted"
+                : "Shortlist"}
+            </button>
+
+            <button
+              type="button"
+              disabled={
+                actionLoading ===
+                  response.id ||
+                normalizedResponseStatus ===
+                  "HOLD"
+              }
+              onClick={() =>
+                onUpdateStatus(
+                  response,
+                  "HOLD"
+                )
+              }
+              className={`rounded-lg px-3 py-2 text-xs font-semibold ${designClasses.secondaryButton} disabled:cursor-not-allowed disabled:opacity-50`}
+            >
+              {normalizedResponseStatus ===
+              "HOLD"
+                ? "On Hold"
+                : "Hold"}
+            </button>
+
+            <button
+              type="button"
+              disabled={
+                actionLoading ===
+                  response.id ||
+                normalizedResponseStatus ===
+                  "NOT_INTERESTED"
+              }
+              onClick={() =>
+                onUpdateStatus(
+                  response,
+                  "NOT_INTERESTED"
+                )
+              }
+              className={`rounded-lg px-3 py-2 text-xs font-semibold ${designClasses.secondaryButton} disabled:cursor-not-allowed disabled:opacity-50`}
+            >
+              {normalizedResponseStatus ===
+              "NOT_INTERESTED"
+                ? "Not Interested"
+                : "Mark Not Interested"}
+            </button>
+          </div>
+        )}
+
+        {normalizedResponseStatus ===
+          "MUTUAL" && (
+          <div
+            className={`flex flex-wrap items-center justify-between gap-3 border-t pt-3 ${designClasses.border}`}
+          >
+            <div>
+              <p
+                className={`text-sm font-semibold ${designClasses.textPrimary}`}
+              >
+                Mutual Interest
+              </p>
+
+              <p
+                className={`mt-1 text-xs ${designClasses.textSecondary}`}
+              >
+                {contactAccessApproved
+                  ? "Contact access has been approved. Open the profile to view the contact details."
+                  : contactRequestPending
+                  ? "Your contact request is awaiting Moderator review."
+                  : "Both members have expressed positive interest. You may request contact details for Moderator review."}
+              </p>
+            </div>
+
+            <button
+              type="button"
+              disabled={
+                contactActionLoading ===
+                  response.id ||
+                contactRequestPending
+              }
+              onClick={() => {
+                if (
+                  contactAccessApproved
+                ) {
+                  onViewContactDetails(
+                    contactTargetProfileId
+                  );
+                  return;
+                }
+
+                onRequestContact(
+                  response,
+                  direction
+                );
+              }}
+              className={`rounded-lg px-4 py-2 text-sm font-semibold ${designClasses.primaryButton} disabled:cursor-not-allowed disabled:opacity-50`}
+            >
+              {contactActionLoading ===
+              response.id
+                ? "Submitting..."
+                : contactAccessApproved
+                ? "View Contact Details"
+                : contactRequestPending
+                ? "Contact Request Pending"
+                : clarificationRequired
+                ? "Resubmit Contact Request"
+                : "Request Contact Details"}
+            </button>
+          </div>
+        )}
+      </div>
+    </article>
+  );
+};
+
 const EmptyState = ({ message }) => (
   <div
     className={`rounded-xl px-4 py-8 text-center text-sm ${designClasses.surfaceMuted} ${designClasses.textSecondary}`}
@@ -196,6 +534,36 @@ const ConnectionsPage = () => {
     sentInvitations,
     setSentInvitations,
   ] = useState([]);
+
+  const [
+    receivedAdvertisementResponses,
+    setReceivedAdvertisementResponses,
+  ] = useState([]);
+
+  const [
+    sentAdvertisementResponses,
+    setSentAdvertisementResponses,
+  ] = useState([]);
+
+  const [
+    responseActionLoadingId,
+    setResponseActionLoadingId,
+  ] = useState(null);
+
+  const [
+    contactActionLoadingId,
+    setContactActionLoadingId,
+  ] = useState(null);
+
+  const [
+    contactRequestMessage,
+    setContactRequestMessage,
+  ] = useState("");
+
+  const [
+    contactRequestStatusByProfile,
+    setContactRequestStatusByProfile,
+  ] = useState({});
 
   const [loading, setLoading] =
     useState(true);
@@ -276,26 +644,88 @@ const ConnectionsPage = () => {
           return;
         }
 
-        const {
-          received = [],
-          sent = [],
-        } =
-          await invitationService.getAllInvitations();
+        const [
+          invitationData,
+          advertisementResponseData,
+          contactRequestData
+        ] =
+          await Promise.all([
+            invitationService
+              .getAllInvitations(),
+
+            advertisementResponseService
+              .getAllResponses(),
+
+            profileService
+              .getMyContactRequests()
+          ]);
 
         if (!active) {
           return;
         }
 
         setReceivedInvitations(
-          Array.isArray(received)
-            ? received
+          Array.isArray(
+            invitationData?.received
+          )
+            ? invitationData.received
             : []
         );
 
         setSentInvitations(
-          Array.isArray(sent)
-            ? sent
+          Array.isArray(
+            invitationData?.sent
+          )
+            ? invitationData.sent
             : []
+        );
+
+        setReceivedAdvertisementResponses(
+          Array.isArray(
+            advertisementResponseData?.received
+          )
+            ? advertisementResponseData.received
+            : []
+        );
+
+        setSentAdvertisementResponses(
+          Array.isArray(
+            advertisementResponseData?.sent
+          )
+            ? advertisementResponseData.sent
+            : []
+        );
+
+          const contactStatusMap =
+          {};
+
+        (
+          Array.isArray(
+            contactRequestData
+          )
+            ? contactRequestData
+            : []
+        ).forEach((request) => {
+          const targetProfileId =
+            String(
+              request?.target_profile_id ||
+              ""
+            );
+
+          if (!targetProfileId) {
+            return;
+          }
+
+          contactStatusMap[
+            targetProfileId
+          ] =
+            normalizeStatus(
+              request?.status
+            );
+        });
+
+        setContactRequestStatusByProfile(
+          contactStatusMap
         );
       } catch (requestError) {
         console.error(
@@ -359,11 +789,261 @@ const ConnectionsPage = () => {
     normalizedProfileStatus ===
     "APPROVED";
 
+  const handleAdvertisementResponseStatus =
+    async (
+      response,
+      responseStatus
+    ) => {
+      const defaultRemarks =
+        responseStatus ===
+          "NOT_INTERESTED"
+          ? "Not interested"
+          : responseStatus ===
+            "HOLD"
+          ? "Kept on hold for further review"
+          : "Profile shortlisted";
+
+      const remarks =
+        window.prompt(
+          "Remarks:",
+          defaultRemarks
+        );
+
+      if (remarks === null) {
+        return;
+      }
+
+      try {
+        setResponseActionLoadingId(
+          response.id
+        );
+
+        setError("");
+
+        const result =
+          await advertisementResponseService
+            .updateResponseStatus({
+              responseId:
+                response.id,
+              responseStatus,
+              remarks
+            });
+
+        const storedStatus =
+          result?.data
+            ?.response_status ||
+          responseStatus;
+
+        setReceivedAdvertisementResponses(
+          (current) =>
+            current.map(
+              (item) =>
+                item.id ===
+                response.id
+                  ? {
+                      ...item,
+                      response_status:
+                        storedStatus,
+                      owner_remarks:
+                        remarks
+                    }
+                  : item
+            )
+        );
+
+        /*
+         * SHORTLIST may be converted by the
+         * backend to MUTUAL. In that case
+         * refresh both sides because all
+         * INTEREST/APPLY rows for the same
+         * relationship are updated together.
+         */
+        if (
+          storedStatus === "MUTUAL"
+        ) {
+          const refreshed =
+            await advertisementResponseService
+              .getAllResponses();
+
+          setReceivedAdvertisementResponses(
+            refreshed.received || []
+          );
+
+          setSentAdvertisementResponses(
+            refreshed.sent || []
+          );
+        }
+
+      } catch (requestError) {
+        console.error(
+          "Unable to update advertisement response:",
+          requestError
+        );
+
+        setError(
+          requestError?.response
+            ?.data?.message ||
+            "Unable to update the response."
+        );
+      } finally {
+        setResponseActionLoadingId(
+          null
+        );
+      }
+    };
+
+  const handleRequestContact =
+    async (
+      response,
+      direction
+    ) => {
+      const received =
+        direction === "received";
+
+      const targetProfileId =
+        received
+          ? response.responder_profile_id
+          : response.owner_profile_id;
+
+      const targetProfileName =
+        received
+          ? response.responder_name
+          : response.owner_name;
+
+      if (!targetProfileId) {
+        setError(
+          "Member profile could not be identified."
+        );
+        return;
+      }
+
+      try {
+        setContactActionLoadingId(
+          response.id
+        );
+
+        setContactRequestMessage("");
+        setError("");
+
+        const result =
+          await profileService
+            .shareContactDetails({
+              sharedProfileId:
+                targetProfileId,
+
+              sharedProfileName:
+                targetProfileName ||
+                targetProfileId,
+
+              requesterMessage:
+                "Mutual interest established through a matrimonial advertisement.",
+
+              requestSource:
+                "ADVERTISEMENT_MUTUAL"
+            });
+
+        const status =
+          String(
+            result?.status || ""
+          ).toUpperCase();
+
+        if (status === "PENDING") {
+          setContactRequestStatusByProfile(
+            (current) => ({
+              ...current,
+              [String(
+                targetProfileId
+              )]:
+                "PENDING"
+            })
+          );
+
+          setContactRequestMessage(
+            "Contact request sent to the Moderator for review."
+          );
+
+          return;
+        }
+
+        /*
+         * Existing approved access may return
+         * the contact object immediately.
+         */
+        setContactRequestStatusByProfile(
+          (current) => ({
+            ...current,
+            [String(
+              targetProfileId
+            )]:
+              "APPROVED"
+          })
+        );
+
+        setContactRequestMessage(
+          "Contact access is already approved. Open the profile to view the contact details."
+        );
+
+      } catch (requestError) {
+        console.error(
+          "Unable to request contact details:",
+          requestError
+        );
+
+        const code =
+          requestError?.response
+            ?.data?.code;
+
+        if (
+          code ===
+          "CONTACT_VIEW_LIMIT_REACHED"
+        ) {
+          setError(
+            requestError.response.data
+              .message ||
+              "Contact-view limit reached. Please recharge."
+          );
+
+          return;
+        }
+
+        if (
+          code ===
+          "MUTUAL_INTEREST_REQUIRED"
+        ) {
+          setError(
+            "Contact details can be requested only after mutual interest."
+          );
+
+          return;
+        }
+
+        setError(
+          requestError?.response
+            ?.data?.message ||
+            "Unable to submit the contact request."
+        );
+      } finally {
+        setContactActionLoadingId(
+          null
+        );
+      }
+    };
+
+
+
   const handleViewProfile = (
     memberProfileId
   ) => {
     navigate(
       `/view-profile/${memberProfileId}`
+    );
+  };
+
+  const handleViewContactDetails = (
+    memberProfileId
+  ) => {
+    navigate(
+      `/view-profile/${memberProfileId}?section=contact&returnTo=/inbox`
     );
   };
 
@@ -417,9 +1097,10 @@ const ConnectionsPage = () => {
               <p
                 className={`mt-1 text-sm ${designClasses.textSecondary}`}
               >
-                Review interests received
-                from members and interests
-                you have sent.
+                Review applications and
+                interests received from
+                members, and responses you
+                have sent.
               </p>
             </div>
 
@@ -444,6 +1125,15 @@ const ConnectionsPage = () => {
           </div>
         )}
 
+        {contactRequestMessage && (
+          <div
+            className={`rounded-xl p-4 text-sm ${designClasses.statusSuccess}`}
+            role="status"
+          >
+            {contactRequestMessage}
+          </div>
+        )}
+
         {!error && (
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             <section
@@ -453,38 +1143,70 @@ const ConnectionsPage = () => {
                 <h2
                   className={`text-lg font-semibold ${designClasses.textDark}`}
                 >
-                  Received Interests
+                  Received Responses
                 </h2>
 
                 <p
                   className={`mt-1 text-sm ${designClasses.textSecondary}`}
                 >
-                  Interests received from
-                  other members.
+                  Applications and interests
+                  received from other members.
                 </p>
               </div>
 
               <div className="space-y-3">
                 {receivedInvitations.length ===
-                0 ? (
-                  <EmptyState message="You have no received interests at the moment." />
+                  0 &&
+                receivedAdvertisementResponses.length ===
+                  0 ? (
+                  <EmptyState message="You have no received interests or applications at the moment." />
                 ) : (
-                  receivedInvitations.map(
-                    (invitation) => (
-                      <InvitationCard
-                        key={
-                          invitation.invitation_id
-                        }
-                        invitation={
-                          invitation
-                        }
-                        direction="received"
-                        onViewProfile={
-                          handleViewProfile
-                        }
-                      />
-                    )
-                  )
+                  <>
+                    {receivedAdvertisementResponses.map(
+                      (response) => (
+                        <AdvertisementResponseCard
+                          key={`advertisement-response-${response.id}`}
+                          response={
+                            response
+                          }
+                          direction="received"
+                          onViewContactDetails={
+                            handleViewContactDetails
+                          }
+                          onUpdateStatus={
+                            handleAdvertisementResponseStatus
+                          }
+                          onRequestContact={
+                            handleRequestContact
+                          }
+                          actionLoading={
+                            responseActionLoadingId
+                          }
+                          contactActionLoading={
+                            contactActionLoadingId
+                          }
+                          contactRequestStatusByProfile={
+                            contactRequestStatusByProfile
+                          }
+                        />
+                      )
+                    )}
+
+                    {receivedInvitations.map(
+                      (invitation) => (
+                        <InvitationCard
+                          key={`invitation-${invitation.invitation_id}`}
+                          invitation={
+                            invitation
+                          }
+                          direction="received"
+                          onViewContactDetails={
+                            handleViewContactDetails
+                          }
+                        />
+                      )
+                    )}
+                  </>
                 )}
               </div>
             </section>
@@ -496,38 +1218,69 @@ const ConnectionsPage = () => {
                 <h2
                   className={`text-lg font-semibold ${designClasses.textDark}`}
                 >
-                  Sent Interests
+                  Sent Responses
                 </h2>
 
                 <p
                   className={`mt-1 text-sm ${designClasses.textSecondary}`}
                 >
-                  Interests you have sent
-                  to other members.
+                  Applications and interests
+                  you have sent to other
+                  members.
                 </p>
               </div>
 
               <div className="space-y-3">
                 {sentInvitations.length ===
-                0 ? (
-                  <EmptyState message="You have not sent any interests yet." />
+                  0 &&
+                sentAdvertisementResponses.length ===
+                  0 ? (
+                  <EmptyState message="You have not sent any interests or applications yet." />
                 ) : (
-                  sentInvitations.map(
-                    (invitation) => (
-                      <InvitationCard
-                        key={
-                          invitation.invitation_id
-                        }
-                        invitation={
-                          invitation
-                        }
-                        direction="sent"
-                        onViewProfile={
-                          handleViewProfile
-                        }
-                      />
-                    )
-                  )
+                  <>
+                    {sentAdvertisementResponses.map(
+                      (response) => (
+                        <AdvertisementResponseCard
+                          key={`advertisement-sent-${response.id}`}
+                          response={
+                            response
+                          }
+                          direction="sent"
+                          onViewContactDetails={
+                            handleViewContactDetails
+                          }
+                          onUpdateStatus={() => {}}
+                          onRequestContact={
+                            handleRequestContact
+                          }
+                          actionLoading={
+                            null
+                          }
+                          contactActionLoading={
+                            contactActionLoadingId
+                          }
+                          contactRequestStatusByProfile={
+                            contactRequestStatusByProfile
+                          }
+                        />
+                      )
+                    )}
+
+                    {sentInvitations.map(
+                      (invitation) => (
+                        <InvitationCard
+                          key={`invitation-sent-${invitation.invitation_id}`}
+                          invitation={
+                            invitation
+                          }
+                          direction="sent"
+                          onViewContactDetails={
+                            handleViewContactDetails
+                          }
+                        />
+                      )
+                    )}
+                  </>
                 )}
               </div>
             </section>

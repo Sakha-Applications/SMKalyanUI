@@ -194,51 +194,11 @@ const AdvertisementPaymentPage = () => {
           .toTimeString()
           .split(" ")[0];
 
-      await offlinePaymentService.submitPayment(
-        {
-          paymentType:
-            "PreferredProfile",
-
-          profile_id:
-            formData.profileId,
-
-          amount:
-            formData.amount,
-
-          payment_method:
-            "Offline",
-
-          payment_mode:
-            formData.paymentMethod,
-
-          payment_reference:
-            formData.paymentReference,
-
-          payment_date:
-            today,
-
-          payment_time:
-            time,
-
-          phone_number:
-            formData.phoneNumber,
-
-          email:
-            formData.email,
-
-          transactionDetails:
-            formData.transactionDetails,
-        }
-      );
-
       /*
-       * Keep existing preferred-profile
-       * backend contract for now.
+       * Create the advertisement record FIRST.
        *
-       * The advertisement text is carried
-       * in transaction_details so the
-       * current display_summary logic can
-       * continue to use it.
+       * This prevents an orphan offline-payment
+       * record when advertisement creation fails.
        */
       await apiClient.post(
         "/preferred-profiles",
@@ -274,6 +234,51 @@ const AdvertisementPaymentPage = () => {
 
           transaction_details:
             advertisementDraft.advertisementText,
+
+          looking_for:
+            advertisementDraft?.lookingFor ||
+            null
+        }
+      );
+
+      /*
+       * Create the offline payment only after
+       * the advertisement record exists.
+       */
+      await offlinePaymentService.submitPayment(
+        {
+          paymentType:
+            "PreferredProfile",
+
+          profile_id:
+            formData.profileId,
+
+          amount:
+            formData.amount,
+
+          payment_method:
+            "Offline",
+
+          payment_mode:
+            formData.paymentMethod,
+
+          payment_reference:
+            formData.paymentReference,
+
+          payment_date:
+            today,
+
+          payment_time:
+            time,
+
+          phone_number:
+            formData.phoneNumber,
+
+          email:
+            formData.email,
+
+          transactionDetails:
+            formData.transactionDetails,
         }
       );
 

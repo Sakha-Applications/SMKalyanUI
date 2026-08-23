@@ -6,6 +6,7 @@ import profileService from "../../services/profileService";
 import Typography from "@mui/material/Typography";
 import MemberLayout from "../../shared/layouts/MemberLayout";
 import CollapsibleSection from "../../shared/components/CollapsibleSection";
+import ForwardProfileModal from "../../shared/components/ForwardProfileModal";
 import { designClasses } from "../../shared/styles/designTokens";
 
 // Material-UI components for custom message and feedback
@@ -39,11 +40,32 @@ const ViewOtherProfilePage = () => {
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState('success');
 
-  // Ã¢Å“â€¦ Contact details unlock (counted & limited in backend via /api/share-contact-details)
+  const [
+    isForwardingProfile,
+    setIsForwardingProfile,
+  ] = useState(false);
+
+    const [
+    forwardModalOpen,
+    setForwardModalOpen,
+  ] = useState(false);
+
+  // Contact access is moderator-controlled.
+  // Contact-view allowance is consumed only after approval.
   const [contactData, setContactData] = useState(null);
   const [contactLoading, setContactLoading] = useState(false);
 
-  // Ã¢Å“â€¦ Carousel state (ONLY in ViewOtherProfilePage)
+  const [
+    contactAccessChecked,
+    setContactAccessChecked,
+  ] = useState(false);
+
+  const [
+    contactAccessStatus,
+    setContactAccessStatus,
+  ] = useState("");
+
+  // Carousel state (ONLY in ViewOtherProfilePage)
   const [photos, setPhotos] = useState([]); // normalized: [{ id, fullUrl, blobName }]
   const [activeIndex, setActiveIndex] = useState(0);
   const [photosLoading, setPhotosLoading] = useState(false);
@@ -191,6 +213,33 @@ const ViewOtherProfilePage = () => {
   // added on 31-Dec-25 for handling
   const location = useLocation();
 
+  useEffect(() => {
+    const params =
+      new URLSearchParams(
+        location.search
+      );
+
+    const requestedSection =
+      params.get("section");
+
+    if (
+      requestedSection === "contact"
+    ) {
+      setActiveSection("contact");
+
+      window.setTimeout(() => {
+        document
+          .getElementById(
+            "profile-contact-section"
+          )
+          ?.scrollIntoView({
+            behavior: "smooth",
+            block: "start"
+          });
+      }, 150);
+    }
+  }, [location.search]);
+
   const handleReturn = () => {
     const params = new URLSearchParams(location.search);
     const returnTo = params.get("returnTo"); // e.g. "/dashboard" or "/basic-search"
@@ -305,6 +354,84 @@ const normalized = {
 };
 
 setProfileData(normalized);
+
+/*
+ * Check whether contact access for this profile
+ * was already approved by Moderator/Admin.
+ *
+ * Do not silently treat every failure as
+ * "not approved". Preserve the actual state
+ * so the member sees the correct behaviour.
+ */
+setContactAccessChecked(false);
+setContactAccessStatus("");
+setContactData(null);
+
+try {
+  const approvedContact =
+    await profileService.getContactDetails(
+      profileId
+    );
+
+  if (approvedContact) {
+    setContactData(
+      approvedContact
+    );
+
+    setContactAccessStatus(
+      "APPROVED"
+    );
+  } else {
+    setContactData(null);
+    setContactAccessStatus("");
+  }
+} catch (contactError) {
+  const httpStatus =
+    contactError?.response?.status;
+
+  const backendMessage =
+    contactError?.response?.data
+      ?.message ||
+    "";
+
+  if (httpStatus === 403) {
+    setContactData(null);
+
+    setContactAccessStatus(
+      "NOT_APPROVED"
+    );
+  } else if (httpStatus === 404) {
+    setContactData(null);
+
+    setContactAccessStatus(
+      "NOT_FOUND"
+    );
+  } else {
+    console.error(
+      "[ViewOtherProfilePage] Unable to check approved contact access:",
+      contactError
+    );
+
+    setContactData(null);
+
+    setContactAccessStatus(
+      "ERROR"
+    );
+
+    setSnackbarMessage(
+      backendMessage ||
+        "Unable to verify contact access."
+    );
+
+    setSnackbarSeverity(
+      "error"
+    );
+
+    setSnackbarOpen(true);
+  }
+} finally {
+  setContactAccessChecked(true);
+}
     }
       } catch (err) {
         console.error(
@@ -459,14 +586,50 @@ useEffect(() => {
       };
 
 const data =
-  await profileService.shareContactDetails(payload);
+  await profileService.shareContactDetails(
+    payload
+  );
 
+const requestStatus = (
+  data?.status || ""
+).toUpperCase();
+
+if (
+  requestStatus === "PENDING" ||
+  requestStatus ===
+    "CLARIFICATION_REQUIRED"
+) {
+  setContactData(null);
+  setContactAccessChecked(true);
+  setContactAccessStatus(
+    requestStatus
+  );
+
+  setSnackbarMessage(
+    data?.message ||
+      "Contact request submitted for moderator review."
+  );
+
+  setSnackbarSeverity("info");
+  setSnackbarOpen(true);
+  return;
+}
+
+// If access was previously approved,
+// backend returns the contact data directly.
 setContactData(data || {});
+setContactAccessChecked(true);
+setContactAccessStatus(
+  "APPROVED"
+);
 setActiveSection("contact");
 
-      setSnackbarMessage('Contact details unlocked successfully.');
-      setSnackbarSeverity('success');
-      setSnackbarOpen(true);
+setSnackbarMessage(
+  "Contact details are available."
+);
+
+setSnackbarSeverity("success");
+setSnackbarOpen(true);
 
     } catch (err) {
       console.error("Ã¢ÂÅ' [ViewOtherProfilePage] Error unlocking contact details:", err);
@@ -499,6 +662,102 @@ setActiveSection("contact");
       setContactLoading(false);
     }
   };
+  const handleOpenForwardModal =
+    () => {
+      setForwardModalOpen(
+        true
+      );
+    };
+
+
+  const handleCloseForwardModal =
+    () => {
+      if (
+        isForwardingProfile
+      ) {
+        return;
+      }
+
+      setForwardModalOpen(
+        false
+      );
+    };
+
+
+  const handleForwardProfile =
+    async ({
+      recipientEmail,
+      senderMessage,
+    }) => {
+      try {
+        setIsForwardingProfile(
+          true
+        );
+
+        const result =
+          await profileService
+            .forwardProfileByEmail({
+              targetProfileId:
+                profileData
+                  ?.profile_id ||
+                profileId,
+
+              recipientEmail,
+
+              senderMessage,
+            });
+
+        setForwardModalOpen(
+          false
+        );
+
+        setSnackbarMessage(
+          result?.message ||
+            "Profile forwarded successfully."
+        );
+
+        setSnackbarSeverity(
+          "success"
+        );
+
+        setSnackbarOpen(
+          true
+        );
+
+      } catch (
+        forwardError
+      ) {
+        console.error(
+          "[ViewOtherProfilePage] Unable to forward profile:",
+          forwardError
+        );
+
+        setSnackbarMessage(
+          forwardError
+            ?.response
+            ?.data
+            ?.message ||
+            "Unable to forward the profile."
+        );
+
+        setSnackbarSeverity(
+          "error"
+        );
+
+        setSnackbarOpen(
+          true
+        );
+
+      } finally {
+        setIsForwardingProfile(
+          false
+        );
+      }
+    };
+
+
+
+
 
   const handleSendInvitation = async () => {
     setIsSendingInvitation(true);
@@ -676,6 +935,10 @@ setActiveSection("contact");
             <BasicProfile profileData={profileData} />
           </CollapsibleSection>
 
+          <div
+            id="profile-contact-section"
+            className="scroll-mt-4"
+          >
           <CollapsibleSection
             number={2}
             title="Contact & Address"
@@ -683,27 +946,75 @@ setActiveSection("contact");
             open={activeSection === "contact"}
             onToggle={() => toggleSection("contact")}
           >
-            {!contactData ? (
+            {!contactAccessChecked ? (
+              <div
+                className={`rounded-lg p-4 text-sm ${designClasses.surfaceMuted} ${designClasses.textSecondary}`}
+              >
+                Checking approved contact access...
+              </div>
+            ) : contactAccessStatus ===
+                "APPROVED" &&
+              contactData ? (
               <div className="space-y-4">
-                <p className={`text-sm ${designClasses.textSecondary}`}>
-                  Contact details are protected. Viewing them will count
-                  toward your permitted contact views for the current cycle.
+                <div
+                  className={`rounded-lg border p-3 text-sm ${designClasses.border}`}
+                >
+                  <span
+                    className={`font-semibold ${designClasses.textPrimary}`}
+                  >
+                    Contact access approved.
+                  </span>
+
+                  <span
+                    className={`ml-1 ${designClasses.textSecondary}`}
+                  >
+                    The approved contact details
+                    are available below.
+                  </span>
+                </div>
+
+                <AddressDetails
+                  profileData={
+                    mergedProfileData
+                  }
+                />
+              </div>
+            ) : contactAccessStatus ===
+              "ERROR" ? (
+              <div
+                className={`rounded-lg p-4 text-sm ${designClasses.statusError}`}
+              >
+                We could not verify your
+                approved contact access.
+                Please refresh and try again.
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <p
+                  className={`text-sm ${designClasses.textSecondary}`}
+                >
+                  Contact details are protected.
+                  Submit a request for moderator
+                  review. Your contact-view
+                  allowance is consumed only when
+                  access is approved.
                 </p>
 
                 <Button
                   variant="contained"
-                  onClick={handleUnlockContactDetails}
+                  onClick={
+                    handleUnlockContactDetails
+                  }
                   disabled={contactLoading}
                 >
                   {contactLoading
-                    ? "Loading..."
-                    : "View Contact Details"}
+                    ? "Submitting..."
+                    : "Request Contact Details"}
                 </Button>
               </div>
-            ) : (
-              <AddressDetails profileData={mergedProfileData} />
             )}
           </CollapsibleSection>
+          </div>
 
           <CollapsibleSection
             number={3}
@@ -759,7 +1070,7 @@ setActiveSection("contact");
           <p
             className={`mb-4 mt-1 text-sm ${designClasses.textSecondary}`}
           >
-            Send a message along with your invitation.
+            Send an invitation or securely forward this profile by email.
           </p>
 
           <TextField
@@ -783,6 +1094,21 @@ setActiveSection("contact");
 
             <button
               type="button"
+              className={`rounded-lg px-6 py-2.5 font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${designClasses.secondaryButton}`}
+              onClick={
+                handleOpenForwardModal
+              }
+              disabled={
+                isForwardingProfile
+              }
+            >
+              {isForwardingProfile
+                ? "Forwarding..."
+                : "Forward by Email"}
+            </button>
+
+            <button
+              type="button"
               className={`rounded-lg px-6 py-2.5 font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${designClasses.primaryButton}`}
               onClick={handleSendInvitation}
               disabled={isSendingInvitation}
@@ -793,6 +1119,31 @@ setActiveSection("contact");
             </button>
           </div>
         </div>
+
+        <ForwardProfileModal
+          open={
+            forwardModalOpen
+          }
+          profileName={
+            profileData?.name ||
+            "Matrimonial Profile"
+          }
+          profileId={
+            profileData
+              ?.profile_id ||
+            profileId ||
+            ""
+          }
+          submitting={
+            isForwardingProfile
+          }
+          onClose={
+            handleCloseForwardModal
+          }
+          onSubmit={
+            handleForwardProfile
+          }
+        />
 
         <Snackbar
           open={snackbarOpen}

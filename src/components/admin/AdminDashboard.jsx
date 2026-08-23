@@ -13,8 +13,11 @@ const SETTINGS_KEYS = {
 
 const VIEWS = {
   SETTINGS: "SETTINGS",
+  CONTACT_REQUESTS: "CONTACT_REQUESTS",
   PENDING_RECHARGE: "PENDING_RECHARGE",
   PENDING_REG_FEE: "PENDING_REG_FEE",
+  PENDING_ADVERTISEMENT: "PENDING_ADVERTISEMENT",
+  ADVERTISEMENT_REVIEW: "ADVERTISEMENT_REVIEW",
   PAYMENT_SUBMITTED: "PAYMENT_SUBMITTED",
   STATS_PROFILE: "STATS_PROFILE",
   STATS_OFFLINE: "STATS_OFFLINE"
@@ -23,7 +26,19 @@ const VIEWS = {
 const AdminDashboard = () => {
   const navigate = useNavigate();
 
-  const [activeView, setActiveView] = useState(VIEWS.SETTINGS);
+  const currentRole = (
+    sessionStorage.getItem("userRole") || ""
+  ).toUpperCase();
+
+  const isAdminRole =
+    currentRole === "ADMIN";
+
+  const [activeView, setActiveView] =
+    useState(
+      isAdminRole
+        ? VIEWS.SETTINGS
+        : VIEWS.CONTACT_REQUESTS
+    );
   const [stats, setStats] = useState(null);
 
   // Existing: profile approval queue (PAYMENT_SUBMITTED)
@@ -31,10 +46,29 @@ const AdminDashboard = () => {
   const [searchText, setSearchText] = useState("");
   const [actionLoadingId, setActionLoadingId] = useState(null);
 
+
+  // Contact request review queue
+const [
+  contactRequests,
+  setContactRequests
+] = useState([]);
+
+const [
+  contactActionLoadingId,
+  setContactActionLoadingId
+] = useState(null);
+
   // Offline payments queue
   const [pendingPayments, setPendingPayments] = useState([]);
   const [paymentSearchText, setPaymentSearchText] = useState("");
   const [paymentActionLoadingId, setPaymentActionLoadingId] = useState(null);
+
+  // Advertisement moderation queue
+  const [advertisementReviewQueue, setAdvertisementReviewQueue] = useState([]);
+  const [selectedAdvertisement, setSelectedAdvertisement] = useState(null);
+  const [moderatorNarrative, setModeratorNarrative] = useState("");
+  const [moderatorRemarks, setModeratorRemarks] = useState("");
+  const [advertisementActionLoadingId, setAdvertisementActionLoadingId] = useState(null);
 
   // Admin settings (Registration & Limits)
   const [settingsLoading, setSettingsLoading] = useState(false);
@@ -139,6 +173,74 @@ const AdminDashboard = () => {
       setSettingsSaving(false);
     }
   };
+const fetchContactRequests = async () => {
+  try {
+    const res = await fetch(
+      `${getBaseUrl()}/api/moderator/contact-requests?status=PENDING`,
+      {
+        headers: {
+          Authorization:
+            `Bearer ${token}`
+        }
+      }
+    );
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      console.error(
+        "Contact request fetch failed:",
+        data
+      );
+      return;
+    }
+
+    setContactRequests(
+      Array.isArray(data?.requests)
+        ? data.requests
+        : []
+    );
+  } catch (error) {
+    console.error(
+      "❌ fetchContactRequests error:",
+      error
+    );
+  }
+};
+
+  const fetchAdvertisementReviewQueue = async () => {
+    try {
+      const res = await fetch(
+        `${getBaseUrl()}/api/preferred-profiles/moderator/review-queue`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        console.error(
+          "Advertisement review queue fetch failed:",
+          data
+        );
+        return;
+      }
+
+      setAdvertisementReviewQueue(
+        Array.isArray(data?.data)
+          ? data.data
+          : []
+      );
+    } catch (error) {
+      console.error(
+        "❌ fetchAdvertisementReviewQueue error:",
+        error
+      );
+    }
+  };
 
   const fetchData = async () => {
     setLoading(true);
@@ -218,7 +320,8 @@ const AdminDashboard = () => {
         return;
       }
 
-      fetchData();
+      await fetchData();
+      await fetchAdvertisementReviewQueue();
     } catch (e) {
       console.error("❌ updateOfflinePaymentStatus error:", e);
       alert("Payment status update failed");
@@ -227,9 +330,190 @@ const AdminDashboard = () => {
     }
   };
 
+  const openAdvertisementReview = (advertisement) => {
+    setSelectedAdvertisement(advertisement);
+
+    setModeratorNarrative(
+      advertisement?.moderator_narrative ||
+        advertisement?.transaction_details ||
+        ""
+    );
+
+    setModeratorRemarks(
+      advertisement?.moderator_remarks ||
+        ""
+    );
+  };
+
+  const closeAdvertisementReview = () => {
+    setSelectedAdvertisement(null);
+    setModeratorNarrative("");
+    setModeratorRemarks("");
+  };
+
+  const reviewAdvertisement = async (
+    advertisementId,
+    action
+  ) => {
+    try {
+      setAdvertisementActionLoadingId(
+        advertisementId
+      );
+
+      const normalizedAction =
+        String(action || "")
+          .trim()
+          .toUpperCase();
+
+      if (
+        normalizedAction === "APPROVE" &&
+        !moderatorNarrative.trim()
+      ) {
+        alert(
+          "Advertisement narrative is required before publishing."
+        );
+        return;
+      }
+
+      if (
+        normalizedAction === "REJECT" &&
+        !moderatorRemarks.trim()
+      ) {
+        alert(
+          "Please enter Moderator remarks before rejecting."
+        );
+        return;
+      }
+
+      const res = await fetch(
+        `${getBaseUrl()}/api/preferred-profiles/moderator/${advertisementId}/review`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            action: normalizedAction,
+            moderatorNarrative:
+              moderatorNarrative.trim(),
+            moderatorRemarks:
+              moderatorRemarks.trim()
+          })
+        }
+      );
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(
+          data?.message ||
+            "Advertisement review failed."
+        );
+        return;
+      }
+
+      alert(data?.message || "Advertisement updated.");
+
+      closeAdvertisementReview();
+
+      await fetchAdvertisementReviewQueue();
+      await fetchData();
+    } catch (error) {
+      console.error(
+        "❌ reviewAdvertisement error:",
+        error
+      );
+
+      alert(
+        "Advertisement review failed."
+      );
+    } finally {
+      setAdvertisementActionLoadingId(
+        null
+      );
+    }
+  };
+
+const reviewContactRequest = async (
+  requestId,
+  action
+) => {
+  try {
+    setContactActionLoadingId(
+      requestId
+    );
+
+    const defaultRemark =
+      action === "APPROVED"
+        ? "Approved after moderator review"
+        : action === "REJECTED"
+        ? "Rejected after moderator review"
+        : "Please provide additional clarification";
+
+    const remarks =
+      window.prompt(
+        "Moderator remarks:",
+        defaultRemark
+      );
+
+    if (remarks === null) {
+      return;
+    }
+
+    const res = await fetch(
+      `${getBaseUrl()}/api/moderator/contact-requests/${requestId}/review`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type":
+            "application/json",
+          Authorization:
+            `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          action,
+          remarks
+        })
+      }
+    );
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(
+        data?.message ||
+          "Contact request update failed."
+      );
+      return;
+    }
+
+    alert(data.message);
+
+    await fetchContactRequests();
+
+  } catch (error) {
+    console.error(
+      "❌ reviewContactRequest error:",
+      error
+    );
+
+    alert(
+      "Contact request update failed."
+    );
+  } finally {
+    setContactActionLoadingId(null);
+  }
+};
   useEffect(() => {
     fetchData();
-    fetchSettings();
+    fetchContactRequests();
+    fetchAdvertisementReviewQueue();
+
+    if (isAdminRole) {
+      fetchSettings();
+    }
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -295,7 +579,15 @@ const AdminDashboard = () => {
   }, [filteredPendingPayments]);
 
   const pendingRegistrationFeePayments = useMemo(() => {
-    return filteredPendingPayments.filter((p) => (p.payment_type || "") === "Donation");
+    return filteredPendingPayments.filter(
+      (p) => (p.payment_type || "") === "Donation"
+    );
+  }, [filteredPendingPayments]);
+
+  const pendingAdvertisementPayments = useMemo(() => {
+    return filteredPendingPayments.filter(
+      (p) => (p.payment_type || "") === "PreferredProfile"
+    );
   }, [filteredPendingPayments]);
 
   const paymentTypeLabel = (paymentType) => {
@@ -303,6 +595,7 @@ const AdminDashboard = () => {
     if (!pt) return "-";
     if (pt === "ProfileRenewal") return "Recharge (Profile Renewal)";
     if (pt === "Donation") return "Registration Fee (Donation)";
+    if (pt === "PreferredProfile") return "Advertisement Payment";
     return pt;
   };
 
@@ -384,9 +677,14 @@ const AdminDashboard = () => {
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-3 sticky top-6">
         <div className="text-xs uppercase tracking-wide text-gray-500 px-2 py-2">Menu</div>
 
-        <div className="space-y-1">
-          <SidebarItem label="Registration & Limits" view={VIEWS.SETTINGS} />
-        </div>
+        {isAdminRole && (
+  <div className="space-y-1">
+    <SidebarItem
+      label="Registration & Limits"
+      view={VIEWS.SETTINGS}
+    />
+  </div>
+)}
 
         <div className="mt-4">
           <div className="text-xs uppercase tracking-wide text-gray-500 px-2 py-2">
@@ -403,16 +701,44 @@ const AdminDashboard = () => {
               view={VIEWS.PENDING_REG_FEE}
               badge={pendingRegistrationFeePayments.length}
             />
+
+            <SidebarItem
+              label="Advertisement Payments"
+              view={VIEWS.PENDING_ADVERTISEMENT}
+              badge={pendingAdvertisementPayments.length}
+            />
           </div>
         </div>
 
         <div className="mt-4">
-          <div className="text-xs uppercase tracking-wide text-gray-500 px-2 py-2">Approvals</div>
+  <div className="text-xs uppercase tracking-wide text-gray-500 px-2 py-2">
+    Member Requests
+  </div>
+
+  <div className="space-y-1">
+    <SidebarItem
+      label="Contact Requests"
+      view={VIEWS.CONTACT_REQUESTS}
+      badge={contactRequests.length}
+    />
+  </div>
+</div>
+
+<div className="mt-4">
+  <div className="text-xs uppercase tracking-wide text-gray-500 px-2 py-2">
+    Approvals
+  </div>
           <div className="space-y-1">
             <SidebarItem
               label="Payment Submitted Queue"
               view={VIEWS.PAYMENT_SUBMITTED}
               badge={profiles.length}
+            />
+
+            <SidebarItem
+              label="Advertisement Review"
+              view={VIEWS.ADVERTISEMENT_REVIEW}
+              badge={advertisementReviewQueue.length}
             />
           </div>
         </div>
@@ -641,6 +967,343 @@ const AdminDashboard = () => {
     </div>
   );
 
+  const renderAdvertisementReview = () => (
+    <div className="space-y-5">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+        <div className="flex items-center justify-between gap-3 mb-4">
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900">
+              Advertisement Review
+              <span className="ml-2 text-sm text-gray-500">
+                ({advertisementReviewQueue.length})
+              </span>
+            </h2>
+
+            <p className="text-sm text-gray-600">
+              Review payment-approved advertisements before publication.
+              Profile facts are read-only. Moderator may edit only the
+              published advertisement narrative.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={fetchAdvertisementReviewQueue}
+            className="px-3 py-2 rounded-lg bg-gray-700 text-white text-sm"
+          >
+            Refresh
+          </button>
+        </div>
+
+        <div className="overflow-auto rounded-lg border border-gray-100">
+          <table className="min-w-full text-sm">
+            <thead className="bg-gray-50">
+              <tr className="text-left border-b border-gray-100">
+                <th className="p-3 font-semibold text-gray-700">
+                  Advertisement
+                </th>
+
+                <th className="p-3 font-semibold text-gray-700">
+                  Profile
+                </th>
+
+                <th className="p-3 font-semibold text-gray-700">
+                  Profile Facts
+                </th>
+
+                <th className="p-3 font-semibold text-gray-700">
+                  Payment
+                </th>
+
+                <th className="p-3 font-semibold text-gray-700">
+                  Status
+                </th>
+
+                <th className="p-3 font-semibold text-gray-700">
+                  Action
+                </th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {advertisementReviewQueue.map(
+                (advertisement, index) => (
+                  <tr
+                    key={advertisement.id}
+                    className={`border-b border-gray-100 ${
+                      index % 2 === 0
+                        ? "bg-white"
+                        : "bg-gray-50"
+                    }`}
+                  >
+                    <td className="p-3">
+                      <div className="font-semibold text-gray-900">
+                        #{advertisement.id}
+                      </div>
+
+                      <div className="text-xs text-gray-500">
+                        {advertisement.created_at
+                          ? new Date(
+                              advertisement.created_at
+                            ).toLocaleString()
+                          : "-"}
+                      </div>
+                    </td>
+
+                    <td className="p-3">
+                      <div className="font-medium text-gray-900">
+                        {advertisement.profile_id}
+                      </div>
+
+                      <div className="text-xs text-gray-500">
+                        {advertisement.name ||
+                          advertisement.member_name ||
+                          "-"}
+                      </div>
+                    </td>
+
+                    <td className="p-3">
+                      <div className="text-xs text-gray-800">
+                        {advertisement.current_age || "-"} yrs
+                        {" · "}
+                        {advertisement.gotra || "-"} Gotra
+                      </div>
+
+                      <div className="text-xs text-gray-500 mt-1">
+                        {advertisement.profession ||
+                          advertisement.designation ||
+                          "-"}
+                        {" · "}
+                        {advertisement.current_location || "-"}
+                      </div>
+
+                      <div className="text-xs text-gray-500 mt-1">
+                        Education: {advertisement.education || "-"}
+                        {" · "}
+                        Income: {advertisement.annual_income || "-"}
+                      </div>
+                    </td>
+
+                    <td className="p-3">
+                      <div className="font-medium text-gray-900">
+                        ₹{advertisement.payment_amount || "0"}
+                      </div>
+
+                      <div className="text-xs text-gray-500">
+                        {advertisement.payment_method || "-"}
+                        {" · "}
+                        {advertisement.payment_reference || "-"}
+                      </div>
+                    </td>
+
+                    <td className="p-3">
+                      <span className="inline-flex rounded-full bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-800">
+                        {advertisement.review_status ||
+                          advertisement.status ||
+                          "PENDING"}
+                      </span>
+                    </td>
+
+                    <td className="p-3">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          openAdvertisementReview(
+                            advertisement
+                          )
+                        }
+                        className="px-3 py-2 rounded-lg bg-indigo-600 text-white text-xs font-semibold hover:bg-indigo-700"
+                      >
+                        Review Advertisement
+                      </button>
+                    </td>
+                  </tr>
+                )
+              )}
+
+              {advertisementReviewQueue.length === 0 && (
+                <tr>
+                  <td
+                    colSpan={6}
+                    className="p-5 text-gray-500"
+                  >
+                    No advertisements are waiting for review.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {selectedAdvertisement && (
+        <div className="bg-white rounded-xl shadow-sm border border-indigo-100 p-5">
+          <div className="flex items-start justify-between gap-4 mb-5">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">
+                Review Advertisement #{selectedAdvertisement.id}
+              </h3>
+
+              <p className="text-sm text-gray-600">
+                {selectedAdvertisement.profile_id}
+                {" · "}
+                {selectedAdvertisement.name ||
+                  selectedAdvertisement.member_name ||
+                  "-"}
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={closeAdvertisementReview}
+              className="px-3 py-2 rounded-lg border border-gray-200 text-sm text-gray-700"
+            >
+              Close
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-5">
+            <div className="rounded-lg border border-gray-100 bg-gray-50 p-3">
+              <div className="text-xs text-gray-500">
+                Age / Gotra
+              </div>
+
+              <div className="mt-1 text-sm font-semibold text-gray-900">
+                {selectedAdvertisement.current_age || "-"} yrs
+                {" · "}
+                {selectedAdvertisement.gotra || "-"}
+              </div>
+            </div>
+
+            <div className="rounded-lg border border-gray-100 bg-gray-50 p-3">
+              <div className="text-xs text-gray-500">
+                Education / Profession
+              </div>
+
+              <div className="mt-1 text-sm font-semibold text-gray-900">
+                {selectedAdvertisement.education || "-"}
+                {" · "}
+                {selectedAdvertisement.profession ||
+                  selectedAdvertisement.designation ||
+                  "-"}
+              </div>
+            </div>
+
+            <div className="rounded-lg border border-gray-100 bg-gray-50 p-3">
+              <div className="text-xs text-gray-500">
+                Location / Income
+              </div>
+
+              <div className="mt-1 text-sm font-semibold text-gray-900">
+                {selectedAdvertisement.current_location || "-"}
+                {" · "}
+                {selectedAdvertisement.annual_income || "-"}
+              </div>
+            </div>
+          </div>
+
+          <div className="mb-5">
+            <label className="block text-sm font-semibold text-gray-900 mb-2">
+              Submitted Advertisement
+            </label>
+
+            <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm leading-6 text-gray-700 whitespace-pre-wrap">
+              {selectedAdvertisement.transaction_details ||
+                "No submitted advertisement text."}
+            </div>
+
+            <p className="mt-1 text-xs text-gray-500">
+              Read-only member submission.
+            </p>
+          </div>
+
+          <div className="mb-5">
+            <label className="block text-sm font-semibold text-gray-900 mb-2">
+              Published Advertisement
+            </label>
+
+            <textarea
+              rows={7}
+              value={moderatorNarrative}
+              onChange={(event) =>
+                setModeratorNarrative(
+                  event.target.value
+                )
+              }
+              className="w-full rounded-lg border border-gray-200 px-3 py-3 text-sm leading-6 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+              placeholder="Edit the final advertisement text that members will see..."
+            />
+
+            <p className="mt-1 text-xs text-gray-500">
+              Moderator may improve wording here. Do not change authoritative
+              profile facts such as age, Gotra, education, profession or income.
+            </p>
+          </div>
+
+          <div className="mb-5">
+            <label className="block text-sm font-semibold text-gray-900 mb-2">
+              Moderator Remarks
+            </label>
+
+            <textarea
+              rows={3}
+              value={moderatorRemarks}
+              onChange={(event) =>
+                setModeratorRemarks(
+                  event.target.value
+                )
+              }
+              className="w-full rounded-lg border border-gray-200 px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
+              placeholder="Review notes / rejection reason / internal remarks..."
+            />
+          </div>
+
+          <div className="flex flex-wrap justify-end gap-3">
+            <button
+              type="button"
+              disabled={
+                advertisementActionLoadingId ===
+                selectedAdvertisement.id
+              }
+              onClick={() =>
+                reviewAdvertisement(
+                  selectedAdvertisement.id,
+                  "REJECT"
+                )
+              }
+              className="px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-semibold hover:bg-red-700 disabled:opacity-50"
+            >
+              Reject Advertisement
+            </button>
+
+            <button
+              type="button"
+              disabled={
+                advertisementActionLoadingId ===
+                  selectedAdvertisement.id ||
+                !moderatorNarrative.trim()
+              }
+              onClick={() =>
+                reviewAdvertisement(
+                  selectedAdvertisement.id,
+                  "APPROVE"
+                )
+              }
+              className="px-4 py-2 rounded-lg bg-green-600 text-white text-sm font-semibold hover:bg-green-700 disabled:opacity-50"
+            >
+              {advertisementActionLoadingId ===
+              selectedAdvertisement.id
+                ? "Processing..."
+                : "Approve & Publish"}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  
+
   const renderPaymentSubmittedQueue = () => (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
@@ -738,6 +1401,174 @@ const AdminDashboard = () => {
     </div>
   );
 
+  const renderContactRequests = () => (
+  <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+    <div className="flex items-center justify-between gap-3 mb-4">
+      <div>
+        <h2 className="text-lg font-semibold text-gray-900">
+          Contact Requests
+          <span className="ml-2 text-sm text-gray-500">
+            ({contactRequests.length})
+          </span>
+        </h2>
+
+        <p className="text-sm text-gray-600">
+          Review requests before sensitive
+          contact information is released.
+        </p>
+      </div>
+
+      <button
+        onClick={fetchContactRequests}
+        className="px-3 py-2 rounded-lg bg-gray-700 text-white text-sm"
+      >
+        Refresh
+      </button>
+    </div>
+
+    <div className="overflow-auto rounded-lg border border-gray-100">
+      <table className="min-w-full text-sm">
+        <thead className="bg-gray-50">
+          <tr className="text-left border-b">
+            <th className="p-3">
+              Request
+            </th>
+
+            <th className="p-3">
+              Requester
+            </th>
+
+            <th className="p-3">
+              Requested Profile
+            </th>
+
+            <th className="p-3">
+              Requested On
+            </th>
+
+            <th className="p-3">
+              Actions
+            </th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {contactRequests.map(
+            (request) => (
+              <tr
+                key={request.id}
+                className="border-b"
+              >
+                <td className="p-3">
+                  #{request.id}
+                </td>
+
+                <td className="p-3">
+                  <div className="font-medium">
+                    {request.requester_name ||
+                      "-"}
+                  </div>
+
+                  <div className="text-xs text-gray-500">
+                    {
+                      request.requester_profile_id
+                    }
+                  </div>
+                </td>
+
+                <td className="p-3">
+                  <div className="font-medium">
+                    {request.target_name ||
+                      "-"}
+                  </div>
+
+                  <div className="text-xs text-gray-500">
+                    {
+                      request.target_profile_id
+                    }
+                  </div>
+                </td>
+
+                <td className="p-3">
+                  {request.created_at
+                    ? new Date(
+                        request.created_at
+                      ).toLocaleString()
+                    : "-"}
+                </td>
+
+                <td className="p-3">
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      disabled={
+                        contactActionLoadingId ===
+                        request.id
+                      }
+                      onClick={() =>
+                        reviewContactRequest(
+                          request.id,
+                          "APPROVED"
+                        )
+                      }
+                      className="px-3 py-2 rounded-lg bg-green-600 text-white text-xs"
+                    >
+                      Approve
+                    </button>
+
+                    <button
+                      disabled={
+                        contactActionLoadingId ===
+                        request.id
+                      }
+                      onClick={() =>
+                        reviewContactRequest(
+                          request.id,
+                          "CLARIFICATION_REQUIRED"
+                        )
+                      }
+                      className="px-3 py-2 rounded-lg bg-amber-600 text-white text-xs"
+                    >
+                      Clarification
+                    </button>
+
+                    <button
+                      disabled={
+                        contactActionLoadingId ===
+                        request.id
+                      }
+                      onClick={() =>
+                        reviewContactRequest(
+                          request.id,
+                          "REJECTED"
+                        )
+                      }
+                      className="px-3 py-2 rounded-lg bg-red-600 text-white text-xs"
+                    >
+                      Reject
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            )
+          )}
+
+          {contactRequests.length ===
+            0 && (
+            <tr>
+              <td
+                colSpan={5}
+                className="p-5 text-gray-500"
+              >
+                No pending contact requests.
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  </div>
+);
+
   const renderMainContent = () => {
     if (loading) {
       return (
@@ -747,12 +1578,41 @@ const AdminDashboard = () => {
       );
     }
 
-    if (activeView === VIEWS.SETTINGS) return renderSettingsView();
+    if (
+  activeView === VIEWS.CONTACT_REQUESTS
+) {
+  return renderContactRequests();
+}
+
+if (
+  activeView === VIEWS.SETTINGS &&
+  isAdminRole
+) {
+  return renderSettingsView();
+}
     if (activeView === VIEWS.PENDING_RECHARGE)
-      return renderPendingPaymentsTable(pendingRechargePayments, "Pending Offline Payments – Recharge");
+      return renderPendingPaymentsTable(
+        pendingRechargePayments,
+        "Pending Offline Payments – Recharge"
+      );
+
     if (activeView === VIEWS.PENDING_REG_FEE)
-      return renderPendingPaymentsTable(pendingRegistrationFeePayments, "Pending Offline Payments – Registration Fee");
-    if (activeView === VIEWS.PAYMENT_SUBMITTED) return renderPaymentSubmittedQueue();
+      return renderPendingPaymentsTable(
+        pendingRegistrationFeePayments,
+        "Pending Offline Payments – Registration Fee"
+      );
+
+    if (activeView === VIEWS.PENDING_ADVERTISEMENT)
+      return renderPendingPaymentsTable(
+        pendingAdvertisementPayments,
+        "Pending Offline Payments – Advertisement"
+      );
+
+    if (activeView === VIEWS.ADVERTISEMENT_REVIEW)
+      return renderAdvertisementReview();
+
+    if (activeView === VIEWS.PAYMENT_SUBMITTED)
+      return renderPaymentSubmittedQueue();
     if (activeView === VIEWS.STATS_PROFILE) return renderCountCards("Profile Status Statistics", stats?.profileCounts);
     if (activeView === VIEWS.STATS_OFFLINE) return renderCountCards("Offline Payment Status Statistics", stats?.offlinePaymentCounts);
 

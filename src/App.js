@@ -35,12 +35,28 @@ const ProtectedRoute = ({ children }) => {
     return children;
 };
 
-const AdminRoute = ({ children }) => {
-  const isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
-  const role = (sessionStorage.getItem('userRole') || '').toUpperCase();
+const OperationalRoute = ({ children }) => {
+  const isLoggedIn =
+    sessionStorage.getItem("isLoggedIn") === "true";
 
-  if (!isLoggedIn) return <Navigate to="/login" replace />;
-  if (role !== 'ADMIN') return <Navigate to="/dashboard" replace />;
+  const role = (
+    sessionStorage.getItem("userRole") || ""
+  ).toUpperCase();
+
+  if (!isLoggedIn) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (
+    !["ADMIN", "MODERATOR"].includes(role)
+  ) {
+    return (
+      <Navigate
+        to="/dashboard"
+        replace
+      />
+    );
+  }
 
   return children;
 };
@@ -217,10 +233,9 @@ function App() {
 <Route
   path="/admin"
   element={
-    <AdminRoute>
-      <AdminDashboard />
-    </AdminRoute>
-  }
+    <OperationalRoute>
+  <AdminDashboard />
+</OperationalRoute>  }
 />
 
 

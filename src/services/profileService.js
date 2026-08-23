@@ -91,6 +91,47 @@ shareContactDetails: async (payload) => {
   return response.data;
 },
 
+getMyContactRequests: async () => {
+  const response = await apiClient.get(
+    "/contact-requests/my"
+  );
+
+  return Array.isArray(
+    response?.data?.requests
+  )
+    ? response.data.requests
+    : [];
+},
+
+getContactDetails: async (profileId) => {
+  if (!profileId) {
+    return null;
+  }
+
+  const response = await apiClient.get(
+    `/contact-details/${profileId}`
+  );
+
+  return response.data;
+},
+
+forwardProfileByEmail: async ({
+  targetProfileId,
+  recipientEmail,
+  senderMessage = "",
+}) => {
+  const response = await apiClient.post(
+    "/profile-forward",
+    {
+      targetProfileId,
+      recipientEmail,
+      senderMessage,
+    }
+  );
+
+  return response.data;
+},
+
 getProfilePhotos: async (profileId) => {
   if (!profileId) {
     return [];

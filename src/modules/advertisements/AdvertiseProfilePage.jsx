@@ -165,15 +165,16 @@ const determineLookingFor = (
   ).toLowerCase();
 
   if (
-    profileFor.includes("bride")
-  ) {
-    return "bride";
-  }
-
-  if (
+    profileFor.includes("bridegroom") ||
     profileFor.includes("groom")
   ) {
     return "groom";
+  }
+
+  if (
+    profileFor.includes("bride")
+  ) {
+    return "bride";
   }
 
   const gender = String(
@@ -814,8 +815,13 @@ const AdvertiseProfilePage = () => {
               profile?.id
             ),
 
-          advertisementHeading,
+                    advertisementHeading,
           advertisementText,
+
+          lookingFor:
+            determineLookingFor(
+              profile
+            ),
 
           source: {
             age: firstValue(

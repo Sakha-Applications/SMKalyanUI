@@ -39,6 +39,44 @@ const advertisementService = {
 
     return response?.data?.data || null;
   },
+
+  respondToAdvertisement: async ({
+    advertisementId,
+    responseType,
+    remarks = "",
+  }) => {
+    const response =
+      await apiClient.post(
+        `/advertisement-responses/${advertisementId}/respond`,
+        {
+          responseType,
+          remarks,
+        }
+      );
+
+    return response?.data || null;
+  },
+
+  getMyAdvertisementResponses:
+    async () => {
+      const response =
+        await apiClient.get(
+          "/advertisement-responses/my-responses"
+        );
+
+      return {
+        responses:
+          Array.isArray(
+            response?.data?.data
+          )
+            ? response.data.data
+            : [],
+
+        counts:
+          response?.data?.counts ||
+          {},
+      };
+    },
 };
 
 export default advertisementService;

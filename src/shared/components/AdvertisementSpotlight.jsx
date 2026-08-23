@@ -1,7 +1,6 @@
 import {
   useEffect,
   useMemo,
-  useRef,
   useState,
 } from "react";
 
@@ -23,7 +22,7 @@ import {
   designClasses,
 } from "../styles/designTokens";
 
-const ROTATION_INTERVAL = 30000;
+const ROTATION_INTERVAL = 10000;
 
 const cleanAdvertisementText = (
   value
@@ -136,24 +135,28 @@ const getAdvertisementText = (
     );
   }
 
+  const transactionText =
+    cleanAdvertisementText(
+      advertisement?.transaction_details ||
+        ""
+    );
+
+  if (transactionText) {
+    return transactionText;
+  }
+
   const displaySummary =
     cleanAdvertisementText(
       advertisement?.display_summary ||
         ""
     );
 
-  if (
-    displaySummary &&
-    !displaySummary.endsWith("...")
-  ) {
+  if (displaySummary) {
     return displaySummary;
   }
 
-  return (
-    buildFallbackAdvertisementText(
-      advertisement
-    ) ||
-    displaySummary
+  return buildFallbackAdvertisementText(
+    advertisement
   );
 };
 
@@ -169,20 +172,218 @@ const getCompactAge = (
     : "";
 };
 
+const getLookingFor = (
+  advertisement
+) => {
+  const lookingFor =
+    String(
+      advertisement?.looking_for ||
+        advertisement?.lookingFor ||
+        ""
+    )
+      .trim()
+      .toUpperCase();
+
+  if (lookingFor === "BRIDE") {
+    return {
+      label: "Looking for Bride",
+      type: "BRIDE",
+    };
+  }
+
+  if (
+    lookingFor === "BRIDEGROOM" ||
+    lookingFor === "GROOM"
+  ) {
+    return {
+      label: "Looking for Bridegroom",
+      type: "GROOM",
+    };
+  }
+
+  const profileFor =
+    String(
+      advertisement?.profile_for ||
+        advertisement?.profileFor ||
+        advertisement?.profile_category_need ||
+        advertisement?.profileCategoryNeed ||
+        ""
+    )
+      .trim()
+      .toLowerCase();
+
+  if (
+    profileFor.includes("bridegroom") ||
+    profileFor.includes("groom")
+  ) {
+    return {
+      label: "Looking for Bride",
+      type: "BRIDE",
+    };
+  }
+
+  if (
+    profileFor.includes("bride")
+  ) {
+    return {
+      label: "Looking for Bridegroom",
+      type: "GROOM",
+    };
+  }
+
+  const gender =
+    String(
+      advertisement?.gender ||
+        advertisement?.sex ||
+        ""
+    )
+      .trim()
+      .toLowerCase();
+
+  /*
+   * Legacy advertisements may not yet carry
+   * profile_for/gender in the display payload.
+   * Use the already-approved advertisement text
+   * only as a final compatibility fallback.
+   */
+  const advertisementText =
+    String(
+      advertisement?.transaction_details ||
+        advertisement?.display_summary ||
+        ""
+    )
+      .trim()
+      .toLowerCase();
+
+  if (
+    advertisementText.includes(
+      "looking for a bridegroom"
+    ) ||
+    advertisementText.includes(
+      "looking for bridegroom"
+    ) ||
+    advertisementText.includes(
+      "looking for a groom"
+    ) ||
+    advertisementText.includes(
+      "looking for groom"
+    )
+  ) {
+    return {
+      label: "Looking for Bridegroom",
+      type: "GROOM",
+    };
+  }
+
+  if (
+    advertisementText.includes(
+      "looking for a bride"
+    ) ||
+    advertisementText.includes(
+      "looking for bride"
+    )
+  ) {
+    return {
+      label: "Looking for Bride",
+      type: "BRIDE",
+    };
+  }
+
+  /*
+   * Same business rule already used by
+   * AdvertiseProfilePage:
+   *
+   * Male profile -> looking for Bride
+   * Female profile -> looking for Bridegroom
+   */
+  if (
+    gender === "male" ||
+    gender === "m"
+  ) {
+    return {
+      label: "Looking for Bride",
+      type: "BRIDE",
+    };
+  }
+
+  if (
+    gender === "female" ||
+    gender === "f"
+  ) {
+    return {
+      label: "Looking for Bridegroom",
+      type: "GROOM",
+    };
+  }
+
+  return {
+    label: "Matrimonial Profile",
+    type: "NEUTRAL",
+  };
+};
+
+
+const getAdvertisementTeaser = (
+  advertisement
+) => {
+  if (!advertisement) {
+    return "";
+  }
+
+  const lookingFor =
+    getLookingFor(advertisement);
+
+  const age =
+    getCompactAge(
+      advertisement?.current_age ||
+        advertisement?.currentAge
+    );
+
+  const gotra =
+    advertisement?.gotra &&
+    advertisement.gotra !==
+      "Not specified"
+      ? `${advertisement.gotra} Gotra`
+      : "";
+
+  const profession =
+    advertisement?.profession &&
+    advertisement.profession !==
+      "Not specified"
+      ? advertisement.profession
+      : "";
+
+  const city =
+    advertisement?.city &&
+    advertisement.city !==
+      "Not specified"
+      ? advertisement.city
+      : "";
+
+  const income =
+    advertisement?.annual_income &&
+    advertisement.annual_income !==
+      "Not specified"
+      ? advertisement.annual_income
+      : "";
+
+  return [
+    lookingFor.label,
+    age,
+    gotra,
+    profession,
+    income,
+    city,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+};
+
 const AdvertisementSpotlight = ({
   limit = 8,
 }) => {
   const navigate =
     useNavigate();
-
-  const textViewportRef =
-    useRef(null);
-
-  const textTrackRef =
-    useRef(null);
-
-  const textAnimationRef =
-    useRef(null);
 
   const [
     advertisements,
@@ -205,9 +406,24 @@ const AdvertisementSpotlight = ({
   ] = useState(false);
 
   const [
-    reducedMotion,
-    setReducedMotion,
+    showFullMessage,
+    setShowFullMessage,
   ] = useState(false);
+
+  const [
+    showAllAdvertisements,
+    setShowAllAdvertisements,
+  ] = useState(false);
+
+  const [
+    responseSubmitting,
+    setResponseSubmitting,
+  ] = useState(false);
+
+  const [
+    responseMessage,
+    setResponseMessage,
+  ] = useState("");
 
   useEffect(() => {
     let active = true;
@@ -243,9 +459,10 @@ const AdvertisementSpotlight = ({
 
           setCurrentIndex(0);
         } catch (error) {
-          console.error(
+                    console.error(
             "Unable to load advertisement spotlight:",
-            error
+            error?.response?.data ||
+              error
           );
 
           if (active) {
@@ -262,39 +479,10 @@ const AdvertisementSpotlight = ({
   }, [limit]);
 
   useEffect(() => {
-    const mediaQuery =
-      window.matchMedia(
-        "(prefers-reduced-motion: reduce)"
-      );
-
-    const updatePreference =
-      () => {
-        setReducedMotion(
-          mediaQuery.matches
-        );
-      };
-
-    updatePreference();
-
-    mediaQuery.addEventListener?.(
-      "change",
-      updatePreference
-    );
-
-    return () => {
-      mediaQuery.removeEventListener?.(
-        "change",
-        updatePreference
-      );
-    };
-  }, []);
-
-  useEffect(() => {
     if (
       advertisements.length <= 1 ||
       paused ||
-      manuallyPaused ||
-      reducedMotion
+      manuallyPaused
     ) {
       return undefined;
     }
@@ -318,7 +506,6 @@ const AdvertisementSpotlight = ({
     advertisements.length,
     paused,
     manuallyPaused,
-    reducedMotion,
   ]);
 
   const advertisement =
@@ -334,144 +521,25 @@ const AdvertisementSpotlight = ({
         ),
       [advertisement]
     );
-  useEffect(() => {
-    const viewport =
-      textViewportRef.current;
 
-    const track =
-      textTrackRef.current;
+  const advertisementTeaser =
+    useMemo(
+      () =>
+        getAdvertisementTeaser(
+          advertisement
+        ),
+      [advertisement]
+    );
 
-    if (
-      !viewport ||
-      !track
-    ) {
-      return undefined;
-    }
+  const lookingFor =
+    useMemo(
+      () =>
+        getLookingFor(
+          advertisement
+        ),
+      [advertisement]
+    );
 
-    if (
-      textAnimationRef.current
-    ) {
-      textAnimationRef.current.cancel();
-      textAnimationRef.current =
-        null;
-    }
-
-    track.style.transform =
-      "translateX(0px)";
-
-    if (
-      reducedMotion ||
-      !advertisementText
-    ) {
-      return undefined;
-    }
-
-    const startAnimation =
-      () => {
-        const viewportWidth =
-          viewport.clientWidth;
-
-        const textWidth =
-          track.scrollWidth;
-
-        const minimumTrackWidth =
-          viewportWidth + 160;
-
-        const effectiveTextWidth =
-          Math.max(
-            textWidth,
-            minimumTrackWidth
-          );
-
-        const distance =
-          effectiveTextWidth +
-          viewportWidth;
-
-        const pixelsPerSecond =
-          32;
-
-        const duration =
-          Math.max(
-            12000,
-            (distance /
-              pixelsPerSecond) *
-              1000
-          );
-
-        const animation =
-          track.animate(
-            [
-              {
-                transform: `translateX(${viewportWidth}px)`,
-              },
-              {
-                transform: `translateX(-${effectiveTextWidth}px)`,
-              },
-            ],
-            {
-              duration,
-              iterations: Infinity,
-              easing: "linear",
-            }
-          );
-
-        textAnimationRef.current =
-          animation;
-
-        if (
-          paused ||
-          manuallyPaused
-        ) {
-          animation.pause();
-        }
-      };
-
-    const frame =
-      window.requestAnimationFrame(
-        startAnimation
-      );
-
-    return () => {
-      window.cancelAnimationFrame(
-        frame
-      );
-
-      if (
-        textAnimationRef.current
-      ) {
-        textAnimationRef.current.cancel();
-        textAnimationRef.current =
-          null;
-      }
-    };
-  }, [
-    advertisementText,
-    currentIndex,
-    reducedMotion,
-    paused,
-    manuallyPaused,
-  ]);
-
-  useEffect(() => {
-    const animation =
-      textAnimationRef.current;
-
-    if (!animation) {
-      return;
-    }
-
-    if (
-      paused ||
-      manuallyPaused
-    ) {
-      animation.pause();
-    } else {
-      animation.play();
-    }
-  }, [
-    paused,
-    manuallyPaused,
-  ]);
 
   const compactDetails =
     useMemo(() => {
@@ -514,20 +582,15 @@ const AdvertisementSpotlight = ({
     advertisement?.profileId;
 
   const goPrevious = () => {
-    setManuallyPaused(true);
-
     setCurrentIndex(
       (current) =>
         current === 0
-          ? advertisements.length -
-            1
+          ? advertisements.length - 1
           : current - 1
     );
   };
 
   const goNext = () => {
-    setManuallyPaused(true);
-
     setCurrentIndex(
       (current) =>
         (current + 1) %
@@ -545,7 +608,74 @@ const AdvertisementSpotlight = ({
         `/view-profile/${profileId}`
       );
     };
+  const handleAdvertisementResponse =
+    async (
+      item,
+      responseType
+    ) => {
+      const advertisementId =
+        item?.id;
 
+      if (!advertisementId) {
+        setResponseMessage(
+          "Advertisement reference is unavailable."
+        );
+        return;
+      }
+
+      const defaultRemarks =
+        responseType === "APPLY"
+          ? "I would like to apply for this matrimonial advertisement."
+          : "I am interested in this matrimonial profile.";
+
+      const remarks =
+        window.prompt(
+          responseType === "APPLY"
+            ? "Application remarks:"
+            : "Interest remarks:",
+          defaultRemarks
+        );
+
+      if (remarks === null) {
+        return;
+      }
+
+      try {
+        setResponseSubmitting(
+          true
+        );
+
+        setResponseMessage("");
+
+        const result =
+          await advertisementService
+            .respondToAdvertisement({
+              advertisementId,
+              responseType,
+              remarks,
+            });
+
+        setResponseMessage(
+          result?.message ||
+            "Response submitted."
+        );
+      } catch (error) {
+        console.error(
+          "Unable to submit advertisement response:",
+          error
+        );
+
+        setResponseMessage(
+          error?.response?.data
+            ?.message ||
+            "Unable to submit response."
+        );
+      } finally {
+        setResponseSubmitting(
+          false
+        );
+      }
+    };
   const toggleRotation =
     () => {
       setManuallyPaused(
@@ -557,18 +687,6 @@ const AdvertisementSpotlight = ({
     <aside
       aria-label="Matrimonial Spotlight"
       aria-live="off"
-      onMouseEnter={() =>
-        setPaused(true)
-      }
-      onMouseLeave={() =>
-        setPaused(false)
-      }
-      onFocus={() =>
-        setPaused(true)
-      }
-      onBlur={() =>
-        setPaused(false)
-      }
       className={`${designClasses.surface} ${designClasses.border} border-b`}
     >
       <div className="mx-auto flex w-full max-w-7xl items-center gap-3 px-4 py-2.5 sm:px-6 lg:px-8">
@@ -579,29 +697,181 @@ const AdvertisementSpotlight = ({
           Matrimonial Spotlight
         </div>
 
-        <div className="min-w-0 flex-1">
-          {compactDetails.length >
-            0 && (
-            <div
-              className={`mb-0.5 truncate text-xs font-semibold ${designClasses.textPrimary}`}
-            >
-              {compactDetails.join(
-                " · "
-              )}
-            </div>
-          )}
-
+        <div
+          className="relative min-w-0 flex-1"
+          onMouseEnter={() => {
+            setPaused(true);
+            setShowFullMessage(true);
+          }}
+          onMouseLeave={() => {
+            setPaused(false);
+            setShowFullMessage(false);
+          }}
+        >
           <div
-            ref={textViewportRef}
-            className="relative overflow-hidden"
+            tabIndex={0}
+            onFocus={() => {
+              setPaused(true);
+              setShowFullMessage(true);
+            }}
+            onBlur={() => {
+              setPaused(false);
+              setShowFullMessage(false);
+            }}
+            className="relative cursor-pointer rounded-md px-1 py-0.5"
           >
-            <div
-              ref={textTrackRef}
-              className={`w-max whitespace-nowrap text-sm leading-5 ${designClasses.textDark}`}
-            >
-              {advertisementText}
+            <div className="flex min-w-0 items-center gap-2">
+              <span
+                className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-bold ${
+                  lookingFor.type ===
+                  "BRIDE"
+                    ? "bg-pink-50 text-pink-700"
+                    : lookingFor.type ===
+                      "GROOM"
+                    ? "bg-blue-50 text-blue-700"
+                    : `${designClasses.bgAccentSoft} ${designClasses.textAccent}`
+                }`}
+              >
+                {lookingFor.label}
+              </span>
+
+              <span
+                className={`min-w-0 truncate text-sm font-medium ${designClasses.textDark}`}
+              >
+                {advertisementTeaser
+                  .replace(
+                    `${lookingFor.label} · `,
+                    ""
+                  )
+                  .replace(
+                    lookingFor.label,
+                    ""
+                  )
+                  .trim()}
+              </span>
             </div>
           </div>
+
+          {showFullMessage &&
+            advertisementText && (
+              <div
+                className={`absolute left-0 top-[calc(100%-2px)] z-50 w-full min-w-[320px] max-w-3xl rounded-xl border p-4 shadow-lg ${designClasses.surface} ${designClasses.border}`}
+                role="dialog"
+                aria-label="Full matrimonial advertisement"
+                onMouseEnter={() => {
+                  setPaused(true);
+                  setShowFullMessage(true);
+                }}
+              >
+                <div className="mb-2 flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-2">
+                    <div
+                      className={`text-sm font-semibold ${designClasses.textPrimary}`}
+                    >
+                      Matrimonial Advertisement
+                    </div>
+
+                    <span
+                      className={`rounded-full px-2.5 py-1 text-xs font-bold ${
+                        lookingFor.type ===
+                        "BRIDE"
+                          ? "bg-pink-50 text-pink-700"
+                          : lookingFor.type ===
+                            "GROOM"
+                          ? "bg-blue-50 text-blue-700"
+                          : `${designClasses.bgAccentSoft} ${designClasses.textAccent}`
+                      }`}
+                    >
+                      {lookingFor.label}
+                    </span>
+                  </div>
+
+                  {profileId && (
+                    <button
+                      type="button"
+                      onClick={
+                        handleViewProfile
+                      }
+                      className={`shrink-0 rounded-lg px-3 py-1.5 text-xs font-semibold ${designClasses.secondaryButton}`}
+                    >
+                      View Profile
+                    </button>
+                  )}
+                </div>
+
+                {compactDetails.length >
+                  0 && (
+                  <div
+                    className={`mb-2 text-xs font-semibold ${designClasses.textSecondary}`}
+                  >
+                    {compactDetails.join(
+                      " · "
+                    )}
+                  </div>
+                )}
+
+                <div
+                  className={`whitespace-normal text-sm leading-6 ${designClasses.textDark}`}
+                >
+                  {advertisementText}
+                </div>
+                                <div
+                  className={`mt-4 border-t pt-3 ${designClasses.border}`}
+                >
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={
+                        handleViewProfile
+                      }
+                      className={`rounded-lg px-3 py-2 text-xs font-semibold ${designClasses.secondaryButton}`}
+                    >
+                      View Profile
+                    </button>
+
+                    <button
+                      type="button"
+                      disabled={
+                        responseSubmitting
+                      }
+                      onClick={() =>
+                        handleAdvertisementResponse(
+                          advertisement,
+                          "INTEREST"
+                        )
+                      }
+                      className={`rounded-lg px-3 py-2 text-xs font-semibold ${designClasses.primaryButton}`}
+                    >
+                      Show Interest
+                    </button>
+
+                    <button
+                      type="button"
+                      disabled={
+                        responseSubmitting
+                      }
+                      onClick={() =>
+                        handleAdvertisementResponse(
+                          advertisement,
+                          "APPLY"
+                        )
+                      }
+                      className={`rounded-lg px-3 py-2 text-xs font-semibold ${designClasses.primaryButton}`}
+                    >
+                      Apply
+                    </button>
+                  </div>
+
+                  {responseMessage && (
+                    <p
+                      className={`mt-2 text-xs ${designClasses.textSecondary}`}
+                    >
+                      {responseMessage}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
         </div>
 
         <div className="flex shrink-0 items-center gap-1">
@@ -623,10 +893,8 @@ const AdvertisementSpotlight = ({
               <span
                 className={`hidden min-w-[42px] text-center text-xs md:inline ${designClasses.textSecondary}`}
               >
-                {currentIndex + 1}/
-                {
-                  advertisements.length
-                }
+                {currentIndex + 1} of{" "}
+                {advertisements.length}
               </span>
 
               <button
@@ -665,10 +933,155 @@ const AdvertisementSpotlight = ({
               >
                 <ChevronRight className="h-4 w-4" />
               </button>
+
+                            <button
+                type="button"
+                onClick={() => {
+                  setPaused(true);
+                  setShowAllAdvertisements(true);
+                }}
+                className={`hidden rounded-lg px-3 py-1.5 text-xs font-semibold lg:inline-flex ${designClasses.secondaryButton}`}
+              >
+                View All Ads
+              </button>
             </>
           )}
         </div>
       </div>
+
+      {showAllAdvertisements && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-4"
+          onClick={() => {
+            setShowAllAdvertisements(false);
+            setPaused(false);
+          }}
+        >
+          <div
+            className={`max-h-[85vh] w-full max-w-5xl overflow-hidden rounded-2xl border shadow-xl ${designClasses.surface} ${designClasses.border}`}
+            onClick={(event) =>
+              event.stopPropagation()
+            }
+          >
+            <div
+              className={`flex items-center justify-between border-b p-5 ${designClasses.border}`}
+            >
+              <div>
+                <h2
+                  className={`text-xl font-bold ${designClasses.textPrimary}`}
+                >
+                  Matrimonial Advertisements
+                </h2>
+
+                <p
+                  className={`mt-1 text-sm ${designClasses.textSecondary}`}
+                >
+                  Browse all currently published
+                  matrimonial advertisements.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setShowAllAdvertisements(
+                    false
+                  );
+                  setPaused(false);
+                }}
+                className={`rounded-lg px-4 py-2 text-sm font-semibold ${designClasses.secondaryButton}`}
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="max-h-[70vh] overflow-y-auto p-5">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                {advertisements.map(
+                  (item, index) => {
+                    const itemLookingFor =
+                      getLookingFor(
+                        item
+                      );
+
+                    const itemText =
+                      getAdvertisementText(
+                        item
+                      );
+
+                    const itemTeaser =
+                      getAdvertisementTeaser(
+                        item
+                      );
+
+                    const itemProfileId =
+                      item?.profile_id ||
+                      item?.profileId;
+
+                    return (
+                      <div
+                        key={
+                          itemProfileId ||
+                          index
+                        }
+                        className={`rounded-xl border p-4 ${designClasses.border}`}
+                      >
+                        <div className="mb-3 flex items-start justify-between gap-3">
+                          <span
+                            className={`rounded-full px-2.5 py-1 text-xs font-bold ${
+                              itemLookingFor.type ===
+                              "BRIDE"
+                                ? "bg-pink-50 text-pink-700"
+                                : itemLookingFor.type ===
+                                  "GROOM"
+                                ? "bg-blue-50 text-blue-700"
+                                : `${designClasses.bgAccentSoft} ${designClasses.textAccent}`
+                            }`}
+                          >
+                            {
+                              itemLookingFor.label
+                            }
+                          </span>
+
+                          {itemProfileId && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setShowAllAdvertisements(
+                                  false
+                                );
+
+                                navigate(
+                                  `/view-profile/${itemProfileId}`
+                                );
+                              }}
+                              className={`rounded-lg px-3 py-1.5 text-xs font-semibold ${designClasses.secondaryButton}`}
+                            >
+                              View Profile
+                            </button>
+                          )}
+                        </div>
+
+                        <div
+                          className={`mb-2 text-sm font-semibold ${designClasses.textPrimary}`}
+                        >
+                          {itemTeaser}
+                        </div>
+
+                        <div
+                          className={`text-sm leading-6 ${designClasses.textSecondary}`}
+                        >
+                          {itemText}
+                        </div>
+                      </div>
+                    );
+                  }
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </aside>
   );
 };

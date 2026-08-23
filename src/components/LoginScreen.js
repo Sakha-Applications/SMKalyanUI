@@ -98,9 +98,13 @@ if (role) {
   console.warn("âš ï¸ userRole could not be determined from response/token.");
 }
 
-// Redirect administrators to the admin dashboard.
-if (role.toUpperCase() === 'ADMIN') {
-  navigate('/admin');
+// Operational users use the shared Moderator/Admin workbench.
+if (
+  ["ADMIN", "MODERATOR"].includes(
+    role.toUpperCase()
+  )
+) {
+  navigate("/admin");
   return;
 }
 
