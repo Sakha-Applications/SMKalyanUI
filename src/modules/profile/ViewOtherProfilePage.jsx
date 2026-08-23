@@ -6,7 +6,6 @@ import profileService from "../../services/profileService";
 import Typography from "@mui/material/Typography";
 import MemberLayout from "../../shared/layouts/MemberLayout";
 import CollapsibleSection from "../../shared/components/CollapsibleSection";
-import ForwardProfileModal from "../../shared/components/ForwardProfileModal";
 import { designClasses } from "../../shared/styles/designTokens";
 
 // Material-UI components for custom message and feedback
@@ -39,16 +38,6 @@ const ViewOtherProfilePage = () => {
   const [snackbarOpen, setSnackbarOpen] = useState(false); // State for Snackbar feedback
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState('success');
-
-  const [
-    isForwardingProfile,
-    setIsForwardingProfile,
-  ] = useState(false);
-
-    const [
-    forwardModalOpen,
-    setForwardModalOpen,
-  ] = useState(false);
 
   // Contact access is moderator-controlled.
   // Contact-view allowance is consumed only after approval.
@@ -662,102 +651,6 @@ setSnackbarOpen(true);
       setContactLoading(false);
     }
   };
-  const handleOpenForwardModal =
-    () => {
-      setForwardModalOpen(
-        true
-      );
-    };
-
-
-  const handleCloseForwardModal =
-    () => {
-      if (
-        isForwardingProfile
-      ) {
-        return;
-      }
-
-      setForwardModalOpen(
-        false
-      );
-    };
-
-
-  const handleForwardProfile =
-    async ({
-      recipientEmail,
-      senderMessage,
-    }) => {
-      try {
-        setIsForwardingProfile(
-          true
-        );
-
-        const result =
-          await profileService
-            .forwardProfileByEmail({
-              targetProfileId:
-                profileData
-                  ?.profile_id ||
-                profileId,
-
-              recipientEmail,
-
-              senderMessage,
-            });
-
-        setForwardModalOpen(
-          false
-        );
-
-        setSnackbarMessage(
-          result?.message ||
-            "Profile forwarded successfully."
-        );
-
-        setSnackbarSeverity(
-          "success"
-        );
-
-        setSnackbarOpen(
-          true
-        );
-
-      } catch (
-        forwardError
-      ) {
-        console.error(
-          "[ViewOtherProfilePage] Unable to forward profile:",
-          forwardError
-        );
-
-        setSnackbarMessage(
-          forwardError
-            ?.response
-            ?.data
-            ?.message ||
-            "Unable to forward the profile."
-        );
-
-        setSnackbarSeverity(
-          "error"
-        );
-
-        setSnackbarOpen(
-          true
-        );
-
-      } finally {
-        setIsForwardingProfile(
-          false
-        );
-      }
-    };
-
-
-
-
 
   const handleSendInvitation = async () => {
     setIsSendingInvitation(true);
@@ -1070,7 +963,7 @@ setSnackbarOpen(true);
           <p
             className={`mb-4 mt-1 text-sm ${designClasses.textSecondary}`}
           >
-            Send an invitation or securely forward this profile by email.
+            Send a message along with your invitation.
           </p>
 
           <TextField
@@ -1092,20 +985,6 @@ setSnackbarOpen(true);
               Back
             </button>
 
-            <button
-              type="button"
-              className={`rounded-lg px-6 py-2.5 font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${designClasses.secondaryButton}`}
-              onClick={
-                handleOpenForwardModal
-              }
-              disabled={
-                isForwardingProfile
-              }
-            >
-              {isForwardingProfile
-                ? "Forwarding..."
-                : "Forward by Email"}
-            </button>
 
             <button
               type="button"
@@ -1120,30 +999,6 @@ setSnackbarOpen(true);
           </div>
         </div>
 
-        <ForwardProfileModal
-          open={
-            forwardModalOpen
-          }
-          profileName={
-            profileData?.name ||
-            "Matrimonial Profile"
-          }
-          profileId={
-            profileData
-              ?.profile_id ||
-            profileId ||
-            ""
-          }
-          submitting={
-            isForwardingProfile
-          }
-          onClose={
-            handleCloseForwardModal
-          }
-          onSubmit={
-            handleForwardProfile
-          }
-        />
 
         <Snackbar
           open={snackbarOpen}

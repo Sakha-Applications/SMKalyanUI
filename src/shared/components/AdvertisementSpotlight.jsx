@@ -17,6 +17,9 @@ import {
 } from "react-router-dom";
 
 import advertisementService from "../../services/advertisementService";
+import profileService from "../../services/profileService";
+
+import ForwardProfileModal from "./ForwardProfileModal";
 
 import {
   designClasses,
@@ -425,6 +428,21 @@ const AdvertisementSpotlight = ({
     setResponseMessage,
   ] = useState("");
 
+  const [
+    forwardModalOpen,
+    setForwardModalOpen,
+  ] = useState(false);
+
+  const [
+    forwardTarget,
+    setForwardTarget,
+  ] = useState(null);
+
+  const [
+    isForwardingProfile,
+    setIsForwardingProfile,
+  ] = useState(false);
+
   useEffect(() => {
     let active = true;
 
@@ -608,7 +626,124 @@ const AdvertisementSpotlight = ({
         `/view-profile/${profileId}`
       );
     };
-  const handleAdvertisementResponse =
+
+  const handleOpenForwardModal =
+    (item) => {
+      const targetProfileId =
+        item?.profile_id ||
+        item?.profileId;
+
+      if (!targetProfileId) {
+        setResponseMessage(
+          "Profile reference is unavailable."
+        );
+        return;
+      }
+
+      setForwardTarget(
+        item
+      );
+
+      setForwardModalOpen(
+        true
+      );
+
+      setPaused(
+        true
+      );
+    };
+
+
+  const handleCloseForwardModal =
+    () => {
+      if (
+        isForwardingProfile
+      ) {
+        return;
+      }
+
+      setForwardModalOpen(
+        false
+      );
+
+      setForwardTarget(
+        null
+      );
+
+      setPaused(
+        false
+      );
+    };
+
+
+  const handleForwardProfile =
+    async ({
+      recipientEmail,
+      senderMessage,
+    }) => {
+      const targetProfileId =
+        forwardTarget?.profile_id ||
+        forwardTarget?.profileId;
+
+      if (!targetProfileId) {
+        setResponseMessage(
+          "Profile reference is unavailable."
+        );
+
+        return;
+      }
+
+      try {
+        setIsForwardingProfile(
+          true
+        );
+
+        const result =
+          await profileService
+            .forwardProfileByEmail({
+              targetProfileId,
+              recipientEmail,
+              senderMessage,
+            });
+
+        setForwardModalOpen(
+          false
+        );
+
+        setForwardTarget(
+          null
+        );
+
+        setResponseMessage(
+          result?.message ||
+            "Advertisement forwarded successfully."
+        );
+
+      } catch (error) {
+        console.error(
+          "Unable to forward advertisement:",
+          error
+        );
+
+        setResponseMessage(
+          error?.response?.data
+            ?.message ||
+            "Unable to forward advertisement."
+        );
+
+      } finally {
+        setIsForwardingProfile(
+          false
+        );
+
+        setPaused(
+          false
+        );
+      }
+    };
+
+
+    const handleAdvertisementResponse =
     async (
       item,
       responseType
@@ -786,17 +921,7 @@ const AdvertisementSpotlight = ({
                     </span>
                   </div>
 
-                  {profileId && (
-                    <button
-                      type="button"
-                      onClick={
-                        handleViewProfile
-                      }
-                      className={`shrink-0 rounded-lg px-3 py-1.5 text-xs font-semibold ${designClasses.secondaryButton}`}
-                    >
-                      View Profile
-                    </button>
-                  )}
+
                 </div>
 
                 {compactDetails.length >
@@ -859,6 +984,23 @@ const AdvertisementSpotlight = ({
                       className={`rounded-lg px-3 py-2 text-xs font-semibold ${designClasses.primaryButton}`}
                     >
                       Apply
+                    </button>
+
+                                        <button
+                      type="button"
+                      disabled={
+                        isForwardingProfile
+                      }
+                      onClick={() =>
+                        handleOpenForwardModal(
+                          advertisement
+                        )
+                      }
+                      className={`rounded-lg px-3 py-2 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-60 ${designClasses.secondaryButton}`}
+                    >
+                      {isForwardingProfile
+                        ? "Forwarding..."
+                        : "Forward"}
                     </button>
                   </div>
 
@@ -1044,21 +1186,46 @@ const AdvertisementSpotlight = ({
                           </span>
 
                           {itemProfileId && (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setShowAllAdvertisements(
-                                  false
-                                );
+                            <div className="flex flex-wrap gap-2">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setShowAllAdvertisements(
+                                    false
+                                  );
 
-                                navigate(
-                                  `/view-profile/${itemProfileId}`
-                                );
-                              }}
-                              className={`rounded-lg px-3 py-1.5 text-xs font-semibold ${designClasses.secondaryButton}`}
-                            >
-                              View Profile
-                            </button>
+                                  navigate(
+                                    `/view-profile/${itemProfileId}`
+                                  );
+                                }}
+                                className={`rounded-lg px-3 py-1.5 text-xs font-semibold ${designClasses.secondaryButton}`}
+                              >
+                                View Profile
+                              </button>
+
+                              <button
+                                type="button"
+                                disabled={
+                                  isForwardingProfile
+                                }
+                                onClick={() => {
+                                  setForwardTarget(
+                                    item
+                                  );
+
+                                  setForwardModalOpen(
+                                    true
+                                  );
+
+                                  setPaused(
+                                    true
+                                  );
+                                }}
+                                className={`rounded-lg px-3 py-1.5 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-60 ${designClasses.secondaryButton}`}
+                              >
+                                Forward
+                              </button>
+                            </div>
                           )}
                         </div>
 
@@ -1082,6 +1249,31 @@ const AdvertisementSpotlight = ({
           </div>
         </div>
       )}
+            <ForwardProfileModal
+        open={
+          forwardModalOpen
+        }
+        profileName={
+          forwardTarget?.name ||
+          forwardTarget?.profile_name ||
+          forwardTarget?.profileName ||
+          "Matrimonial Profile"
+        }
+        profileId={
+          forwardTarget?.profile_id ||
+          forwardTarget?.profileId ||
+          ""
+        }
+        submitting={
+          isForwardingProfile
+        }
+        onClose={
+          handleCloseForwardModal
+        }
+        onSubmit={
+          handleForwardProfile
+        }
+      />
     </aside>
   );
 };
