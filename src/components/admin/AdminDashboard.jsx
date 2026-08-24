@@ -2,6 +2,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import getBaseUrl from "../../utils/GetUrl";
+import PromptModal from "../../shared/components/PromptModal";
+import NotificationBanner from "../../shared/components/NotificationBanner";
 
 const normalizeStatus = (s) => (typeof s === "string" ? s.trim().toUpperCase() : "");
 
@@ -80,6 +82,78 @@ const [
   const [rechargeFeeAmount, setRechargeFeeAmount] = useState("0");
 
   const [loading, setLoading] = useState(true);
+
+  const [
+    notification,
+    setNotification,
+  ] = useState({
+    message: "",
+    type: "success"
+  });
+
+  const showNotification = (
+    message,
+    type = "success"
+  ) => {
+    setNotification({
+      message:
+        String(message || ""),
+      type
+    });
+  };
+
+  const [
+    promptModal,
+    setPromptModal,
+  ] = useState({
+    open: false,
+    title: "",
+    description: "",
+    label: "Remarks",
+    initialValue: "",
+    placeholder: "",
+    required: false,
+    confirmLabel: "Submit",
+    onConfirm: null
+  });
+
+  const closePromptModal = () => {
+    setPromptModal(
+      (current) => ({
+        ...current,
+        open: false,
+        onConfirm: null
+      })
+    );
+  };
+
+  const openPromptModal = (
+    options
+  ) => {
+    setPromptModal({
+      open: true,
+      title:
+        options?.title || "",
+      description:
+        options?.description || "",
+      label:
+        options?.label || "Remarks",
+      initialValue:
+        options?.initialValue || "",
+      placeholder:
+        options?.placeholder || "",
+      required:
+        Boolean(
+          options?.required
+        ),
+      confirmLabel:
+        options?.confirmLabel ||
+        "Submit",
+      onConfirm:
+        options?.onConfirm ||
+        null
+    });
+  };
 
   const token = sessionStorage.getItem("token");
 
@@ -165,7 +239,11 @@ const [
 
       await fetchSettings();
       await fetchData();
-      alert("Settings saved successfully.");
+
+      showNotification(
+        "Settings saved successfully.",
+        "success"
+      );
     } catch (e) {
       console.error("❌ saveSettings error:", e);
       setSettingsError("Failed to save admin settings");
@@ -282,52 +360,143 @@ const fetchContactRequests = async () => {
 
       const data = await res.json();
       if (!res.ok) {
-        alert(data?.message || "Approval failed");
+        showNotification(
+          data?.message ||
+            "Approval failed.",
+          "error"
+        );
         return;
       }
 
-      fetchData();
+      await fetchData();
+
+      showNotification(
+        "Profile approved successfully.",
+        "success"
+      );
     } catch (e) {
-      console.error("❌ approve error:", e);
-      alert("Approval failed");
+      console.error(
+        "❌ approve error:",
+        e
+      );
+
+      showNotification(
+        "Approval failed.",
+        "error"
+      );
     } finally {
       setActionLoadingId(null);
     }
   };
 
-  const updateOfflinePaymentStatus = async (paymentId, status) => {
-    try {
-      setPaymentActionLoadingId(paymentId);
+  const updateOfflinePaymentStatus = (
+    paymentId,
+    status
+  ) => {
+    const normalizedStatus =
+      String(status || "")
+        .trim()
+        .toLowerCase();
 
-      const adminNotes =
-        window.prompt(
-          `Enter admin notes for marking payment as "${status.toUpperCase()}":`,
-          status === "verified" ? "Verified after review" : "Rejected after review"
-        ) || "";
+    const verifying =
+      normalizedStatus ===
+      "verified";
 
-      const res = await fetch(`${getBaseUrl()}/api/offline-payment/update-status`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({ paymentId, status, adminNotes })
-      });
+    openPromptModal({
+      title: verifying
+        ? "Verify Offline Payment"
+        : "Reject Offline Payment",
 
-      const data = await res.json();
-      if (!res.ok) {
-        alert(data?.message || "Update failed");
-        return;
+      description: verifying
+        ? "Add review notes before marking this payment as verified."
+        : "Provide the reason for rejecting this payment.",
+
+      label: "Admin Notes",
+
+      initialValue: verifying
+        ? "Verified after review"
+        : "Rejected after review",
+
+      placeholder:
+        "Enter payment review notes...",
+
+      required:
+        !verifying,
+
+      confirmLabel: verifying
+        ? "Verify Payment"
+        : "Reject Payment",
+
+      onConfirm: async (
+        adminNotes
+      ) => {
+        closePromptModal();
+
+        try {
+          setPaymentActionLoadingId(
+            paymentId
+          );
+
+          const res =
+            await fetch(
+              `${getBaseUrl()}/api/offline-payment/update-status`,
+              {
+                method: "PUT",
+                headers: {
+                  "Content-Type":
+                    "application/json",
+                  Authorization:
+                    `Bearer ${token}`
+                },
+                body:
+                  JSON.stringify({
+                    paymentId,
+                    status:
+                      normalizedStatus,
+                    adminNotes
+                  })
+              }
+            );
+
+          const data =
+            await res.json();
+
+          if (!res.ok) {
+            showNotification(
+              data?.message ||
+                "Payment update failed.",
+              "error"
+            );
+            return;
+          }
+
+          await fetchData();
+
+          showNotification(
+            verifying
+              ? "Payment verified successfully."
+              : "Payment rejected successfully.",
+            "success"
+          );
+
+        } catch (e) {
+          console.error(
+            "❌ updateOfflinePaymentStatus error:",
+            e
+          );
+
+          showNotification(
+            "Payment status update failed.",
+            "error"
+          );
+
+        } finally {
+          setPaymentActionLoadingId(
+            null
+          );
+        }
       }
-
-      await fetchData();
-      await fetchAdvertisementReviewQueue();
-    } catch (e) {
-      console.error("❌ updateOfflinePaymentStatus error:", e);
-      alert("Payment status update failed");
-    } finally {
-      setPaymentActionLoadingId(null);
-    }
+    });
   };
 
   const openAdvertisementReview = (advertisement) => {
@@ -369,8 +538,9 @@ const fetchContactRequests = async () => {
         normalizedAction === "APPROVE" &&
         !moderatorNarrative.trim()
       ) {
-        alert(
-          "Advertisement narrative is required before publishing."
+        showNotification(
+          "Advertisement narrative is required before publishing.",
+          "warning"
         );
         return;
       }
@@ -379,8 +549,9 @@ const fetchContactRequests = async () => {
         normalizedAction === "REJECT" &&
         !moderatorRemarks.trim()
       ) {
-        alert(
-          "Please enter Moderator remarks before rejecting."
+        showNotification(
+          "Please enter Moderator remarks before rejecting.",
+          "warning"
         );
         return;
       }
@@ -406,14 +577,19 @@ const fetchContactRequests = async () => {
       const data = await res.json();
 
       if (!res.ok) {
-        alert(
+        showNotification(
           data?.message ||
-            "Advertisement review failed."
+            "Advertisement review failed.",
+          "error"
         );
         return;
       }
 
-      alert(data?.message || "Advertisement updated.");
+      showNotification(
+        data?.message ||
+          "Advertisement updated.",
+        "success"
+      );
 
       closeAdvertisementReview();
 
@@ -425,8 +601,9 @@ const fetchContactRequests = async () => {
         error
       );
 
-      alert(
-        "Advertisement review failed."
+      showNotification(
+        "Advertisement review failed.",
+        "error"
       );
     } finally {
       setAdvertisementActionLoadingId(
@@ -435,75 +612,142 @@ const fetchContactRequests = async () => {
     }
   };
 
-const reviewContactRequest = async (
+const reviewContactRequest = (
   requestId,
   action
 ) => {
-  try {
-    setContactActionLoadingId(
-      requestId
-    );
+  const normalizedAction =
+    String(action || "")
+      .trim()
+      .toUpperCase();
 
-    const defaultRemark =
-      action === "APPROVED"
-        ? "Approved after moderator review"
-        : action === "REJECTED"
-        ? "Rejected after moderator review"
-        : "Please provide additional clarification";
+  const defaultRemark =
+    normalizedAction ===
+      "APPROVED"
+      ? "Approved after moderator review"
+      : normalizedAction ===
+        "REJECTED"
+      ? "Rejected after moderator review"
+      : "Please provide additional clarification";
 
-    const remarks =
-      window.prompt(
-        "Moderator remarks:",
-        defaultRemark
-      );
+  openPromptModal({
+    title:
+      normalizedAction ===
+        "APPROVED"
+        ? "Approve Contact Request"
+        : normalizedAction ===
+          "REJECTED"
+        ? "Reject Contact Request"
+        : "Request Clarification",
 
-    if (remarks === null) {
-      return;
-    }
+    description:
+      normalizedAction ===
+        "APPROVED"
+        ? "Add optional moderator remarks before granting contact access."
+        : normalizedAction ===
+          "REJECTED"
+        ? "Provide the reason for rejecting this contact request."
+        : "Specify the additional clarification required from the member.",
 
-    const res = await fetch(
-      `${getBaseUrl()}/api/moderator/contact-requests/${requestId}/review`,
-      {
-        method: "PUT",
-        headers: {
-          "Content-Type":
-            "application/json",
-          Authorization:
-            `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          action,
-          remarks
-        })
+    label:
+      "Moderator Remarks",
+
+    initialValue:
+      defaultRemark,
+
+    placeholder:
+      "Enter moderator remarks...",
+
+    required:
+      normalizedAction ===
+        "REJECTED" ||
+      normalizedAction ===
+        "CLARIFICATION_REQUIRED",
+
+    confirmLabel:
+      normalizedAction ===
+        "APPROVED"
+        ? "Approve Request"
+        : normalizedAction ===
+          "REJECTED"
+        ? "Reject Request"
+        : "Request Clarification",
+
+    onConfirm: async (
+      remarks
+    ) => {
+      closePromptModal();
+
+      try {
+        setContactActionLoadingId(
+          requestId
+        );
+
+        const normalizedRemarks =
+          String(
+            remarks || ""
+          ).trim();
+
+        const res =
+          await fetch(
+            `${getBaseUrl()}/api/moderator/contact-requests/${requestId}/review`,
+            {
+              method: "PUT",
+              headers: {
+                "Content-Type":
+                  "application/json",
+                Authorization:
+                  `Bearer ${token}`
+              },
+              body:
+                JSON.stringify({
+                  action:
+                    normalizedAction,
+                  remarks:
+                    normalizedRemarks
+                })
+            }
+          );
+
+        const data =
+          await res.json();
+
+        if (!res.ok) {
+          showNotification(
+            data?.message ||
+              "Contact request update failed.",
+            "error"
+          );
+          return;
+        }
+
+        showNotification(
+          data?.message ||
+            "Contact request updated.",
+          "success"
+        );
+
+        await fetchContactRequests();
+        await fetchData();
+
+      } catch (error) {
+        console.error(
+          "❌ reviewContactRequest error:",
+          error
+        );
+
+        showNotification(
+          "Contact request update failed.",
+          "error"
+        );
+
+      } finally {
+        setContactActionLoadingId(
+          null
+        );
       }
-    );
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      alert(
-        data?.message ||
-          "Contact request update failed."
-      );
-      return;
     }
-
-    alert(data.message);
-
-    await fetchContactRequests();
-
-  } catch (error) {
-    console.error(
-      "❌ reviewContactRequest error:",
-      error
-    );
-
-    alert(
-      "Contact request update failed."
-    );
-  } finally {
-    setContactActionLoadingId(null);
-  }
+  });
 };
   useEffect(() => {
     fetchData();
@@ -1413,13 +1657,16 @@ const reviewContactRequest = async (
         </h2>
 
         <p className="text-sm text-gray-600">
-          Review requests before sensitive
-          contact information is released.
+          Review mutual-interest evidence and member requests
+          before sensitive contact information is released.
         </p>
       </div>
 
       <button
-        onClick={fetchContactRequests}
+        type="button"
+        onClick={
+          fetchContactRequests
+        }
         className="px-3 py-2 rounded-lg bg-gray-700 text-white text-sm"
       >
         Refresh
@@ -1429,24 +1676,32 @@ const reviewContactRequest = async (
     <div className="overflow-auto rounded-lg border border-gray-100">
       <table className="min-w-full text-sm">
         <thead className="bg-gray-50">
-          <tr className="text-left border-b">
-            <th className="p-3">
+          <tr className="text-left border-b border-gray-100">
+            <th className="p-3 font-semibold text-gray-700">
               Request
             </th>
 
-            <th className="p-3">
+            <th className="p-3 font-semibold text-gray-700">
               Requester
             </th>
 
-            <th className="p-3">
+            <th className="p-3 font-semibold text-gray-700">
               Requested Profile
             </th>
 
-            <th className="p-3">
+            <th className="p-3 font-semibold text-gray-700">
+              Relationship
+            </th>
+
+            <th className="p-3 font-semibold text-gray-700">
+              Request Message
+            </th>
+
+            <th className="p-3 font-semibold text-gray-700">
               Requested On
             </th>
 
-            <th className="p-3">
+            <th className="p-3 font-semibold text-gray-700">
               Actions
             </th>
           </tr>
@@ -1454,109 +1709,179 @@ const reviewContactRequest = async (
 
         <tbody>
           {contactRequests.map(
-            (request) => (
-              <tr
-                key={request.id}
-                className="border-b"
-              >
-                <td className="p-3">
-                  #{request.id}
-                </td>
+            (request) => {
+              const actionLoading =
+                contactActionLoadingId ===
+                request.id;
 
-                <td className="p-3">
-                  <div className="font-medium">
-                    {request.requester_name ||
-                      "-"}
-                  </div>
+              return (
+                <tr
+                  key={request.id}
+                  className="border-b border-gray-100 align-top"
+                >
+                  <td className="p-3">
+                    <div className="font-semibold text-gray-900">
+                      #{request.id}
+                    </div>
 
-                  <div className="text-xs text-gray-500">
-                    {
-                      request.requester_profile_id
-                    }
-                  </div>
-                </td>
+                    <span className="mt-1 inline-flex rounded-full bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-800">
+                      {request.status ||
+                        "PENDING"}
+                    </span>
+                  </td>
 
-                <td className="p-3">
-                  <div className="font-medium">
-                    {request.target_name ||
-                      "-"}
-                  </div>
+                  <td className="p-3">
+                    <div className="font-medium text-gray-900">
+                      {request.requester_name ||
+                        "-"}
+                    </div>
 
-                  <div className="text-xs text-gray-500">
-                    {
-                      request.target_profile_id
-                    }
-                  </div>
-                </td>
-
-                <td className="p-3">
-                  {request.created_at
-                    ? new Date(
-                        request.created_at
-                      ).toLocaleString()
-                    : "-"}
-                </td>
-
-                <td className="p-3">
-                  <div className="flex flex-wrap gap-2">
-                    <button
-                      disabled={
-                        contactActionLoadingId ===
-                        request.id
+                    <div className="text-xs text-gray-500">
+                      {
+                        request.requester_profile_id
                       }
-                      onClick={() =>
-                        reviewContactRequest(
-                          request.id,
-                          "APPROVED"
-                        )
-                      }
-                      className="px-3 py-2 rounded-lg bg-green-600 text-white text-xs"
-                    >
-                      Approve
-                    </button>
+                    </div>
 
-                    <button
-                      disabled={
-                        contactActionLoadingId ===
-                        request.id
-                      }
-                      onClick={() =>
-                        reviewContactRequest(
-                          request.id,
-                          "CLARIFICATION_REQUIRED"
-                        )
-                      }
-                      className="px-3 py-2 rounded-lg bg-amber-600 text-white text-xs"
-                    >
-                      Clarification
-                    </button>
+                    <div className="mt-1 text-xs text-gray-500">
+                      Profile Status:{" "}
+                      {request.requester_profile_status ||
+                        "-"}
+                    </div>
+                  </td>
 
-                    <button
-                      disabled={
-                        contactActionLoadingId ===
-                        request.id
+                  <td className="p-3">
+                    <div className="font-medium text-gray-900">
+                      {request.target_name ||
+                        "-"}
+                    </div>
+
+                    <div className="text-xs text-gray-500">
+                      {
+                        request.target_profile_id
                       }
-                      onClick={() =>
-                        reviewContactRequest(
-                          request.id,
-                          "REJECTED"
-                        )
-                      }
-                      className="px-3 py-2 rounded-lg bg-red-600 text-white text-xs"
-                    >
-                      Reject
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            )
+                    </div>
+
+                    <div className="mt-1 text-xs text-gray-500">
+                      Profile Status:{" "}
+                      {request.target_profile_status ||
+                        "-"}
+                    </div>
+                  </td>
+
+                  <td className="p-3">
+                    {request.mutual_interest ? (
+                      <div>
+                        <span className="inline-flex rounded-full bg-green-100 px-2 py-1 text-xs font-semibold text-green-800">
+                          Mutual Interest
+                        </span>
+
+                        <div className="mt-2 text-xs text-gray-500">
+                          Advertisement relationship verified.
+                        </div>
+                      </div>
+                    ) : (
+                      <div>
+                        <span className="inline-flex rounded-full bg-gray-100 px-2 py-1 text-xs font-semibold text-gray-700">
+                          Standard Request
+                        </span>
+
+                        <div className="mt-2 text-xs text-gray-500">
+                          No mutual advertisement relationship found.
+                        </div>
+                      </div>
+                    )}
+                  </td>
+
+                  <td className="p-3">
+                    <div className="max-w-xs whitespace-pre-wrap text-sm text-gray-700">
+                      {request.requester_message ||
+                        "No message provided."}
+                    </div>
+                  </td>
+
+                  <td className="p-3 text-gray-700">
+                    {request.created_at
+                      ? new Date(
+                          request.created_at
+                        ).toLocaleString()
+                      : "-"}
+                  </td>
+
+                  <td className="p-3">
+                    <div className="flex flex-col gap-2">
+                      <button
+                        type="button"
+                        disabled={
+                          actionLoading
+                        }
+                        onClick={() =>
+                          reviewContactRequest(
+                            request.id,
+                            "APPROVED"
+                          )
+                        }
+                        className={`px-3 py-2 rounded-lg text-white text-xs font-semibold ${
+                          actionLoading
+                            ? "bg-green-400 cursor-not-allowed"
+                            : "bg-green-600 hover:bg-green-700"
+                        }`}
+                      >
+                        {actionLoading
+                          ? "Processing..."
+                          : "Approve"}
+                      </button>
+
+                      <button
+                        type="button"
+                        disabled={
+                          actionLoading
+                        }
+                        onClick={() =>
+                          reviewContactRequest(
+                            request.id,
+                            "CLARIFICATION_REQUIRED"
+                          )
+                        }
+                        className={`px-3 py-2 rounded-lg text-white text-xs font-semibold ${
+                          actionLoading
+                            ? "bg-amber-400 cursor-not-allowed"
+                            : "bg-amber-600 hover:bg-amber-700"
+                        }`}
+                      >
+                        Clarification
+                      </button>
+
+                      <button
+                        type="button"
+                        disabled={
+                          actionLoading
+                        }
+                        onClick={() =>
+                          reviewContactRequest(
+                            request.id,
+                            "REJECTED"
+                          )
+                        }
+                        className={`px-3 py-2 rounded-lg text-white text-xs font-semibold ${
+                          actionLoading
+                            ? "bg-red-400 cursor-not-allowed"
+                            : "bg-red-600 hover:bg-red-700"
+                        }`}
+                      >
+                        Reject
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              );
+            }
           )}
 
           {contactRequests.length ===
             0 && (
             <tr>
               <td
-                colSpan={5}
+                colSpan={7}
                 className="p-5 text-gray-500"
               >
                 No pending contact requests.
@@ -1624,6 +1949,25 @@ if (
       <div className="container mx-auto px-4 py-6">
         {renderTopHeader()}
 
+        {notification.message && (
+          <div className="mb-4">
+            <NotificationBanner
+              message={
+                notification.message
+              }
+              type={
+                notification.type
+              }
+              onClose={() =>
+                setNotification({
+                  message: "",
+                  type: "success"
+                })
+              }
+            />
+          </div>
+        )}
+
         {/* Layout with Sidebar */}
         <div className="flex flex-col md:flex-row gap-5">
           {renderSidebar()}
@@ -1633,6 +1977,44 @@ if (
           </div>
         </div>
       </div>
+
+      <PromptModal
+        open={
+          promptModal.open
+        }
+        title={
+          promptModal.title
+        }
+        description={
+          promptModal.description
+        }
+        label={
+          promptModal.label
+        }
+        initialValue={
+          promptModal.initialValue
+        }
+        placeholder={
+          promptModal.placeholder
+        }
+        required={
+          promptModal.required
+        }
+        confirmLabel={
+          promptModal.confirmLabel
+        }
+        onCancel={
+          closePromptModal
+        }
+        onConfirm={(
+          value
+        ) => {
+          promptModal
+            .onConfirm?.(
+              value
+            );
+        }}
+      />
     </div>
   );
 };

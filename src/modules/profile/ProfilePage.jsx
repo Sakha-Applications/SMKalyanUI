@@ -16,6 +16,7 @@ import { Country, State } from 'country-state-city';
 import countryData from 'country-telephone-data'; 
 import ViewModeProfile from './components/ViewModeProfile';
 import MemberLayout from "../../shared/layouts/MemberLayout";
+import NotificationBanner from "../../shared/components/NotificationBanner";
 import { designClasses } from "../../shared/styles/designTokens";
 
 
@@ -41,6 +42,14 @@ const ProfilePage = () => {
   const [error, setError] = useState(null);
   const [errors, setErrors] = useState({});
   const [showErrorDialog, setShowErrorDialog] = useState(false);
+
+    const [
+    notification,
+    setNotification,
+  ] = useState({
+    message: "",
+    type: "success",
+  });
 
     const skipNextEducationSearch = useRef(false);
     const skipNextMotherTongueSearch = useRef(false);
@@ -1020,16 +1029,30 @@ reference2_phone: (reference2PhoneCountryCode && reference2PhoneNumber) ? `${ref
   finalPayload
 );
 
-    alert('Profile updated successfully.');
+    setNotification({
+      message:
+        "Profile updated successfully.",
+      type:
+        "success",
+    });
+
     setIsEditing(false);
-    fetchUserProfile();
+
+    await fetchUserProfile();
   } catch (error) {
     console.error(
       "Unable to update profile:",
       error
     );
 
-    alert("Failed to update profile.");
+    setNotification({
+      message:
+        error?.response?.data
+          ?.message ||
+        "Failed to update profile.",
+      type:
+        "error",
+    });
   } finally {
     setLoading(false);
   }
@@ -1049,7 +1072,21 @@ reference2_phone: (reference2PhoneCountryCode && reference2PhoneNumber) ? `${ref
 
   return (
   <MemberLayout>
-    <div className="w-full">
+    <div className="w-full space-y-4">
+      <NotificationBanner
+        message={
+          notification.message
+        }
+        type={
+          notification.type
+        }
+        onClose={() =>
+          setNotification({
+            message: "",
+            type: "success",
+          })
+        }
+      />
       <div
         className={`overflow-hidden rounded-2xl border ${designClasses.border} ${designClasses.surface}`}
       >

@@ -62,8 +62,7 @@ getDefaultPhoto: async (profileId) => {
 
     if (
       !photo?.id ||
-      !photo?.fullUrl ||
-      !photo?.blobName
+      !photo?.fullUrl
     ) {
       return null;
     }
@@ -71,7 +70,8 @@ getDefaultPhoto: async (profileId) => {
     return {
       id: photo.id,
       fullUrl: photo.fullUrl,
-      blobName: photo.blobName,
+      blobName:
+        photo.blobName || "",
     };
   } catch (error) {
     if (error?.response?.status === 404) {

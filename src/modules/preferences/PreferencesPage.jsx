@@ -7,6 +7,7 @@ import EditMode from "./components/EditMode";
 
 import ValidationErrorDialog from "../../components/common/ValidationErrorDialog";
 import MemberLayout from "../../shared/layouts/MemberLayout";
+import NotificationBanner from "../../shared/components/NotificationBanner";
 import { designClasses } from "../../shared/styles/designTokens";
 import {
   maritalStatusOptions,
@@ -81,6 +82,14 @@ const PartnerPreferencesPage = () => {
   const [error, setError] = useState(null);
   const [errors] = useState({});
   const [showErrorDialog, setShowErrorDialog] = useState(false);
+
+    const [
+    notification,
+    setNotification,
+  ] = useState({
+    message: "",
+    type: "success",
+  });
 
   const [educationInput, setEducationInput] = useState('');
   const [motherTongueInput, setMotherTongueInput] = useState('');
@@ -527,16 +536,30 @@ preferredBrideGroomCategory,
   finalPayload
 );
 
-    alert("Partner expectations updated successfully.");
+    setNotification({
+      message:
+        "Partner expectations updated successfully.",
+      type:
+        "success",
+    });
+
     setIsEditing(false);
-    fetchUserProfile();
+
+    await fetchUserProfile();
   } catch (error) {
   console.error(
     "Unable to update partner expectations:",
     error
   );
 
-  alert("Failed to update partner expectations.");
+  setNotification({
+    message:
+      error?.response?.data
+        ?.message ||
+      "Failed to update partner expectations.",
+    type:
+      "error",
+  });
   } finally {
     setLoading(false);
   }
@@ -571,7 +594,21 @@ if (!userEmail) {
 
   return (
     <MemberLayout>
-      <div className="w-full">
+      <div className="w-full space-y-4">
+        <NotificationBanner
+          message={
+            notification.message
+          }
+          type={
+            notification.type
+          }
+          onClose={() =>
+            setNotification({
+              message: "",
+              type: "success",
+            })
+          }
+        />
         <div
           className={`overflow-hidden rounded-2xl border ${designClasses.border} ${designClasses.surface}`}
         >

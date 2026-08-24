@@ -20,6 +20,7 @@ import advertisementService from "../../services/advertisementService";
 import profileService from "../../services/profileService";
 
 import ForwardProfileModal from "./ForwardProfileModal";
+import PromptModal from "./PromptModal";
 
 import {
   designClasses,
@@ -442,6 +443,58 @@ const AdvertisementSpotlight = ({
     isForwardingProfile,
     setIsForwardingProfile,
   ] = useState(false);
+  const [
+    promptModal,
+    setPromptModal,
+  ] = useState({
+    open: false,
+    title: "",
+    description: "",
+    label: "Remarks",
+    initialValue: "",
+    placeholder: "",
+    required: false,
+    confirmLabel: "Submit",
+    onConfirm: null,
+  });
+
+  const closePromptModal =
+    () => {
+      setPromptModal(
+        (current) => ({
+          ...current,
+          open: false,
+          onConfirm: null,
+        })
+      );
+    };
+
+  const openPromptModal =
+    (options) => {
+      setPromptModal({
+        open: true,
+        title:
+          options?.title || "",
+        description:
+          options?.description || "",
+        label:
+          options?.label || "Remarks",
+        initialValue:
+          options?.initialValue || "",
+        placeholder:
+          options?.placeholder || "",
+        required:
+          Boolean(
+            options?.required
+          ),
+        confirmLabel:
+          options?.confirmLabel ||
+          "Submit",
+        onConfirm:
+          options?.onConfirm ||
+          null,
+      });
+    };
 
   useEffect(() => {
     let active = true;
@@ -599,6 +652,21 @@ const AdvertisementSpotlight = ({
     advertisement?.profile_id ||
     advertisement?.profileId;
 
+  const loggedInProfileId =
+    String(
+      sessionStorage.getItem(
+        "profileId"
+      ) || ""
+    ).trim();
+
+  const isOwnAdvertisement =
+    Boolean(
+      loggedInProfileId &&
+      profileId &&
+      String(profileId) ===
+        loggedInProfileId
+    );
+
   const goPrevious = () => {
     setCurrentIndex(
       (current) =>
@@ -624,6 +692,29 @@ const AdvertisementSpotlight = ({
 
       navigate(
         `/view-profile/${profileId}`
+      );
+    };
+
+  const handleViewResponses =
+    (item) => {
+      const advertisementId =
+        item?.id;
+
+      if (!advertisementId) {
+        setResponseMessage(
+          "Advertisement reference is unavailable."
+        );
+        return;
+      }
+
+      setShowFullMessage(false);
+      setShowAllAdvertisements(false);
+      setPaused(false);
+
+      navigate(
+        `/inbox?advertisementId=${encodeURIComponent(
+          advertisementId
+        )}`
       );
     };
 
@@ -739,12 +830,12 @@ const AdvertisementSpotlight = ({
         setPaused(
           false
         );
-      }
+            }
     };
 
 
-    const handleAdvertisementResponse =
-    async (
+  const handleAdvertisementResponse =
+    (
       item,
       responseType
     ) => {
@@ -758,59 +849,107 @@ const AdvertisementSpotlight = ({
         return;
       }
 
+      const normalizedResponseType =
+        String(
+          responseType || ""
+        )
+          .trim()
+          .toUpperCase();
+
       const defaultRemarks =
-        responseType === "APPLY"
+        normalizedResponseType ===
+        "APPLY"
           ? "I would like to apply for this matrimonial advertisement."
           : "I am interested in this matrimonial profile.";
 
-      const remarks =
-        window.prompt(
-          responseType === "APPLY"
-            ? "Application remarks:"
-            : "Interest remarks:",
-          defaultRemarks
-        );
+      openPromptModal({
+        title:
+          normalizedResponseType ===
+          "APPLY"
+            ? "Apply for this Profile"
+            : "Show Interest",
 
-      if (remarks === null) {
-        return;
-      }
+        description:
+          normalizedResponseType ===
+          "APPLY"
+            ? "Add a short message to accompany your application."
+            : "Add a short message to express your interest.",
 
-      try {
-        setResponseSubmitting(
-          true
-        );
+        label:
+          normalizedResponseType ===
+          "APPLY"
+            ? "Application Remarks"
+            : "Interest Remarks",
 
-        setResponseMessage("");
+        initialValue:
+          defaultRemarks,
 
-        const result =
-          await advertisementService
-            .respondToAdvertisement({
-              advertisementId,
-              responseType,
-              remarks,
-            });
+        placeholder:
+          normalizedResponseType ===
+          "APPLY"
+            ? "Enter your application message..."
+            : "Enter your interest message...",
 
-        setResponseMessage(
-          result?.message ||
-            "Response submitted."
-        );
-      } catch (error) {
-        console.error(
-          "Unable to submit advertisement response:",
-          error
-        );
+        required:
+          true,
 
-        setResponseMessage(
-          error?.response?.data
-            ?.message ||
-            "Unable to submit response."
-        );
-      } finally {
-        setResponseSubmitting(
-          false
-        );
-      }
+        confirmLabel:
+          normalizedResponseType ===
+          "APPLY"
+            ? "Submit Application"
+            : "Send Interest",
+
+        onConfirm:
+          async (
+            remarks
+          ) => {
+            closePromptModal();
+
+            try {
+              setResponseSubmitting(
+                true
+              );
+
+              setResponseMessage(
+                ""
+              );
+
+              const result =
+                await advertisementService
+                  .respondToAdvertisement({
+                    advertisementId,
+                    responseType:
+                      normalizedResponseType,
+                    remarks,
+                  });
+
+              setResponseMessage(
+                result?.message ||
+                  "Response submitted."
+              );
+
+            } catch (error) {
+              console.error(
+                "Unable to submit advertisement response:",
+                error
+              );
+
+              setResponseMessage(
+                error?.response?.data
+                  ?.message ||
+                  "Unable to submit response."
+              );
+
+            } finally {
+              setResponseSubmitting(
+                false
+              );
+            }
+          },
+      });
     };
+
+
   const toggleRotation =
     () => {
       setManuallyPaused(
@@ -953,37 +1092,55 @@ const AdvertisementSpotlight = ({
                       View Profile
                     </button>
 
-                    <button
-                      type="button"
-                      disabled={
-                        responseSubmitting
-                      }
-                      onClick={() =>
-                        handleAdvertisementResponse(
-                          advertisement,
-                          "INTEREST"
-                        )
-                      }
-                      className={`rounded-lg px-3 py-2 text-xs font-semibold ${designClasses.primaryButton}`}
-                    >
-                      Show Interest
-                    </button>
+                    {!isOwnAdvertisement && (
+                      <>
+                        <button
+                          type="button"
+                          disabled={
+                            responseSubmitting
+                          }
+                          onClick={() =>
+                            handleAdvertisementResponse(
+                              advertisement,
+                              "INTEREST"
+                            )
+                          }
+                          className={`rounded-lg px-3 py-2 text-xs font-semibold ${designClasses.primaryButton}`}
+                        >
+                          Show Interest
+                        </button>
 
-                    <button
-                      type="button"
-                      disabled={
-                        responseSubmitting
-                      }
-                      onClick={() =>
-                        handleAdvertisementResponse(
-                          advertisement,
-                          "APPLY"
-                        )
-                      }
-                      className={`rounded-lg px-3 py-2 text-xs font-semibold ${designClasses.primaryButton}`}
-                    >
-                      Apply
-                    </button>
+                        <button
+                          type="button"
+                          disabled={
+                            responseSubmitting
+                          }
+                          onClick={() =>
+                            handleAdvertisementResponse(
+                              advertisement,
+                              "APPLY"
+                            )
+                          }
+                          className={`rounded-lg px-3 py-2 text-xs font-semibold ${designClasses.primaryButton}`}
+                        >
+                          Apply
+                        </button>
+                      </>
+                    )}
+
+                    {isOwnAdvertisement && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          handleViewResponses(
+                            advertisement
+                          )
+                        }
+                        className={`rounded-lg px-3 py-2 text-xs font-semibold ${designClasses.primaryButton}`}
+                      >
+                        View Responses
+                      </button>
+                    )}
 
                                         <button
                       type="button"
@@ -1158,6 +1315,15 @@ const AdvertisementSpotlight = ({
                     const itemProfileId =
                       item?.profile_id ||
                       item?.profileId;
+                                        const itemIsOwnAdvertisement =
+                      Boolean(
+                        loggedInProfileId &&
+                        itemProfileId &&
+                        String(
+                          itemProfileId
+                        ) ===
+                          loggedInProfileId
+                      );
 
                     return (
                       <div
@@ -1201,7 +1367,19 @@ const AdvertisementSpotlight = ({
                               >
                                 View Profile
                               </button>
-
+                              {itemIsOwnAdvertisement && (
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    handleViewResponses(
+                                      item
+                                    )
+                                  }
+                                  className={`rounded-lg px-3 py-1.5 text-xs font-semibold ${designClasses.primaryButton}`}
+                                >
+                                  View Responses
+                                </button>
+                              )}
                               <button
                                 type="button"
                                 disabled={
@@ -1272,6 +1450,44 @@ const AdvertisementSpotlight = ({
         onSubmit={
           handleForwardProfile
         }
+      />
+
+      <PromptModal
+        open={
+          promptModal.open
+        }
+        title={
+          promptModal.title
+        }
+        description={
+          promptModal.description
+        }
+        label={
+          promptModal.label
+        }
+        initialValue={
+          promptModal.initialValue
+        }
+        placeholder={
+          promptModal.placeholder
+        }
+        required={
+          promptModal.required
+        }
+        confirmLabel={
+          promptModal.confirmLabel
+        }
+        onCancel={
+          closePromptModal
+        }
+        onConfirm={(
+          value
+        ) => {
+          promptModal
+            .onConfirm?.(
+              value
+            );
+        }}
       />
     </aside>
   );

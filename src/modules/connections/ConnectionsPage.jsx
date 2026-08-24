@@ -2,7 +2,10 @@ import {
   useEffect,
   useState,
 } from "react";
-import { useNavigate } from "react-router-dom";
+import {
+  useNavigate,
+  useSearchParams,
+} from "react-router-dom";
 
 import invitationService from "../../services/invitationService";
 import advertisementResponseService from "../../services/advertisementResponseService";
@@ -11,6 +14,7 @@ import profileService from "../../services/profileService";
 
 import MemberLayout from "../../shared/layouts/MemberLayout";
 import RestrictedFeatureState from "../../shared/components/RestrictedFeatureState";
+import PromptModal from "../../shared/components/PromptModal";
 
 import {
   calculateProfileCompletion,
@@ -228,14 +232,30 @@ const AdvertisementResponseCard = ({
       ? response.responder_profile_id
       : response.owner_profile_id;
 
+  const contactRequestInfo =
+    contactRequestStatusByProfile[
+      String(
+        contactTargetProfileId || ""
+      )
+    ] || {};
+
   const contactRequestStatus =
     normalizeStatus(
-      contactRequestStatusByProfile[
-        String(
-          contactTargetProfileId || ""
-        )
-      ] || ""
+      typeof contactRequestInfo ===
+        "string"
+        ? contactRequestInfo
+        : contactRequestInfo?.status
     );
+
+  const contactModeratorRemarks =
+    typeof contactRequestInfo ===
+      "object"
+      ? String(
+          contactRequestInfo
+            ?.moderatorRemarks ||
+          ""
+        ).trim()
+      : "";
 
   const contactRequestPending =
     contactRequestStatus ===
@@ -455,8 +475,22 @@ const AdvertisementResponseCard = ({
                   ? "Contact access has been approved. Open the profile to view the contact details."
                   : contactRequestPending
                   ? "Your contact request is awaiting Moderator review."
+                  : clarificationRequired
+                  ? "The Moderator has requested additional clarification before reviewing your contact request."
                   : "Both members have expressed positive interest. You may request contact details for Moderator review."}
               </p>
+
+              {clarificationRequired &&
+                contactModeratorRemarks && (
+                  <div
+                    className={`mt-2 rounded-lg p-3 text-xs ${designClasses.statusWarning}`}
+                  >
+                    <span className="font-semibold">
+                      Moderator clarification:
+                    </span>{" "}
+                    {contactModeratorRemarks}
+                  </div>
+                )}
             </div>
 
             <button
@@ -478,7 +512,12 @@ const AdvertisementResponseCard = ({
 
                 onRequestContact(
                   response,
-                  direction
+                  direction,
+                  {
+                    clarificationRequired,
+                    moderatorRemarks:
+                      contactModeratorRemarks
+                  }
                 );
               }}
               className={`rounded-lg px-4 py-2 text-sm font-semibold ${designClasses.primaryButton} disabled:cursor-not-allowed disabled:opacity-50`}
@@ -511,6 +550,18 @@ const EmptyState = ({ message }) => (
 
 const ConnectionsPage = () => {
   const navigate = useNavigate();
+
+  const [
+    searchParams,
+    setSearchParams,
+  ] = useSearchParams();
+
+  const selectedAdvertisementId =
+    String(
+      searchParams.get(
+        "advertisementId"
+      ) || ""
+    ).trim();
 
   const profileId =
     sessionStorage.getItem("profileId");
@@ -545,6 +596,19 @@ const ConnectionsPage = () => {
     setSentAdvertisementResponses,
   ] = useState([]);
 
+    const visibleReceivedAdvertisementResponses =
+    selectedAdvertisementId
+      ? receivedAdvertisementResponses.filter(
+          (response) =>
+            String(
+              response?.advertisement_id ||
+              response?.advertisementId ||
+              ""
+            ) ===
+            selectedAdvertisementId
+        )
+      : receivedAdvertisementResponses;
+
   const [
     responseActionLoadingId,
     setResponseActionLoadingId,
@@ -568,8 +632,72 @@ const ConnectionsPage = () => {
   const [loading, setLoading] =
     useState(true);
 
+  const [
+    messagesLoading,
+    setMessagesLoading,
+  ] = useState(false);
+
   const [error, setError] =
     useState("");
+
+  const [
+    promptModal,
+    setPromptModal,
+  ] = useState({
+    open: false,
+    title: "",
+    description: "",
+    label: "Remarks",
+    initialValue: "",
+    placeholder: "",
+    required: false,
+    confirmLabel:
+      "Submit",
+    onConfirm: null,
+  });
+
+  const closePromptModal =
+    () => {
+      setPromptModal(
+        (current) => ({
+          ...current,
+          open: false,
+          onConfirm:
+            null,
+        })
+      );
+    };
+
+  const openPromptModal =
+    (options) => {
+      setPromptModal({
+        open: true,
+        title:
+          options.title ||
+          "",
+        description:
+          options.description ||
+          "",
+        label:
+          options.label ||
+          "Remarks",
+        initialValue:
+          options.initialValue ||
+          "",
+        placeholder:
+          options.placeholder ||
+          "",
+        required:
+          Boolean(
+            options.required
+          ),
+        confirmLabel:
+          options.confirmLabel ||
+          "Submit",
+        onConfirm:
+          options.onConfirm,
+      });
+    };
 
   useEffect(() => {
     let active = true;
@@ -644,89 +772,208 @@ const ConnectionsPage = () => {
           return;
         }
 
-        const [
-          invitationData,
-          advertisementResponseData,
-          contactRequestData
-        ] =
-          await Promise.all([
-            invitationService
-              .getAllInvitations(),
+        /*
+         * Profile validation is complete.
+         * Render Message Box now instead of
+         * blocking the whole page while all
+         * message APIs finish.
+         */
+        if (active) {
+          setLoading(false);
+          setMessagesLoading(true);
+        }
 
-            advertisementResponseService
-              .getAllResponses(),
+        const invitationPromise =
+          invitationService
+            .getAllInvitations()
+            .then(
+              (invitationData) => {
+                if (!active) {
+                  return;
+                }
 
-            profileService
-              .getMyContactRequests()
+                setReceivedInvitations(
+                  Array.isArray(
+                    invitationData
+                      ?.received
+                  )
+                    ? invitationData.received
+                    : []
+                );
+
+                setSentInvitations(
+                  Array.isArray(
+                    invitationData
+                      ?.sent
+                  )
+                    ? invitationData.sent
+                    : []
+                );
+              }
+            );
+
+        const advertisementPromise =
+          advertisementResponseService
+            .getAllResponses()
+            .then(
+              (
+                advertisementResponseData
+              ) => {
+                if (!active) {
+                  return;
+                }
+
+                setReceivedAdvertisementResponses(
+                  Array.isArray(
+                    advertisementResponseData
+                      ?.received
+                  )
+                    ? advertisementResponseData
+                        .received
+                    : []
+                );
+
+                setSentAdvertisementResponses(
+                  Array.isArray(
+                    advertisementResponseData
+                      ?.sent
+                  )
+                    ? advertisementResponseData
+                        .sent
+                    : []
+                );
+              }
+            );
+
+        const contactRequestPromise =
+          profileService
+            .getMyContactRequests()
+            .then(
+              (
+                contactRequestData
+              ) => {
+                if (!active) {
+                  return;
+                }
+
+                const contactStatusMap =
+                  {};
+
+                (
+                  Array.isArray(
+                    contactRequestData
+                  )
+                    ? contactRequestData
+                    : []
+                ).forEach(
+                  (request) => {
+                    const requesterProfileId =
+                      String(
+                        request
+                          ?.requester_profile_id ||
+                          ""
+                      );
+
+                    const targetProfileId =
+                      String(
+                        request
+                          ?.target_profile_id ||
+                          ""
+                      );
+
+                    const otherProfileId =
+                      String(
+                        request
+                          ?.other_profile_id ||
+                          (
+                            requesterProfileId ===
+                              String(
+                                profileId
+                              )
+                              ? targetProfileId
+                              : requesterProfileId
+                          ) ||
+                          ""
+                      );
+
+                    if (
+                      !otherProfileId
+                    ) {
+                      return;
+                    }
+
+                    if (
+                      contactStatusMap[
+                        otherProfileId
+                      ]
+                    ) {
+                      return;
+                    }
+
+                    contactStatusMap[
+                      otherProfileId
+                    ] = {
+                      status:
+                        normalizeStatus(
+                          request
+                            ?.status
+                        ),
+
+                      moderatorRemarks:
+                        String(
+                          request
+                            ?.moderator_remarks ||
+                            ""
+                        ).trim(),
+
+                      requestId:
+                        request?.id ||
+                        null
+                    };
+                  }
+                );
+
+                setContactRequestStatusByProfile(
+                  contactStatusMap
+                );
+              }
+            );
+
+        const results =
+          await Promise.allSettled([
+            invitationPromise,
+            advertisementPromise,
+            contactRequestPromise
           ]);
 
         if (!active) {
           return;
         }
 
-        setReceivedInvitations(
-          Array.isArray(
-            invitationData?.received
-          )
-            ? invitationData.received
-            : []
-        );
+        const failedCount =
+          results.filter(
+            (result) =>
+              result.status ===
+              "rejected"
+          ).length;
 
-        setSentInvitations(
-          Array.isArray(
-            invitationData?.sent
-          )
-            ? invitationData.sent
-            : []
-        );
+        if (
+          failedCount ===
+          results.length
+        ) {
+          setError(
+            "We could not load your messages right now. Please try again."
+          );
+        } else if (
+          failedCount > 0
+        ) {
+          console.warn(
+            "Some Message Box data could not be loaded:",
+            results
+          );
+        }
 
-        setReceivedAdvertisementResponses(
-          Array.isArray(
-            advertisementResponseData?.received
-          )
-            ? advertisementResponseData.received
-            : []
-        );
-
-        setSentAdvertisementResponses(
-          Array.isArray(
-            advertisementResponseData?.sent
-          )
-            ? advertisementResponseData.sent
-            : []
-        );
-
-          const contactStatusMap =
-          {};
-
-        (
-          Array.isArray(
-            contactRequestData
-          )
-            ? contactRequestData
-            : []
-        ).forEach((request) => {
-          const targetProfileId =
-            String(
-              request?.target_profile_id ||
-              ""
-            );
-
-          if (!targetProfileId) {
-            return;
-          }
-
-          contactStatusMap[
-            targetProfileId
-          ] =
-            normalizeStatus(
-              request?.status
-            );
-        });
-
-        setContactRequestStatusByProfile(
-          contactStatusMap
-        );
+        setMessagesLoading(false);
       } catch (requestError) {
         console.error(
           "Unable to load Message Box:",
@@ -803,17 +1050,38 @@ const ConnectionsPage = () => {
           ? "Kept on hold for further review"
           : "Profile shortlisted";
 
-      const remarks =
-        window.prompt(
-          "Remarks:",
-          defaultRemarks
-        );
+      openPromptModal({
+        title:
+          responseStatus ===
+          "NOT_INTERESTED"
+            ? "Mark Not Interested"
+            : responseStatus ===
+              "HOLD"
+            ? "Place Profile On Hold"
+            : "Shortlist Profile",
 
-      if (remarks === null) {
-        return;
-      }
+        description:
+          "Add remarks for this response.",
 
-      try {
+        label:
+          "Remarks",
+
+        initialValue:
+          defaultRemarks,
+
+        required:
+          true,
+
+        confirmLabel:
+          "Save",
+
+        onConfirm:
+          async (
+            remarks
+          ) => {
+            closePromptModal();
+
+            try {
         setResponseActionLoadingId(
           response.id
         );
@@ -885,17 +1153,20 @@ const ConnectionsPage = () => {
             ?.data?.message ||
             "Unable to update the response."
         );
-      } finally {
-        setResponseActionLoadingId(
-          null
-        );
-      }
+            } finally {
+              setResponseActionLoadingId(
+                null
+              );
+            }
+          }
+      });
     };
 
   const handleRequestContact =
     async (
       response,
-      direction
+      direction,
+      contactRequestInfo = {}
     ) => {
       const received =
         direction === "received";
@@ -917,6 +1188,78 @@ const ConnectionsPage = () => {
         return;
       }
 
+      const clarificationRequired =
+        Boolean(
+          contactRequestInfo
+            ?.clarificationRequired
+        );
+
+      const isClarificationResubmission =
+        Boolean(
+          contactRequestInfo
+            ?.submittedClarification
+        );
+
+      let requesterMessage =
+        "Mutual interest established through a matrimonial advertisement.";
+
+      if (
+        clarificationRequired
+      ) {
+        openPromptModal({
+          title:
+            "Respond to Moderator",
+
+          description:
+            contactRequestInfo
+              ?.moderatorRemarks
+              ? `Moderator clarification: ${contactRequestInfo.moderatorRemarks}`
+              : "Please provide the additional clarification requested by the Moderator.",
+
+          label:
+            "Your Clarification",
+
+          placeholder:
+            "Enter your response to the Moderator...",
+
+          required:
+            true,
+
+          confirmLabel:
+            "Resubmit Request",
+
+          onConfirm:
+            async (
+              clarification
+            ) => {
+              closePromptModal();
+
+              await handleRequestContact(
+                response,
+                direction,
+                {
+                  ...contactRequestInfo,
+                  clarificationRequired:
+                    false,
+                  submittedClarification:
+                    clarification
+                }
+              );
+            }
+        });
+
+        return;
+      }
+
+      if (
+        contactRequestInfo
+          ?.submittedClarification
+      ) {
+        requesterMessage =
+          contactRequestInfo
+            .submittedClarification;
+      }
+
       try {
         setContactActionLoadingId(
           response.id
@@ -935,8 +1278,7 @@ const ConnectionsPage = () => {
                 targetProfileName ||
                 targetProfileId,
 
-              requesterMessage:
-                "Mutual interest established through a matrimonial advertisement.",
+              requesterMessage,
 
               requestSource:
                 "ADVERTISEMENT_MUTUAL"
@@ -951,15 +1293,27 @@ const ConnectionsPage = () => {
           setContactRequestStatusByProfile(
             (current) => ({
               ...current,
+
               [String(
                 targetProfileId
-              )]:
-                "PENDING"
+              )]: {
+                status:
+                  "PENDING",
+
+                moderatorRemarks:
+                  "",
+
+                requestId:
+                  result?.requestId ||
+                  null
+              }
             })
           );
 
           setContactRequestMessage(
-            "Contact request sent to the Moderator for review."
+            isClarificationResubmission
+              ? "Your clarification has been submitted to the Moderator for review."
+              : "Contact request sent to the Moderator for review."
           );
 
           return;
@@ -972,10 +1326,20 @@ const ConnectionsPage = () => {
         setContactRequestStatusByProfile(
           (current) => ({
             ...current,
+
             [String(
               targetProfileId
-            )]:
-              "APPROVED"
+            )]: {
+              status:
+                "APPROVED",
+
+              moderatorRemarks:
+                "",
+
+              requestId:
+                result?.requestId ||
+                null
+            }
           })
         );
 
@@ -1002,7 +1366,6 @@ const ConnectionsPage = () => {
               .message ||
               "Contact-view limit reached. Please recharge."
           );
-
           return;
         }
 
@@ -1013,7 +1376,6 @@ const ConnectionsPage = () => {
           setError(
             "Contact details can be requested only after mutual interest."
           );
-
           return;
         }
 
@@ -1049,7 +1411,11 @@ const ConnectionsPage = () => {
 
   if (loading) {
     return (
-      <MemberLayout>
+      <MemberLayout
+        loadInvitationNotifications={
+          false
+        }
+      >
         <div
           className={`${designClasses.card} p-6`}
         >
@@ -1081,7 +1447,11 @@ const ConnectionsPage = () => {
   }
 
   return (
-    <MemberLayout>
+    <MemberLayout
+      loadInvitationNotifications={
+        false
+      }
+    >
       <div className="space-y-4">
         <div
           className={`${designClasses.card} p-5 sm:p-6`}
@@ -1097,11 +1467,22 @@ const ConnectionsPage = () => {
               <p
                 className={`mt-1 text-sm ${designClasses.textSecondary}`}
               >
-                Review applications and
-                interests received from
-                members, and responses you
-                have sent.
+                {selectedAdvertisementId
+                  ? `Showing responses received for Advertisement #${selectedAdvertisementId}.`
+                  : "Review applications and interests received from members, and responses you have sent."}
               </p>
+
+              {selectedAdvertisementId && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    setSearchParams({})
+                  }
+                  className={`mt-2 rounded-lg px-3 py-1.5 text-xs font-semibold ${designClasses.secondaryButton}`}
+                >
+                  Show All Messages
+                </button>
+              )}
             </div>
 
             <button
@@ -1124,7 +1505,14 @@ const ConnectionsPage = () => {
             {error}
           </div>
         )}
-
+        {messagesLoading && (
+          <div
+            className={`rounded-xl p-3 text-sm ${designClasses.surfaceMuted} ${designClasses.textSecondary}`}
+            role="status"
+          >
+            Loading latest messages…
+          </div>
+        )}
         {contactRequestMessage && (
           <div
             className={`rounded-xl p-4 text-sm ${designClasses.statusSuccess}`}
@@ -1135,7 +1523,13 @@ const ConnectionsPage = () => {
         )}
 
         {!error && (
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <div
+            className={`grid grid-cols-1 gap-4 ${
+              selectedAdvertisementId
+                ? ""
+                : "lg:grid-cols-2"
+            }`}
+          >
             <section
               className={`${designClasses.card} p-5`}
             >
@@ -1155,14 +1549,29 @@ const ConnectionsPage = () => {
               </div>
 
               <div className="space-y-3">
-                {receivedInvitations.length ===
+                {messagesLoading &&
+                visibleReceivedAdvertisementResponses.length ===
                   0 &&
-                receivedAdvertisementResponses.length ===
+                receivedInvitations.length ===
+                  0 ? (
+                  <div
+                    className={`rounded-xl px-4 py-6 text-center text-sm ${designClasses.surfaceMuted} ${designClasses.textSecondary}`}
+                  >
+                    Loading received responses…
+                  </div>
+                ) : (
+                (
+                  selectedAdvertisementId
+                    ? true
+                    : receivedInvitations.length ===
+                      0
+                ) &&
+                visibleReceivedAdvertisementResponses.length ===
                   0 ? (
                   <EmptyState message="You have no received interests or applications at the moment." />
                 ) : (
                   <>
-                    {receivedAdvertisementResponses.map(
+                    {visibleReceivedAdvertisementResponses.map(
                       (response) => (
                         <AdvertisementResponseCard
                           key={`advertisement-response-${response.id}`}
@@ -1170,6 +1579,9 @@ const ConnectionsPage = () => {
                             response
                           }
                           direction="received"
+                          onViewProfile={
+                            handleViewProfile
+                          }
                           onViewContactDetails={
                             handleViewContactDetails
                           }
@@ -1192,7 +1604,8 @@ const ConnectionsPage = () => {
                       )
                     )}
 
-                    {receivedInvitations.map(
+                    {!selectedAdvertisementId &&
+                      receivedInvitations.map(
                       (invitation) => (
                         <InvitationCard
                           key={`invitation-${invitation.invitation_id}`}
@@ -1200,17 +1613,19 @@ const ConnectionsPage = () => {
                             invitation
                           }
                           direction="received"
-                          onViewContactDetails={
-                            handleViewContactDetails
+                          onViewProfile={
+                            handleViewProfile
                           }
                         />
                       )
                     )}
                   </>
+                )
                 )}
+              
               </div>
             </section>
-
+            {!selectedAdvertisementId && (
             <section
               className={`${designClasses.card} p-5`}
             >
@@ -1231,7 +1646,17 @@ const ConnectionsPage = () => {
               </div>
 
               <div className="space-y-3">
-                {sentInvitations.length ===
+                {messagesLoading &&
+                sentAdvertisementResponses.length ===
+                  0 &&
+                sentInvitations.length ===
+                  0 ? (
+                  <div
+                    className={`rounded-xl px-4 py-6 text-center text-sm ${designClasses.surfaceMuted} ${designClasses.textSecondary}`}
+                  >
+                    Loading sent responses…
+                  </div>
+                ) : sentInvitations.length ===
                   0 &&
                 sentAdvertisementResponses.length ===
                   0 ? (
@@ -1246,6 +1671,9 @@ const ConnectionsPage = () => {
                             response
                           }
                           direction="sent"
+                          onViewProfile={
+                            handleViewProfile
+                          }
                           onViewContactDetails={
                             handleViewContactDetails
                           }
@@ -1274,8 +1702,8 @@ const ConnectionsPage = () => {
                             invitation
                           }
                           direction="sent"
-                          onViewContactDetails={
-                            handleViewContactDetails
+                          onViewProfile={
+                            handleViewProfile
                           }
                         />
                       )
@@ -1283,10 +1711,51 @@ const ConnectionsPage = () => {
                   </>
                 )}
               </div>
-            </section>
+              
+                        </section>
+            )}
           </div>
         )}
       </div>
+
+      <PromptModal
+        open={
+          promptModal.open
+        }
+        title={
+          promptModal.title
+        }
+        description={
+          promptModal.description
+        }
+        label={
+          promptModal.label
+        }
+        initialValue={
+          promptModal.initialValue
+        }
+        placeholder={
+          promptModal.placeholder
+        }
+        required={
+          promptModal.required
+        }
+        confirmLabel={
+          promptModal.confirmLabel
+        }
+        onCancel={
+          closePromptModal
+        }
+        onConfirm={(
+          value
+        ) => {
+          promptModal
+            .onConfirm?.(
+              value
+            );
+        }}
+      />
+
     </MemberLayout>
   );
 };
