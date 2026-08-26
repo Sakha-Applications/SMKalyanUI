@@ -176,6 +176,64 @@ const getCompactAge = (
     : "";
 };
 
+const formatIncomeForSpotlight = (
+  value
+) => {
+  if (
+    value === null ||
+    value === undefined ||
+    value === "" ||
+    String(value).trim() ===
+      "Not specified"
+  ) {
+    return "";
+  }
+
+  const numericIncome =
+    Number(
+      String(value)
+        .replace(/,/g, "")
+        .trim()
+    );
+
+  if (
+    !Number.isFinite(
+      numericIncome
+    ) ||
+    numericIncome <= 0
+  ) {
+    return String(value);
+  }
+
+  if (
+    numericIncome >= 10000000
+  ) {
+    const crores =
+      numericIncome /
+      10000000;
+
+    return `₹${Number(
+      crores.toFixed(1)
+    )} Cr`;
+  }
+
+  if (
+    numericIncome >= 100000
+  ) {
+    const lakhs =
+      numericIncome /
+      100000;
+
+    return `₹${Number(
+      lakhs.toFixed(1)
+    )} Lakh`;
+  }
+
+  return `₹${numericIncome.toLocaleString(
+    "en-IN"
+  )}`;
+};
+
 const getLookingFor = (
   advertisement
 ) => {
@@ -365,19 +423,18 @@ const getAdvertisementTeaser = (
       : "";
 
   const income =
-    advertisement?.annual_income &&
-    advertisement.annual_income !==
-      "Not specified"
-      ? advertisement.annual_income
-      : "";
+    formatIncomeForSpotlight(
+      advertisement?.annual_income ||
+        advertisement?.annualIncome
+    );
 
   return [
     lookingFor.label,
     age,
     gotra,
     profession,
-    income,
     city,
+    income,
   ]
     .filter(Boolean)
     .join(" · ");
@@ -443,6 +500,11 @@ const AdvertisementSpotlight = ({
     isForwardingProfile,
     setIsForwardingProfile,
   ] = useState(false);
+
+  const [
+    photoByProfileId,
+    setPhotoByProfileId,
+  ] = useState({});  
   const [
     promptModal,
     setPromptModal,
@@ -623,23 +685,222 @@ const AdvertisementSpotlight = ({
           advertisement?.current_age ||
             advertisement?.currentAge
         ),
+
         advertisement?.gotra &&
         advertisement.gotra !==
           "Not specified"
           ? `${advertisement.gotra} Gotra`
           : "",
+
         advertisement?.profession &&
         advertisement.profession !==
           "Not specified"
           ? advertisement.profession
           : "",
+
         advertisement?.city &&
         advertisement.city !==
           "Not specified"
           ? advertisement.city
           : "",
+
+        formatIncomeForSpotlight(
+          advertisement?.annual_income ||
+            advertisement?.annualIncome
+        ),
       ].filter(Boolean);
     }, [advertisement]);
+
+  const profileId =
+    advertisement?.profile_id ||
+    advertisement?.profileId ||
+    "";
+
+  useEffect(() => {
+    let active = true;
+
+    const loadSpotlightPhoto =
+      async () => {
+        if (!profileId) {
+          return;
+        }
+
+        const profileKey =
+          String(profileId);
+
+        if (
+          Object.prototype.hasOwnProperty.call(
+            photoByProfileId,
+            profileKey
+          )
+        ) {
+          return;
+        }
+
+        try {
+          const photo =
+            await profileService
+              .getDefaultPhoto(
+                profileId
+              );
+
+          if (!active) {
+            return;
+          }
+
+          setPhotoByProfileId(
+            (current) => ({
+              ...current,
+              [profileKey]:
+                photo?.fullUrl ||
+                ""
+            })
+          );
+        } catch (error) {
+          console.warn(
+            "Unable to load Spotlight photo:",
+            profileId,
+            error
+          );
+
+          if (active) {
+            setPhotoByProfileId(
+              (current) => ({
+                ...current,
+                [profileKey]:
+                  ""
+              })
+            );
+          }
+        }
+      };
+
+    loadSpotlightPhoto();
+
+    return () => {
+      active = false;
+    };
+  }, [
+    profileId,
+    photoByProfileId,
+  ]);
+
+  const spotlightPhotoUrl =
+    profileId
+      ? photoByProfileId[
+          String(profileId)
+        ] || ""
+      : "";
+
+  useEffect(() => {
+    if (
+      !showAllAdvertisements ||
+      advertisements.length === 0
+    ) {
+      return;
+    }
+
+    let active = true;
+
+    const loadMissingPhotos =
+      async () => {
+        const missingProfileIds =
+          advertisements
+            .map(
+              (item) =>
+                item?.profile_id ||
+                item?.profileId
+            )
+            .filter(Boolean)
+            .map(String)
+            .filter(
+              (itemProfileId) =>
+                !Object.prototype
+                  .hasOwnProperty.call(
+                    photoByProfileId,
+                    itemProfileId
+                  )
+            );
+
+        if (
+          missingProfileIds.length === 0
+        ) {
+          return;
+        }
+
+        const uniqueProfileIds =
+          [
+            ...new Set(
+              missingProfileIds
+            )
+          ];
+
+        const results =
+          await Promise.allSettled(
+            uniqueProfileIds.map(
+              async (
+                itemProfileId
+              ) => {
+                const photo =
+                  await profileService
+                    .getDefaultPhoto(
+                      itemProfileId
+                    );
+
+                return {
+                  profileId:
+                    itemProfileId,
+                  photoUrl:
+                    photo?.fullUrl ||
+                    ""
+                };
+              }
+            )
+          );
+
+        if (!active) {
+          return;
+        }
+
+        setPhotoByProfileId(
+          (current) => {
+            const updated = {
+              ...current
+            };
+
+            results.forEach(
+              (result) => {
+                if (
+                  result.status !==
+                  "fulfilled"
+                ) {
+                  return;
+                }
+
+                updated[
+                  result.value
+                    .profileId
+                ] =
+                  result.value
+                    .photoUrl;
+              }
+            );
+
+            return updated;
+          }
+        );
+      };
+
+    loadMissingPhotos();
+
+    return () => {
+      active = false;
+    };
+  }, [
+    showAllAdvertisements,
+    advertisements,
+    photoByProfileId,
+  ]);
 
   if (
     advertisements.length === 0 ||
@@ -647,10 +908,6 @@ const AdvertisementSpotlight = ({
   ) {
     return null;
   }
-
-  const profileId =
-    advertisement?.profile_id ||
-    advertisement?.profileId;
 
   const loggedInProfileId =
     String(
@@ -795,6 +1052,13 @@ const AdvertisementSpotlight = ({
               targetProfileId,
               recipientEmail,
               senderMessage,
+              advertisementId:
+                forwardTarget?.id ||
+                null,
+              advertisementText:
+                getAdvertisementText(
+                  forwardTarget
+                ),
             });
 
         setForwardModalOpen(
@@ -961,15 +1225,37 @@ const AdvertisementSpotlight = ({
     <aside
       aria-label="Matrimonial Spotlight"
       aria-live="off"
-      className={`${designClasses.surface} ${designClasses.border} border-b`}
+      className={`${designClasses.surface} border-b border-[#EADFCB]`}
     >
-      <div className="mx-auto flex w-full max-w-7xl items-center gap-3 px-4 py-2.5 sm:px-6 lg:px-8">
+      <div className="mx-auto w-full max-w-7xl px-4 py-2 sm:px-6 lg:px-8">
         <div
-          className={`hidden shrink-0 items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold sm:inline-flex ${designClasses.bgAccentSoft} ${designClasses.textAccent}`}
+          className={`flex min-h-[54px] items-center gap-3 rounded-xl border px-3 py-2 shadow-sm sm:px-4 ${designClasses.border} ${designClasses.bgAccentSoft}`}
         >
-          <Sparkles className="h-3.5 w-3.5" />
-          Matrimonial Spotlight
-        </div>
+          <div
+            className={`hidden shrink-0 items-center gap-2.5 rounded-lg border px-3 py-1.5 sm:flex ${designClasses.border} ${designClasses.surface}`}
+          >
+            <div
+              className={`flex h-8 w-8 items-center justify-center rounded-full ${designClasses.bgAccentSoft}`}
+            >
+              <Sparkles
+                className={`h-4 w-4 ${designClasses.textAccent}`}
+              />
+            </div>
+
+            <div className="leading-tight">
+              <div
+                className={`text-[9px] font-semibold uppercase tracking-[0.18em] ${designClasses.textSecondary}`}
+              >
+                Matrimonial
+              </div>
+
+              <div
+                className={`text-sm font-bold ${designClasses.textAccent}`}
+              >
+                Spotlight
+              </div>
+            </div>
+          </div>
 
         <div
           className="relative min-w-0 flex-1"
@@ -994,23 +1280,49 @@ const AdvertisementSpotlight = ({
             }}
             className="relative cursor-pointer rounded-md px-1 py-0.5"
           >
-            <div className="flex min-w-0 items-center gap-2">
+            <div className="flex min-w-0 items-center gap-3">
+              {spotlightPhotoUrl && (
+                <button
+                  type="button"
+                  onClick={
+                    handleViewProfile
+                  }
+                  className="shrink-0"
+                  aria-label="View matrimonial profile"
+                >
+                  <img
+                    src={
+                      spotlightPhotoUrl
+                    }
+                    alt=""
+                    className={`h-10 w-10 rounded-full border object-cover shadow-sm ${designClasses.border}`}
+                    onError={(
+                      event
+                    ) => {
+                      event.currentTarget
+                        .style.display =
+                        "none";
+                    }}
+                  />
+                </button>
+              )}
+
               <span
-                className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-bold ${
+                className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-bold shadow-[0_2px_8px_rgba(15,23,42,0.06)] ${
                   lookingFor.type ===
                   "BRIDE"
-                    ? "bg-pink-50 text-pink-700"
+                    ? "border-pink-100 bg-pink-50 text-pink-700"
                     : lookingFor.type ===
                       "GROOM"
-                    ? "bg-blue-50 text-blue-700"
-                    : `${designClasses.bgAccentSoft} ${designClasses.textAccent}`
+                    ? "border-blue-100 bg-blue-50 text-blue-700"
+                    : `${designClasses.border} ${designClasses.surface} ${designClasses.textAccent}`
                 }`}
               >
                 {lookingFor.label}
               </span>
 
               <span
-                className={`min-w-0 truncate text-sm font-medium ${designClasses.textDark}`}
+                className={`min-w-0 truncate text-sm font-semibold tracking-[0.01em] ${designClasses.textPrimary}`}
               >
                 {advertisementTeaser
                   .replace(
@@ -1172,14 +1484,14 @@ const AdvertisementSpotlight = ({
             )}
         </div>
 
-        <div className="flex shrink-0 items-center gap-1">
+        <div className="flex shrink-0 items-center gap-2">
           {profileId && (
             <button
               type="button"
               onClick={
                 handleViewProfile
               }
-              className={`hidden rounded-lg px-3 py-1.5 text-xs font-semibold sm:inline-flex ${designClasses.secondaryButton}`}
+              className={`hidden rounded-lg px-3.5 py-2 text-xs font-semibold sm:inline-flex ${designClasses.primaryButton}`}
             >
               View Profile
             </button>
@@ -1246,6 +1558,7 @@ const AdvertisementSpotlight = ({
           )}
         </div>
       </div>
+    </div>
 
       {showAllAdvertisements && (
         <div
@@ -1315,7 +1628,17 @@ const AdvertisementSpotlight = ({
                     const itemProfileId =
                       item?.profile_id ||
                       item?.profileId;
-                                        const itemIsOwnAdvertisement =
+
+                    const itemPhotoUrl =
+                      itemProfileId
+                        ? photoByProfileId[
+                            String(
+                              itemProfileId
+                            )
+                          ] || ""
+                        : "";
+
+                    const itemIsOwnAdvertisement =
                       Boolean(
                         loggedInProfileId &&
                         itemProfileId &&
@@ -1326,98 +1649,185 @@ const AdvertisementSpotlight = ({
                       );
 
                     return (
-                      <div
+                      <article
                         key={
                           itemProfileId ||
                           index
                         }
-                        className={`rounded-xl border p-4 ${designClasses.border}`}
+                        className={`overflow-hidden rounded-xl border ${designClasses.border} ${designClasses.surface}`}
                       >
-                        <div className="mb-3 flex items-start justify-between gap-3">
-                          <span
-                            className={`rounded-full px-2.5 py-1 text-xs font-bold ${
-                              itemLookingFor.type ===
-                              "BRIDE"
-                                ? "bg-pink-50 text-pink-700"
-                                : itemLookingFor.type ===
-                                  "GROOM"
-                                ? "bg-blue-50 text-blue-700"
-                                : `${designClasses.bgAccentSoft} ${designClasses.textAccent}`
-                            }`}
-                          >
-                            {
-                              itemLookingFor.label
-                            }
-                          </span>
+                        <div className="flex gap-4 p-4">
+                          {itemPhotoUrl && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setShowAllAdvertisements(
+                                  false
+                                );
 
-                          {itemProfileId && (
-                            <div className="flex flex-wrap gap-2">
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setShowAllAdvertisements(
-                                    false
-                                  );
-
-                                  navigate(
-                                    `/view-profile/${itemProfileId}`
-                                  );
+                                navigate(
+                                  `/view-profile/${itemProfileId}`
+                                );
+                              }}
+                              className="shrink-0 self-start"
+                              aria-label="View matrimonial profile"
+                            >
+                              <img
+                                src={
+                                  itemPhotoUrl
+                                }
+                                alt=""
+                                className={`h-24 w-20 rounded-xl border object-cover shadow-sm ${designClasses.border}`}
+                                onError={(
+                                  event
+                                ) => {
+                                  event
+                                    .currentTarget
+                                    .style
+                                    .display =
+                                    "none";
                                 }}
-                                className={`rounded-lg px-3 py-1.5 text-xs font-semibold ${designClasses.secondaryButton}`}
+                              />
+                            </button>
+                          )}
+
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-start justify-between gap-2">
+                              <span
+                                className={`rounded-full px-2.5 py-1 text-xs font-bold ${
+                                  itemLookingFor.type ===
+                                  "BRIDE"
+                                    ? "bg-pink-50 text-pink-700"
+                                    : itemLookingFor.type ===
+                                      "GROOM"
+                                    ? "bg-blue-50 text-blue-700"
+                                    : `${designClasses.bgAccentSoft} ${designClasses.textAccent}`
+                                }`}
                               >
-                                View Profile
-                              </button>
-                              {itemIsOwnAdvertisement && (
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    handleViewResponses(
-                                      item
-                                    )
-                                  }
-                                  className={`rounded-lg px-3 py-1.5 text-xs font-semibold ${designClasses.primaryButton}`}
-                                >
-                                  View Responses
-                                </button>
-                              )}
+                                {
+                                  itemLookingFor.label
+                                }
+                              </span>
+                            </div>
+
+                            <div
+                              className={`mt-2 text-sm font-semibold leading-5 ${designClasses.textPrimary}`}
+                            >
+                              {itemTeaser
+                                .replace(
+                                  `${itemLookingFor.label} · `,
+                                  ""
+                                )
+                                .replace(
+                                  itemLookingFor.label,
+                                  ""
+                                )
+                                .trim()}
+                            </div>
+
+                            <div
+                              className={`mt-2 text-sm leading-6 ${designClasses.textSecondary}`}
+                            >
+                              {itemText}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div
+                          className={`flex flex-wrap gap-2 border-t px-4 py-3 ${designClasses.border} ${designClasses.surfaceMuted}`}
+                        >
+                          {itemProfileId && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setShowAllAdvertisements(
+                                  false
+                                );
+
+                                navigate(
+                                  `/view-profile/${itemProfileId}`
+                                );
+                              }}
+                              className={`rounded-lg px-3 py-1.5 text-xs font-semibold ${designClasses.secondaryButton}`}
+                            >
+                              View Profile
+                            </button>
+                          )}
+
+                          {!itemIsOwnAdvertisement && (
+                            <>
                               <button
                                 type="button"
                                 disabled={
-                                  isForwardingProfile
+                                  responseSubmitting
                                 }
-                                onClick={() => {
-                                  setForwardTarget(
-                                    item
-                                  );
-
-                                  setForwardModalOpen(
-                                    true
-                                  );
-
-                                  setPaused(
-                                    true
-                                  );
-                                }}
-                                className={`rounded-lg px-3 py-1.5 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-60 ${designClasses.secondaryButton}`}
+                                onClick={() =>
+                                  handleAdvertisementResponse(
+                                    item,
+                                    "INTEREST"
+                                  )
+                                }
+                                className={`rounded-lg px-3 py-1.5 text-xs font-semibold ${designClasses.primaryButton}`}
                               >
-                                Forward
+                                Show Interest
                               </button>
-                            </div>
+
+                              <button
+                                type="button"
+                                disabled={
+                                  responseSubmitting
+                                }
+                                onClick={() =>
+                                  handleAdvertisementResponse(
+                                    item,
+                                    "APPLY"
+                                  )
+                                }
+                                className={`rounded-lg px-3 py-1.5 text-xs font-semibold ${designClasses.primaryButton}`}
+                              >
+                                Apply
+                              </button>
+                            </>
                           )}
-                        </div>
 
-                        <div
-                          className={`mb-2 text-sm font-semibold ${designClasses.textPrimary}`}
-                        >
-                          {itemTeaser}
-                        </div>
+                          {itemIsOwnAdvertisement && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleViewResponses(
+                                  item
+                                )
+                              }
+                              className={`rounded-lg px-3 py-1.5 text-xs font-semibold ${designClasses.primaryButton}`}
+                            >
+                              View Responses
+                            </button>
+                          )}
 
-                        <div
-                          className={`text-sm leading-6 ${designClasses.textSecondary}`}
-                        >
-                          {itemText}
+                          <button
+                            type="button"
+                            disabled={
+                              isForwardingProfile
+                            }
+                            onClick={() => {
+                              setForwardTarget(
+                                item
+                              );
+
+                              setForwardModalOpen(
+                                true
+                              );
+
+                              setPaused(
+                                true
+                              );
+                            }}
+                            className={`rounded-lg px-3 py-1.5 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-60 ${designClasses.secondaryButton}`}
+                          >
+                            Forward
+                          </button>
                         </div>
-                      </div>
+                      </article>
                     );
                   }
                 )}
@@ -1430,6 +1840,9 @@ const AdvertisementSpotlight = ({
         open={
           forwardModalOpen
         }
+        title="Forward Advertisement"
+        description="Share this matrimonial advertisement securely by email."
+        submitLabel="Forward Advertisement"
         profileName={
           forwardTarget?.name ||
           forwardTarget?.profile_name ||

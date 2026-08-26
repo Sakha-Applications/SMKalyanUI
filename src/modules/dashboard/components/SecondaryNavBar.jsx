@@ -11,8 +11,8 @@ const secondaryLinks = [
     showForStatuses: ["APPROVED"],
   },
   {
-    to: "/make-preferred",
-    label: "Advertise Your Profile",
+    to: "/my-advertisements",
+    label: "My Advertisements",
     showForStatuses: ["APPROVED"],
     requiresApproval: true,
   },

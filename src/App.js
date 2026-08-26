@@ -17,6 +17,7 @@ import RechargeContactViewsPage from "./modules/payments/RechargeContactViewsPag
 import RegistrationFeePaymentPage from "./modules/payments/RegistrationFeePaymentPage";
 import About from './components/About';
 import AdvertiseProfilePage from "./modules/advertisements/AdvertiseProfilePage";
+import MyAdvertisementsPage from "./modules/advertisements/MyAdvertisementsPage";
 import AdvertisementPaymentPage from "./modules/payments/AdvertisementPaymentPage";
 import PreferencesPage from "./modules/preferences/PreferencesPage";
 import ProfilePage from "./modules/profile/ProfilePage";
@@ -181,7 +182,14 @@ function App() {
                         </ProtectedRoute>
                     }
                 />
-                                
+                <Route
+    path="/my-advertisements"
+    element={
+        <ProtectedRoute>
+            <MyAdvertisementsPage />
+        </ProtectedRoute>
+    }
+/>                
                 <Route
     path="/make-preferred"
     element={

@@ -16,6 +16,10 @@ const ForwardProfileModal = ({
   open,
   profileName = "",
   profileId = "",
+  title = "Forward Profile",
+  description =
+    "Securely share this matrimonial profile by email.",
+  submitLabel = "Forward Profile",
   submitting = false,
   onClose,
   onSubmit,
@@ -124,14 +128,13 @@ const ForwardProfileModal = ({
               id="forward-profile-title"
               className={`text-xl font-bold ${designClasses.textPrimary}`}
             >
-              Forward Profile
+              {title}
             </h2>
 
             <p
               className={`mt-1 text-sm ${designClasses.textSecondary}`}
             >
-              Securely share this matrimonial
-              profile by email.
+              {description}
             </p>
           </div>
 
@@ -287,7 +290,7 @@ const ForwardProfileModal = ({
             >
               {submitting
                 ? "Forwarding..."
-                : "Forward Profile"}
+                : submitLabel}
             </button>
           </div>
         </form>

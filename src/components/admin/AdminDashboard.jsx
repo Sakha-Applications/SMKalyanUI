@@ -4,13 +4,18 @@ import { useNavigate } from "react-router-dom";
 import getBaseUrl from "../../utils/GetUrl";
 import PromptModal from "../../shared/components/PromptModal";
 import NotificationBanner from "../../shared/components/NotificationBanner";
+import BrandHeader from "../../shared/layouts/BrandHeader";
+import BrandFooter from "../../shared/layouts/BrandFooter";
+import { designClasses } from "../../shared/styles/designTokens";
 
 const normalizeStatus = (s) => (typeof s === "string" ? s.trim().toUpperCase() : "");
 
 const SETTINGS_KEYS = {
   REGISTRATION_FEE_AMOUNT: "REGISTRATION_FEE_AMOUNT",
   CONTACT_VIEWS_PER_CYCLE: "CONTACT_VIEWS_PER_CYCLE",
-  RECHARGE_FEE_AMOUNT: "RECHARGE_FEE_AMOUNT"
+  RECHARGE_FEE_AMOUNT: "RECHARGE_FEE_AMOUNT",
+  ADVERTISEMENT_MIN_CONTRIBUTION:
+    "ADVERTISEMENT_MIN_CONTRIBUTION"
 };
 
 const VIEWS = {
@@ -77,9 +82,21 @@ const [
   const [settingsSaving, setSettingsSaving] = useState(false);
   const [settingsError, setSettingsError] = useState("");
 
-  const [regFeeAmount, setRegFeeAmount] = useState("0");
-  const [contactViewsX, setContactViewsX] = useState("10");
-  const [rechargeFeeAmount, setRechargeFeeAmount] = useState("0");
+  const [regFeeAmount, setRegFeeAmount] =
+    useState("");
+
+  const [contactViewsX, setContactViewsX] =
+    useState("");
+
+  const [
+    rechargeFeeAmount,
+    setRechargeFeeAmount
+  ] = useState("");
+
+  const [
+    advertisementMinContribution,
+    setAdvertisementMinContribution
+  ] = useState("");
 
   const [loading, setLoading] = useState(true);
 
@@ -178,9 +195,39 @@ const [
       }
 
       const s = data?.settings || {};
-      setRegFeeAmount(String(s[SETTINGS_KEYS.REGISTRATION_FEE_AMOUNT] ?? "0"));
-      setContactViewsX(String(s[SETTINGS_KEYS.CONTACT_VIEWS_PER_CYCLE] ?? "10"));
-      setRechargeFeeAmount(String(s[SETTINGS_KEYS.RECHARGE_FEE_AMOUNT] ?? "0"));
+
+      setRegFeeAmount(
+        String(
+          s[
+            SETTINGS_KEYS.REGISTRATION_FEE_AMOUNT
+          ] ?? ""
+        )
+      );
+
+      setContactViewsX(
+        String(
+          s[
+            SETTINGS_KEYS.CONTACT_VIEWS_PER_CYCLE
+          ] ?? ""
+        )
+      );
+
+      setRechargeFeeAmount(
+        String(
+          s[
+            SETTINGS_KEYS.RECHARGE_FEE_AMOUNT
+          ] ?? ""
+        )
+      );
+
+      setAdvertisementMinContribution(
+        String(
+          s[
+            SETTINGS_KEYS
+              .ADVERTISEMENT_MIN_CONTRIBUTION
+          ] ?? ""
+        )
+      );
     } catch (e) {
       console.error("❌ fetchSettings error:", e);
       setSettingsError("Failed to load admin settings");
@@ -194,31 +241,116 @@ const [
     setSettingsError("");
 
     // Minimal client-side validation (server will validate too)
-    const reg = Number(regFeeAmount);
-    const rech = Number(rechargeFeeAmount);
-    const views = Number(contactViewsX);
+    const reg =
+      Number(regFeeAmount);
 
-    if (!Number.isFinite(reg) || reg < 0) {
-      setSettingsError("Registration Fee Amount must be a number >= 0");
+    const rech =
+      Number(rechargeFeeAmount);
+
+    const views =
+      Number(contactViewsX);
+
+    const advertisementMin =
+      Number(
+        advertisementMinContribution
+      );
+
+    if (String(regFeeAmount).trim() === "") {
+      setSettingsError(
+        "Registration Fee Amount is required."
+      );
       setSettingsSaving(false);
       return;
     }
-    if (!Number.isFinite(rech) || rech < 0) {
-      setSettingsError("Recharge Fee Amount must be a number >= 0");
+
+    if (
+      !Number.isFinite(reg) ||
+      reg < 0
+    ) {
+      setSettingsError(
+        "Registration Fee Amount must be a number >= 0."
+      );
       setSettingsSaving(false);
       return;
     }
-    if (!Number.isFinite(views) || !Number.isInteger(views) || views <= 0) {
-      setSettingsError("Contact Views per Cycle (X) must be a positive integer");
+
+    if (String(contactViewsX).trim() === "") {
+      setSettingsError(
+        "Contact Views per Cycle is required."
+      );
+      setSettingsSaving(false);
+      return;
+    }
+
+    if (
+      !Number.isFinite(views) ||
+      !Number.isInteger(views) ||
+      views <= 0
+    ) {
+      setSettingsError(
+        "Contact Views per Cycle must be a positive integer."
+      );
+      setSettingsSaving(false);
+      return;
+    }
+
+    if (
+      String(rechargeFeeAmount).trim() === ""
+    ) {
+      setSettingsError(
+        "Recharge Fee Amount is required."
+      );
+      setSettingsSaving(false);
+      return;
+    }
+
+    if (
+      !Number.isFinite(rech) ||
+      rech < 0
+    ) {
+      setSettingsError(
+        "Recharge Fee Amount must be a number >= 0."
+      );
+      setSettingsSaving(false);
+      return;
+    }
+
+    if (
+      String(
+        advertisementMinContribution
+      ).trim() === ""
+    ) {
+      setSettingsError(
+        "Minimum Advertisement Contribution is required."
+      );
+      setSettingsSaving(false);
+      return;
+    }
+
+    if (
+      !Number.isFinite(advertisementMin) ||
+      advertisementMin < 0
+    ) {
+      setSettingsError(
+        "Minimum Advertisement Contribution must be a number >= 0."
+      );
       setSettingsSaving(false);
       return;
     }
 
     try {
       const payload = {
-        [SETTINGS_KEYS.REGISTRATION_FEE_AMOUNT]: String(reg),
-        [SETTINGS_KEYS.CONTACT_VIEWS_PER_CYCLE]: String(views),
-        [SETTINGS_KEYS.RECHARGE_FEE_AMOUNT]: String(rech)
+        [SETTINGS_KEYS.REGISTRATION_FEE_AMOUNT]:
+          String(reg),
+
+        [SETTINGS_KEYS.CONTACT_VIEWS_PER_CYCLE]:
+          String(views),
+
+        [SETTINGS_KEYS.RECHARGE_FEE_AMOUNT]:
+          String(rech),
+
+        [SETTINGS_KEYS.ADVERTISEMENT_MIN_CONTRIBUTION]:
+          String(advertisementMin)
       };
 
       const res = await fetch(`${getBaseUrl()}/api/admin/settings`, {
@@ -500,12 +632,8 @@ const fetchContactRequests = async () => {
   };
 
   const openAdvertisementReview = (advertisement) => {
-    setSelectedAdvertisement(advertisement);
-
-    setModeratorNarrative(
-      advertisement?.moderator_narrative ||
-        advertisement?.transaction_details ||
-        ""
+    setSelectedAdvertisement(
+      advertisement
     );
 
     setModeratorRemarks(
@@ -519,7 +647,38 @@ const fetchContactRequests = async () => {
     setModeratorNarrative("");
     setModeratorRemarks("");
   };
+  useEffect(() => {
+    if (!selectedAdvertisement) {
+      return;
+    }
 
+    const submittedNarrative =
+      String(
+        selectedAdvertisement
+          ?.member_narrative ||
+          ""
+      ).trim();
+
+    const publishedNarrative =
+      String(
+        selectedAdvertisement
+          ?.moderator_narrative ||
+          ""
+      ).trim();
+
+    /*
+     * The Moderator editor must always start
+     * from the member's latest submitted text.
+     *
+     * member_narrative = latest member submission
+     * moderator_narrative = currently published text
+     */
+    setModeratorNarrative(
+      submittedNarrative ||
+        publishedNarrative ||
+        ""
+    );
+  }, [selectedAdvertisement]);
   const reviewAdvertisement = async (
     advertisementId,
     action
@@ -867,25 +1026,45 @@ const reviewContactRequest = (
   };
 
   const renderTopHeader = () => (
-    <div className="flex items-center justify-between mb-5">
+    <div
+      className={`${designClasses.surface} ${designClasses.border} mb-5 flex flex-col gap-4 rounded-2xl border p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between`}
+    >
       <div>
-        <div className="text-2xl font-bold text-indigo-900">Kalyana Sakha</div>
-        <div className="text-sm text-gray-600">Admin Console</div>
+        <div
+          className={`text-xl font-semibold ${designClasses.textPrimary}`}
+        >
+          Admin Console
+        </div>
+
+        <div
+          className={`mt-1 text-sm ${designClasses.textSecondary}`}
+        >
+          Manage application settings, payments, member requests and approvals.
+        </div>
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <button
+          type="button"
           onClick={() => {
             fetchData();
-            fetchSettings();
+
+            if (isAdminRole) {
+              fetchSettings();
+            }
+
+            fetchContactRequests();
+            fetchAdvertisementReviewQueue();
           }}
-          className="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm hover:bg-indigo-700 shadow-sm"
+          className={`rounded-lg px-4 py-2 text-sm font-semibold transition ${designClasses.secondaryButton}`}
         >
           Refresh
         </button>
+
         <button
+          type="button"
           onClick={logout}
-          className="px-4 py-2 rounded-lg bg-red-500 text-white text-sm hover:bg-red-600 shadow-sm"
+          className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700"
         >
           Logout
         </button>
@@ -924,7 +1103,7 @@ const reviewContactRequest = (
         {isAdminRole && (
   <div className="space-y-1">
     <SidebarItem
-      label="Registration & Limits"
+      label="Fees & Application Settings"
       view={VIEWS.SETTINGS}
     />
   </div>
@@ -1003,36 +1182,58 @@ const reviewContactRequest = (
   );
 
   const renderSettingsView = () => (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+    <div
+      className={`${designClasses.surface} ${designClasses.border} rounded-2xl border p-5 shadow-sm`}
+    >
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
         <div>
-          <h2 className="text-lg font-semibold text-gray-900">Registration & Limits</h2>
-          <p className="text-sm text-gray-600">
-            Configure Registration Fee, Contact Views per Cycle (X), and Recharge Fee.
+          <h2
+            className={`text-lg font-semibold ${designClasses.textPrimary}`}
+          >
+            Fees & Application Settings
+          </h2>
+
+          <p
+            className={`text-sm ${designClasses.textSecondary}`}
+          >
+            Manage configurable fees, contact-view limits,
+            and the minimum advertisement contribution.
           </p>
         </div>
 
         <div className="flex items-center gap-3">
           <button
+            type="button"
             onClick={fetchSettings}
             disabled={settingsLoading}
-            className={`px-4 py-2 rounded-lg text-white text-sm shadow-sm ${
-              settingsLoading ? "bg-gray-400 cursor-not-allowed" : "bg-gray-700 hover:bg-gray-800"
-            }`}
+            className={`rounded-lg px-4 py-2 text-sm font-semibold transition ${
+              settingsLoading
+                ? "cursor-not-allowed opacity-50"
+                : ""
+            } ${designClasses.secondaryButton}`}
           >
-            {settingsLoading ? "Loading..." : "Reload Settings"}
+            {settingsLoading
+              ? "Loading..."
+              : "Reload Settings"}
           </button>
 
           <button
+            type="button"
             onClick={saveSettings}
-            disabled={settingsSaving || settingsLoading}
-            className={`px-4 py-2 rounded-lg text-white text-sm shadow-sm ${
-              settingsSaving || settingsLoading
-                ? "bg-indigo-400 cursor-not-allowed"
-                : "bg-indigo-600 hover:bg-indigo-700"
-            }`}
+            disabled={
+              settingsSaving ||
+              settingsLoading
+            }
+            className={`rounded-lg px-4 py-2 text-sm font-semibold transition ${
+              settingsSaving ||
+              settingsLoading
+                ? "cursor-not-allowed opacity-50"
+                : ""
+            } ${designClasses.primaryButton}`}
           >
-            {settingsSaving ? "Saving..." : "Save"}
+            {settingsSaving
+              ? "Saving..."
+              : "Save Settings"}
           </button>
         </div>
       </div>
@@ -1043,45 +1244,78 @@ const reviewContactRequest = (
         </div>
       ) : null}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="rounded-lg border border-gray-100 bg-gray-50 p-4">
-          <div className="text-sm font-semibold text-gray-800 mb-2">Registration Fee Amount</div>
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+        <div className={`${designClasses.surfaceMuted} ${designClasses.border} rounded-xl border p-4`}>
+          <div className={`mb-2 text-sm font-semibold ${designClasses.textDark}`}>Registration Fee Amount</div>
           <input
             type="number"
             min="0"
             value={regFeeAmount}
             onChange={(e) => setRegFeeAmount(e.target.value)}
-            className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-200"
-            placeholder="e.g., 500"
+            className={`w-full rounded-lg border px-3 py-2 outline-none transition focus:ring-2 focus:ring-[#D79A1E]/30 ${designClasses.border} ${designClasses.surface} ${designClasses.textDark}`}
+            placeholder="Enter registration fee"
           />
-          <div className="text-xs text-gray-500 mt-2">Used for mandatory registration payment (offline).</div>
+          <div className={`mt-2 text-xs ${designClasses.textSecondary}`}>Used for mandatory registration payment (offline).</div>
         </div>
 
-        <div className="rounded-lg border border-gray-100 bg-gray-50 p-4">
-          <div className="text-sm font-semibold text-gray-800 mb-2">Contact Views per Cycle (X)</div>
+        <div className={`${designClasses.surfaceMuted} ${designClasses.border} rounded-xl border p-4`}>
+          <div className={`mb-2 text-sm font-semibold ${designClasses.textDark}`}>Contact Views per Cycle (X)</div>
           <input
             type="number"
             min="1"
             step="1"
             value={contactViewsX}
             onChange={(e) => setContactViewsX(e.target.value)}
-            className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-200"
-            placeholder="e.g., 10"
+            className={`w-full rounded-lg border px-3 py-2 outline-none transition focus:ring-2 focus:ring-[#D79A1E]/30 ${designClasses.border} ${designClasses.surface} ${designClasses.textDark}`}
+            placeholder="Enter contact-view limit"
           />
-          <div className="text-xs text-gray-500 mt-2">After X contact views, user must recharge.</div>
+          <div className={`mt-2 text-xs ${designClasses.textSecondary}`}>After X contact views, user must recharge.</div>
         </div>
 
-        <div className="rounded-lg border border-gray-100 bg-gray-50 p-4">
-          <div className="text-sm font-semibold text-gray-800 mb-2">Recharge Fee Amount</div>
+        <div className={`${designClasses.surfaceMuted} ${designClasses.border} rounded-xl border p-4`}>
+          <div className={`mb-2 text-sm font-semibold ${designClasses.textDark}`}>Recharge Fee Amount</div>
           <input
             type="number"
             min="0"
             value={rechargeFeeAmount}
             onChange={(e) => setRechargeFeeAmount(e.target.value)}
-            className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-200"
-            placeholder="e.g., 300"
+            className={`w-full rounded-lg border px-3 py-2 outline-none transition focus:ring-2 focus:ring-[#D79A1E]/30 ${designClasses.border} ${designClasses.surface} ${designClasses.textDark}`}
+            placeholder="Enter recharge fee"
           />
-          <div className="text-xs text-gray-500 mt-2">Used for offline recharge payments (ProfileRenewal).</div>
+          <div className={`mt-2 text-xs ${designClasses.textSecondary}`}>Used for offline recharge payments (ProfileRenewal).</div>
+        </div>
+                <div className={`${designClasses.surfaceMuted} ${designClasses.border} rounded-xl border p-4`}>
+          <div className={`mb-2 text-sm font-semibold ${designClasses.textDark}`}>
+            Minimum Advertisement Contribution
+          </div>
+
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+              ₹
+            </span>
+
+            <input
+              type="number"
+              min="0"
+              step="1"
+              value={
+                advertisementMinContribution
+              }
+              onChange={(e) =>
+                setAdvertisementMinContribution(
+                  e.target.value
+                )
+              }
+              className={`w-full rounded-lg border py-2 pl-8 pr-3 outline-none transition focus:ring-2 focus:ring-[#D79A1E]/30 ${designClasses.border} ${designClasses.surface} ${designClasses.textDark}`}
+              placeholder="Enter minimum contribution"
+            />
+          </div>
+
+          <div className={`mt-2 text-xs ${designClasses.textSecondary}`}>
+            Members may contribute this amount or
+            any higher amount when submitting an
+            advertisement.
+          </div>
         </div>
       </div>
     </div>
@@ -1445,14 +1679,34 @@ const reviewContactRequest = (
               </div>
             </div>
           </div>
+          {String(
+            selectedAdvertisement.status || ""
+          ).toLowerCase() === "active" &&
+            String(
+              selectedAdvertisement.review_status || ""
+            ).toLowerCase() === "pending" &&
+            selectedAdvertisement.moderator_narrative && (
+              <div className="mb-5">
+                <label className="block text-sm font-semibold text-gray-900 mb-2">
+                  Currently Published Advertisement
+                </label>
 
+                <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm leading-6 text-gray-700 whitespace-pre-wrap">
+                  {selectedAdvertisement.moderator_narrative}
+                </div>
+
+                <p className="mt-1 text-xs text-gray-500">
+                  This version remains live until the submitted revision is approved.
+                </p>
+              </div>
+            )}
           <div className="mb-5">
             <label className="block text-sm font-semibold text-gray-900 mb-2">
               Submitted Advertisement
             </label>
 
             <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm leading-6 text-gray-700 whitespace-pre-wrap">
-              {selectedAdvertisement.transaction_details ||
+              {selectedAdvertisement.member_narrative ||
                 "No submitted advertisement text."}
             </div>
 
@@ -1463,7 +1717,7 @@ const reviewContactRequest = (
 
           <div className="mb-5">
             <label className="block text-sm font-semibold text-gray-900 mb-2">
-              Published Advertisement
+              Advertisement to Approve & Publish
             </label>
 
             <textarea
@@ -1479,7 +1733,8 @@ const reviewContactRequest = (
             />
 
             <p className="mt-1 text-xs text-gray-500">
-              Moderator may improve wording here. Do not change authoritative
+              This starts with the member's latest submitted advertisement.
+              Moderator may improve the wording, but must not change authoritative
               profile facts such as age, Gotra, education, profession or income.
             </p>
           </div>
@@ -1945,8 +2200,12 @@ if (
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-100">
-      <div className="container mx-auto px-4 py-6">
+    <div
+      className={`flex min-h-screen flex-col ${designClasses.page}`}
+    >
+      <BrandHeader compact />
+
+      <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
         {renderTopHeader()}
 
         {notification.message && (
@@ -1976,7 +2235,9 @@ if (
             {renderMainContent()}
           </div>
         </div>
-      </div>
+      </main>
+
+      <BrandFooter />
 
       <PromptModal
         open={

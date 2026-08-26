@@ -14,6 +14,8 @@ import {
 
 import MemberLayout from "../../shared/layouts/MemberLayout";
 import AdvertisementPreview from "../../shared/components/AdvertisementPreview";
+import NotificationBanner from "../../shared/components/NotificationBanner";
+
 
 import {
   designClasses,
@@ -22,8 +24,6 @@ import {
 import profileService from "../../services/profileService";
 import offlinePaymentService from "../../services/offlinePaymentService";
 import apiClient from "../../services/apiClient";
-
-const ADVERTISEMENT_FEE = "250";
 
 const AdvertisementPaymentPage = () => {
   const navigate =
@@ -34,14 +34,42 @@ const AdvertisementPaymentPage = () => {
   const [error, setError] =
     useState("");
 
+  const [
+    notification,
+    setNotification
+  ] = useState({
+    message: "",
+    type: "success"
+  });
+
+  const showNotification = (
+    message,
+    type = "success"
+  ) => {
+    setNotification({
+      message: String(message || ""),
+      type
+    });
+  };
+  const [
+  contributionError,
+  setContributionError
+] = useState("");
   const [submitting, setSubmitting] =
     useState(false);
 
   const [submitted, setSubmitted] =
     useState(false);
 
-  const [advertisementDraft, setAdvertisementDraft] =
-    useState(null);
+  const [
+    advertisementDraft,
+    setAdvertisementDraft
+  ] = useState(null);
+
+  const [
+    minimumContribution,
+    setMinimumContribution
+  ] = useState(null);
 
   const [formData, setFormData] =
     useState({
@@ -49,7 +77,7 @@ const AdvertisementPaymentPage = () => {
       memberName: "",
       email: "",
       phoneNumber: "",
-      amount: ADVERTISEMENT_FEE,
+      amount: "",
       paymentMethod: "UPI",
       paymentReference: "",
       transactionDetails: "",
@@ -79,12 +107,43 @@ const AdvertisementPaymentPage = () => {
         const draft =
           JSON.parse(storedDraft);
 
-        const profile =
-          await profileService.getMyProfile();
+        const [
+          profile,
+          contributionResponse
+        ] = await Promise.all([
+          profileService.getMyProfile(),
+
+          apiClient.get(
+            "/preferred-profiles/minimum-contribution"
+          )
+        ]);
 
         if (!active) {
           return;
         }
+
+        const configuredMinimum =
+          Number(
+            contributionResponse?.data
+              ?.minimumContribution
+          );
+
+        if (
+          !Number.isFinite(
+            configuredMinimum
+          ) ||
+          configuredMinimum < 0
+        ) {
+          throw new Error(
+            "Advertisement contribution has not been configured."
+          );
+        }
+
+        setMinimumContribution(
+          configuredMinimum
+        );
+
+        setContributionError("");
 
         setAdvertisementDraft(draft);
 
@@ -113,6 +172,11 @@ const AdvertisementPaymentPage = () => {
             profile?.phoneNumber ||
             profile?.phone_number ||
             "",
+
+          amount:
+            String(
+              configuredMinimum
+            ),
         }));
       } catch (err) {
         console.error(
@@ -120,9 +184,16 @@ const AdvertisementPaymentPage = () => {
           err
         );
 
-        setError(
+        const message =
           err?.response?.data?.message ||
-            "Unable to prepare advertisement payment."
+          err?.message ||
+          "Unable to prepare advertisement payment.";
+
+        setError(message);
+
+        showNotification(
+          message,
+          "error"
         );
       } finally {
         if (active) {
@@ -150,6 +221,47 @@ const AdvertisementPaymentPage = () => {
     }));
 
     setError("");
+
+    if (name === "amount") {
+      const enteredAmount =
+        Number(value);
+
+      if (
+        String(value).trim() === ""
+      ) {
+        setContributionError(
+          "Please enter your advertisement contribution."
+        );
+
+        return;
+      }
+
+      if (
+        !Number.isFinite(
+          enteredAmount
+        )
+      ) {
+        setContributionError(
+          "Please enter a valid contribution amount."
+        );
+
+        return;
+      }
+
+      if (
+        minimumContribution !== null &&
+        enteredAmount <
+          minimumContribution
+      ) {
+        setContributionError(
+          `Minimum contribution is ₹${minimumContribution}. You may contribute ₹${minimumContribution} or any higher amount.`
+        );
+
+        return;
+      }
+
+      setContributionError("");
+    }
   };
 
   const handleSubmit = async (event) => {
@@ -180,7 +292,38 @@ const AdvertisementPaymentPage = () => {
 
       return;
     }
+    const contribution =
+      Number(formData.amount);
 
+    if (
+      minimumContribution === null
+    ) {
+      setError(
+        "Advertisement contribution configuration could not be loaded."
+      );
+      return;
+    }
+
+    if (
+      !Number.isFinite(
+        contribution
+      ) ||
+      contribution <
+        minimumContribution
+    ) {
+      const message =
+        `Minimum advertisement contribution is ₹${minimumContribution}. You may contribute ₹${minimumContribution} or any higher amount.`;
+
+      setContributionError(
+        message
+      );
+
+      setError(
+        message
+      );
+
+      return;
+    }
     setSubmitting(true);
 
     try {
@@ -232,7 +375,7 @@ const AdvertisementPaymentPage = () => {
           payment_time:
             time,
 
-          transaction_details:
+          member_narrative:
             advertisementDraft.advertisementText,
 
           looking_for:
@@ -284,6 +427,11 @@ const AdvertisementPaymentPage = () => {
 
       setSubmitted(true);
 
+      showNotification(
+        "Advertisement and payment details submitted successfully.",
+        "success"
+      );
+
       sessionStorage.removeItem(
         "advertisementDraft"
       );
@@ -293,9 +441,15 @@ const AdvertisementPaymentPage = () => {
         err
       );
 
-      setError(
+      const message =
         err?.response?.data?.message ||
-          "Unable to submit advertisement and payment details."
+        "Unable to submit advertisement and payment details.";
+
+      setError(message);
+
+      showNotification(
+        message,
+        "error"
       );
     } finally {
       setSubmitting(false);
@@ -322,6 +476,23 @@ const AdvertisementPaymentPage = () => {
     return (
       <MemberLayout>
         <div className="space-y-4">
+          {notification.message && (
+            <NotificationBanner
+              message={
+                notification.message
+              }
+              type={
+                notification.type
+              }
+              onClose={() =>
+                setNotification({
+                  message: "",
+                  type: "success"
+                })
+              }
+            />
+          )}
+
           <section
             className={`${designClasses.statusSuccess} p-5`}
           >
@@ -372,6 +543,23 @@ const AdvertisementPaymentPage = () => {
   return (
     <MemberLayout>
       <div className="space-y-4">
+        {notification.message && (
+          <NotificationBanner
+            message={
+              notification.message
+            }
+            type={
+              notification.type
+            }
+            onClose={() =>
+              setNotification({
+                message: "",
+                type: "success"
+              })
+            }
+          />
+        )}
+
         <section
           className={`${designClasses.card} p-5 sm:p-6`}
         >
@@ -417,6 +605,7 @@ const AdvertisementPaymentPage = () => {
         >
           <form
             onSubmit={handleSubmit}
+            noValidate
             className="space-y-5"
           >
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -470,9 +659,33 @@ const AdvertisementPaymentPage = () => {
               <TextField
                 fullWidth
                 size="small"
-                label="Minimum Advertisement Contribution"
-                value={`₹${formData.amount}`}
-                disabled
+                type="number"
+                name="amount"
+                label="Your Advertisement Contribution"
+                value={
+                  formData.amount
+                }
+                onChange={
+                  handleChange
+                }
+                required
+                error={
+                  Boolean(
+                    contributionError
+                  )
+                }
+                inputProps={{
+                  step: "1"
+                }}
+                helperText={
+                  contributionError ||
+                  (
+                    minimumContribution !==
+                    null
+                      ? `Minimum contribution is ₹${minimumContribution}. You may contribute this amount or more.`
+                      : "Loading minimum contribution..."
+                  )
+                }
               />
 
               <TextField
@@ -529,17 +742,46 @@ const AdvertisementPaymentPage = () => {
             <div
               className={`rounded-xl border p-4 ${designClasses.border} ${designClasses.surfaceMuted}`}
             >
-              <p
-                className={`text-sm ${designClasses.textSecondary}`}
-              >
-                Your contribution supports
-                the maintenance of Kalyana
-                Sakha. Submission does not
-                publish the advertisement
-                immediately; payment and
-                advertisement approval are
-                required before publication.
-              </p>
+              <div className="space-y-2">
+                <p
+                  className={`text-sm font-semibold ${designClasses.textDark}`}
+                >
+                  Advertisement Contribution
+                </p>
+
+                <p
+                  className={`text-sm ${designClasses.textSecondary}`}
+                >
+                  The minimum contribution is{" "}
+                  <strong>
+                    ₹
+                    {minimumContribution ??
+                      "-"}
+                  </strong>
+                  . You may contribute this
+                  amount or any higher amount.
+                </p>
+
+                <p
+                  className={`text-sm ${designClasses.textSecondary}`}
+                >
+                  Contributions are used to
+                  support the operation,
+                  maintenance and continued
+                  improvement of the Kalyana
+                  Sakha matrimonial portal and
+                  member services.
+                </p>
+
+                <p
+                  className={`text-xs ${designClasses.textSecondary}`}
+                >
+                  The advertisement will be
+                  published only after payment
+                  verification and advertisement
+                  review.
+                </p>
+              </div>
             </div>
 
             {error && (
@@ -565,7 +807,14 @@ const AdvertisementPaymentPage = () => {
 
               <button
                 type="submit"
-                disabled={submitting}
+                disabled={
+                  submitting ||
+                  minimumContribution ===
+                    null ||
+                  Boolean(
+                    contributionError
+                  )
+                }
                 className={`rounded-lg px-5 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${designClasses.primaryButton}`}
               >
                 {submitting

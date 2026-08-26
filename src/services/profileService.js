@@ -119,6 +119,8 @@ forwardProfileByEmail: async ({
   targetProfileId,
   recipientEmail,
   senderMessage = "",
+  advertisementId = null,
+  advertisementText = "",
 }) => {
   const response = await apiClient.post(
     "/profile-forward",
@@ -126,6 +128,8 @@ forwardProfileByEmail: async ({
       targetProfileId,
       recipientEmail,
       senderMessage,
+      advertisementId,
+      advertisementText,
     }
   );
 

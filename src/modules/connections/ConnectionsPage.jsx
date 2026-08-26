@@ -563,6 +563,24 @@ const ConnectionsPage = () => {
       ) || ""
     ).trim();
 
+  const selectedResponseType =
+    String(
+      searchParams.get(
+        "responseType"
+      ) || ""
+    )
+      .trim()
+      .toUpperCase();
+
+  const selectedResponseStatus =
+    String(
+      searchParams.get(
+        "responseStatus"
+      ) || ""
+    )
+      .trim()
+      .toUpperCase();
+
   const profileId =
     sessionStorage.getItem("profileId");
 
@@ -596,18 +614,45 @@ const ConnectionsPage = () => {
     setSentAdvertisementResponses,
   ] = useState([]);
 
-    const visibleReceivedAdvertisementResponses =
-    selectedAdvertisementId
-      ? receivedAdvertisementResponses.filter(
-          (response) =>
-            String(
-              response?.advertisement_id ||
+      const visibleReceivedAdvertisementResponses =
+    receivedAdvertisementResponses.filter(
+      (response) => {
+        const advertisementMatches =
+          !selectedAdvertisementId ||
+          String(
+            response?.advertisement_id ||
               response?.advertisementId ||
               ""
-            ) ===
-            selectedAdvertisementId
-        )
-      : receivedAdvertisementResponses;
+          ) ===
+            selectedAdvertisementId;
+
+        const responseTypeMatches =
+          !selectedResponseType ||
+          String(
+            response?.response_type ||
+              ""
+          )
+            .trim()
+            .toUpperCase() ===
+            selectedResponseType;
+
+        const responseStatusMatches =
+          !selectedResponseStatus ||
+          String(
+            response?.response_status ||
+              ""
+          )
+            .trim()
+            .toUpperCase() ===
+            selectedResponseStatus;
+
+        return (
+          advertisementMatches &&
+          responseTypeMatches &&
+          responseStatusMatches
+        );
+      }
+    );
 
   const [
     responseActionLoadingId,
@@ -1468,7 +1513,16 @@ const ConnectionsPage = () => {
                 className={`mt-1 text-sm ${designClasses.textSecondary}`}
               >
                 {selectedAdvertisementId
-                  ? `Showing responses received for Advertisement #${selectedAdvertisementId}.`
+                  ? selectedResponseType ===
+                    "INTEREST"
+                    ? `Showing interests received for Advertisement #${selectedAdvertisementId}.`
+                    : selectedResponseType ===
+                      "APPLY"
+                    ? `Showing applications received for Advertisement #${selectedAdvertisementId}.`
+                    : selectedResponseStatus ===
+                      "MUTUAL"
+                    ? `Showing mutual interests for Advertisement #${selectedAdvertisementId}.`
+                    : `Showing all responses received for Advertisement #${selectedAdvertisementId}.`
                   : "Review applications and interests received from members, and responses you have sent."}
               </p>
 
@@ -1485,15 +1539,33 @@ const ConnectionsPage = () => {
               )}
             </div>
 
-            <button
-              type="button"
-              onClick={() =>
-                navigate("/dashboard")
-              }
-              className={`rounded-lg px-4 py-2 text-sm font-semibold transition ${designClasses.secondaryButton}`}
-            >
-              Back to Dashboard
-            </button>
+            <div className="flex flex-wrap gap-2">
+              {selectedAdvertisementId && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    navigate(
+                      "/my-advertisements"
+                    )
+                  }
+                  className={`rounded-lg px-4 py-2 text-sm font-semibold transition ${designClasses.primaryButton}`}
+                >
+                  Back to My Advertisements
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={() =>
+                  navigate(
+                    "/dashboard"
+                  )
+                }
+                className={`rounded-lg px-4 py-2 text-sm font-semibold transition ${designClasses.secondaryButton}`}
+              >
+                Back to Dashboard
+              </button>
+            </div>
           </div>
         </div>
 

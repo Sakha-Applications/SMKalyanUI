@@ -5,6 +5,7 @@ import {
 } from "react-router-dom";
 
 import getBaseUrl from "../utils/GetUrl";
+import profileService from "../services/profileService";
 
 import BrandHeader from "../shared/layouts/BrandHeader";
 import BrandFooter from "../shared/layouts/BrandFooter";
@@ -40,76 +41,197 @@ function LoginScreen() {
         sessionStorage.setItem('token', data.token);
         sessionStorage.setItem('isLoggedIn', 'true');
 
-        if (data.user && data.user.email) {
-          sessionStorage.setItem('userEmail', data.user.email);
-          
-          // Fetch profile ID from modifyProfile
-          try {
-            const token = data.token;
-            const response = await fetch(`${getBaseUrl()}/api/modifyProfile`, {
-              headers: { Authorization: `Bearer ${token}` }
-            });
-            const profileData = await response.json();
-
-            if (response.ok && profileData.profile_id) {
-              sessionStorage.setItem('profileId', profileData.profile_id);
-              
-
-              // Store profile status for member access checks.
-  const status =
-    profileData?.profile_status ||
-    profileData?.profileStatus ||
-    profileData?.profile?.profile_status ||
-    "";
-
-  if (status) {
-    sessionStorage.setItem("profileStatus", status);
-    
-  } else {
-    console.warn("âš ï¸ profileStatus not found in modifyProfile response:", profileData);
-  }
-            } else {
-              console.warn("âš ï¸ Profile ID not found in modifyProfile response:", profileData);
-            }
-          } catch (fetchError) {
-            console.error("âŒ Error fetching profile ID:", fetchError);
-          }
+        if (
+          data.user &&
+          data.user.email
+        ) {
+          sessionStorage.setItem(
+            "userEmail",
+            data.user.email
+          );
         } else {
-          console.warn("User email not found in login response.");
+          console.warn(
+            "User email not found in login response."
+          );
         }
 
-        // Store role for routing decisions (prefer JWT payload as source of truth)
-let role = (data?.user?.role || data?.role || '').toString();
+        /*
+         * Resolve role before loading a matrimonial
+         * profile. ADMIN/MODERATOR users do not need
+         * member-profile hydration to enter their
+         * operational workbench.
+         */
+        let role =
+          (
+            data?.user?.role ||
+            data?.role ||
+            ""
+          ).toString();
 
-try {
-  if (!role && data?.token) {
-    const payloadBase64 = data.token.split('.')[1];
-    const payloadJson = JSON.parse(atob(payloadBase64));
-    role = (payloadJson?.role || '').toString();
-  }
-} catch (e) {
-  console.warn("âš ï¸ Unable to decode JWT role:", e);
-}
+        try {
+          if (
+            !role &&
+            data?.token
+          ) {
+            const payloadBase64 =
+              data.token.split(
+                "."
+              )[1];
 
-if (role) {
-  sessionStorage.setItem('userRole', role);
-  
-} else {
-  console.warn("âš ï¸ userRole could not be determined from response/token.");
-}
+            const payloadJson =
+              JSON.parse(
+                atob(
+                  payloadBase64
+                )
+              );
 
-// Operational users use the shared Moderator/Admin workbench.
-if (
-  ["ADMIN", "MODERATOR"].includes(
-    role.toUpperCase()
-  )
-) {
-  navigate("/admin");
-  return;
-}
+            role =
+              (
+                payloadJson?.role ||
+                ""
+              ).toString();
+          }
+        } catch (decodeError) {
+          console.warn(
+            "Unable to decode JWT role:",
+            decodeError
+          );
+        }
 
+        if (role) {
+          sessionStorage.setItem(
+            "userRole",
+            role
+          );
+        } else {
+          console.warn(
+            "userRole could not be determined from response/token."
+          );
+        }
 
-        navigate('/dashboard');
+        /*
+         * Operational users use the shared
+         * Moderator/Admin workbench.
+         */
+        if (
+          [
+            "ADMIN",
+            "MODERATOR"
+          ].includes(
+            role.toUpperCase()
+          )
+        ) {
+          navigate(
+            "/admin"
+          );
+          return;
+        }
+
+        /*
+         * Member login:
+         *
+         * Hydrate profile identity/status through
+         * the shared profile service instead of
+         * duplicating the /modifyProfile request.
+         */
+        try {
+          const profileResponse =
+            await profileService
+              .getMyProfile();
+
+          const profile =
+            profileResponse?.profile ||
+            profileResponse ||
+            {};
+
+          const resolvedProfileId =
+            profile?.profile_id ||
+            profile?.profileId ||
+            data?.user?.profile_id ||
+            data?.user?.profileId ||
+            "";
+
+          const resolvedProfileStatus =
+            profileResponse
+              ?.profile_status ||
+            profileResponse
+              ?.profileStatus ||
+            profile
+              ?.profile_status ||
+            profile
+              ?.profileStatus ||
+            data?.user
+              ?.profile_status ||
+            data?.user
+              ?.profileStatus ||
+            "";
+
+          const resolvedName =
+            profile?.name ||
+            data?.user?.name ||
+            "";
+
+          if (
+            resolvedProfileId
+          ) {
+            sessionStorage.setItem(
+              "profileId",
+              String(
+                resolvedProfileId
+              )
+            );
+          } else {
+            sessionStorage.removeItem(
+              "profileId"
+            );
+          }
+
+          if (
+            resolvedProfileStatus
+          ) {
+            sessionStorage.setItem(
+              "profileStatus",
+              String(
+                resolvedProfileStatus
+              )
+            );
+          } else {
+            /*
+             * Do not warn here.
+             * Dashboard/Profile can refresh the
+             * authoritative status when required.
+             */
+            sessionStorage.removeItem(
+              "profileStatus"
+            );
+          }
+
+          if (resolvedName) {
+            sessionStorage.setItem(
+              "name",
+              String(
+                resolvedName
+              )
+            );
+          }
+
+        } catch (
+          profileFetchError
+        ) {
+          /*
+           * Authentication itself succeeded.
+           * Do not reject the member's login solely
+           * because profile hydration failed.
+           */
+          console.error(
+            "Unable to load member profile after login:",
+            profileFetchError
+          );
+        }
+
+        navigate(
+          "/dashboard"
+        );
       } else {
         setError(data.error || 'Invalid username or password.');
       }

@@ -6,6 +6,7 @@ import {
 
 import {
   useNavigate,
+  useSearchParams,
 } from "react-router-dom";
 
 import MemberLayout from "../../shared/layouts/MemberLayout";
@@ -14,9 +15,12 @@ import {
 } from "../../shared/styles/designTokens";
 
 import AdvertisementPreview from "../../shared/components/AdvertisementPreview";
+import NotificationBanner from "../../shared/components/NotificationBanner";
 
 import profileService from "../../services/profileService";
+import advertisementService from "../../services/advertisementService";
 
+const ADVERTISEMENT_MAX_LENGTH = 1000;
 const firstValue = (...values) =>
   values.find(
     (value) =>
@@ -156,33 +160,32 @@ const cleanExpectationsText = (
 const determineLookingFor = (
   profile
 ) => {
-  const profileFor = String(
-    firstValue(
-      profile?.profile_for,
-      profile?.profileFor,
-      profile?.preferredBrideGroomCategory
-    )
-  ).toLowerCase();
-
-  if (
-    profileFor.includes("bridegroom") ||
-    profileFor.includes("groom")
-  ) {
-    return "groom";
-  }
-
-  if (
-    profileFor.includes("bride")
-  ) {
-    return "bride";
-  }
-
+  /*
+   * The member's gender is the primary
+   * source for determining the partner
+   * being sought.
+   *
+   * Female profile  -> Bride
+   *                    looking for Bridegroom
+   *
+   * Male profile    -> Bridegroom
+   *                    looking for Bride
+   */
   const gender = String(
     firstValue(
       profile?.gender,
       profile?.sex
     )
-  ).toLowerCase();
+  )
+    .trim()
+    .toLowerCase();
+
+  if (
+    gender === "female" ||
+    gender === "f"
+  ) {
+    return "groom";
+  }
 
   if (
     gender === "male" ||
@@ -191,9 +194,34 @@ const determineLookingFor = (
     return "bride";
   }
 
+  /*
+   * Fallback for older profiles where
+   * gender may not be populated.
+   *
+   * profile_for identifies the MEMBER
+   * profile type, not the partner sought.
+   *
+   * Bride profile      -> seeks Bridegroom
+   * Bridegroom profile -> seeks Bride
+   */
+  const profileFor = String(
+    firstValue(
+      profile?.profile_for,
+      profile?.profileFor
+    )
+  )
+    .trim()
+    .toLowerCase();
+
   if (
-    gender === "female" ||
-    gender === "f"
+    profileFor.includes("bridegroom") ||
+    profileFor.includes("groom")
+  ) {
+    return "bride";
+  }
+
+  if (
+    profileFor.includes("bride")
   ) {
     return "groom";
   }
@@ -650,9 +678,31 @@ const buildAdvertisementText = (
       )}.`;
   }
 
-  return generated
-    .replace(/\s+/g, " ")
-    .trim();
+  const normalized =
+    generated
+      .replace(/\s+/g, " ")
+      .trim();
+
+  if (
+    normalized.length <=
+    ADVERTISEMENT_MAX_LENGTH
+  ) {
+    return normalized;
+  }
+
+  const shortened =
+    normalized
+      .slice(
+        0,
+        ADVERTISEMENT_MAX_LENGTH - 3
+      )
+      .replace(
+        /\s+\S*$/,
+        ""
+      )
+      .trim();
+
+  return `${shortened}...`;
 };
 const DetailItem = ({
   label,
@@ -677,6 +727,30 @@ const DetailItem = ({
 const AdvertiseProfilePage = () => {
   const navigate =
     useNavigate();
+  
+    const [
+    searchParams
+  ] = useSearchParams();
+
+  const advertisementId =
+    searchParams.get(
+      "advertisementId"
+    );
+
+  const isEditMode =
+    Boolean(
+      advertisementId
+    );
+
+  const [
+    advertisementBeingEdited,
+    setAdvertisementBeingEdited
+  ] = useState(null);
+
+  const [
+    saving,
+    setSaving
+  ] = useState(false);
   const [
     loading,
     setLoading,
@@ -686,6 +760,24 @@ const AdvertiseProfilePage = () => {
     error,
     setError,
   ] = useState("");
+
+    const [
+    notification,
+    setNotification,
+  ] = useState({
+    message: "",
+    type: "success",
+  });
+
+  const showNotification = (
+    message,
+    type = "success"
+  ) => {
+    setNotification({
+      message: String(message || ""),
+      type,
+    });
+  };
 
   const [
     profile,
@@ -743,8 +835,17 @@ const AdvertiseProfilePage = () => {
         setError("");
 
         try {
-          const response =
-            await profileService.getMyProfile();
+          const [
+            response,
+            myAdvertisements
+          ] = await Promise.all([
+            profileService.getMyProfile(),
+
+            isEditMode
+              ? advertisementService
+                  .getMyAdvertisements()
+              : Promise.resolve([])
+          ]);
 
           if (!active) {
             return;
@@ -759,11 +860,40 @@ const AdvertiseProfilePage = () => {
             currentProfile
           );
 
-          setAdvertisementText(
-            buildAdvertisementText(
-              currentProfile
-            )
-          );
+          if (isEditMode) {
+            const currentAdvertisement =
+              myAdvertisements.find(
+                (item) =>
+                  String(item.id) ===
+                  String(
+                    advertisementId
+                  )
+              );
+
+            if (!currentAdvertisement) {
+              throw new Error(
+                "Advertisement was not found."
+              );
+            }
+
+            setAdvertisementBeingEdited(
+              currentAdvertisement
+            );
+
+            setAdvertisementText(
+              String(
+                currentAdvertisement
+                  .member_narrative ||
+                ""
+              )
+            );
+          } else {
+            setAdvertisementText(
+              buildAdvertisementText(
+                currentProfile
+              )
+            );
+          }
         } catch (err) {
           console.error(
             "Unable to load profile for advertisement:",
@@ -790,17 +920,135 @@ const AdvertiseProfilePage = () => {
     return () => {
       active = false;
     };
-  }, []);
+  }, [
+    advertisementId,
+    isEditMode
+  ]);
 
   const resetAdvertisement =
     () => {
+      if (
+        isEditMode &&
+        advertisementBeingEdited
+      ) {
+        setAdvertisementText(
+          String(
+            advertisementBeingEdited
+              .member_narrative ||
+            ""
+          )
+        );
+
+        return;
+      }
+
       setAdvertisementText(
         generatedText
       );
     };
 
+      const handleAdvertisementChange =
+    (value) => {
+      const nextValue =
+        String(value || "");
+
+      if (
+        nextValue.length >
+        ADVERTISEMENT_MAX_LENGTH
+      ) {
+        setAdvertisementText(
+          nextValue.slice(
+            0,
+            ADVERTISEMENT_MAX_LENGTH
+          )
+        );
+
+        showNotification(
+          `Advertisement text is limited to ${ADVERTISEMENT_MAX_LENGTH} characters.`,
+          "warning"
+        );
+
+        return;
+      }
+
+      setAdvertisementText(
+        nextValue
+      );
+    };
   const handleContinue =
     () => {
+      const normalizedText =
+        String(
+          advertisementText || ""
+        ).trim();
+
+      if (!normalizedText) {
+        showNotification(
+          "Please enter advertisement text before continuing.",
+          "warning"
+        );
+
+        return;
+      }
+
+      if (
+        normalizedText.length >
+        ADVERTISEMENT_MAX_LENGTH
+      ) {
+        showNotification(
+          `Advertisement text cannot exceed ${ADVERTISEMENT_MAX_LENGTH} characters.`,
+          "warning"
+        );
+
+        return;
+      }
+      if (isEditMode) {
+        const saveRevision =
+          async () => {
+            try {
+              setSaving(true);
+
+              const result =
+                await advertisementService
+                  .updateMyAdvertisement({
+                    advertisementId,
+                    advertisementText:
+                      normalizedText
+                  });
+
+              showNotification(
+                result?.message ||
+                  "Advertisement updated successfully.",
+                "success"
+              );
+
+              setTimeout(() => {
+                navigate(
+                  "/my-advertisements"
+                );
+              }, 700);
+            } catch (err) {
+              console.error(
+                "Unable to update advertisement:",
+                err
+              );
+
+              showNotification(
+                err?.response?.data
+                  ?.message ||
+                  "Unable to update your advertisement.",
+                "error"
+              );
+            } finally {
+              setSaving(false);
+            }
+          };
+
+        saveRevision();
+
+        return;
+      }
+
       /*
        * Store the completed advertisement
        * draft for the payment screen.
@@ -816,7 +1064,8 @@ const AdvertiseProfilePage = () => {
             ),
 
                     advertisementHeading,
-          advertisementText,
+          advertisementText:
+            normalizedText,
 
           lookingFor:
             determineLookingFor(
@@ -878,18 +1127,42 @@ const AdvertiseProfilePage = () => {
   if (error) {
     return (
       <MemberLayout>
-        <div
-          className={`${designClasses.card} p-6`}
-        >
-          <h1
-            className={`text-lg font-semibold ${designClasses.textPrimary}`}
-          >
-            Advertise Your Profile
-          </h1>
+        <div className="space-y-4">
+          <NotificationBanner
+            message={error}
+            type="error"
+          />
 
-          <p className="mt-3 text-sm text-red-700">
-            {error}
-          </p>
+          <div
+            className={`${designClasses.card} p-6`}
+          >
+            <h1
+              className={`text-lg font-semibold ${designClasses.textPrimary}`}
+            >
+              {isEditMode
+                ? "Edit Advertisement"
+                : "Create Advertisement"}
+            </h1>
+
+            <p
+              className={`mt-2 text-sm ${designClasses.textSecondary}`}
+            >
+              We could not prepare this advertisement.
+              Return to My Advertisements and try again.
+            </p>
+
+            <button
+              type="button"
+              onClick={() =>
+                navigate(
+                  "/my-advertisements"
+                )
+              }
+              className={`mt-4 rounded-lg px-4 py-2 text-sm font-semibold transition ${designClasses.secondaryButton}`}
+            >
+              Back to My Advertisements
+            </button>
+          </div>
         </div>
       </MemberLayout>
     );
@@ -898,25 +1171,43 @@ const AdvertiseProfilePage = () => {
   return (
     <MemberLayout>
       <div className="space-y-4">
+        {notification.message && (
+          <NotificationBanner
+            message={
+              notification.message
+            }
+            type={
+              notification.type
+            }
+            onClose={() =>
+              setNotification({
+                message: "",
+                type: "success",
+              })
+            }
+          />
+        )}
+
         <section
           className={`${designClasses.card} p-5 sm:p-6`}
         >
           <h1
             className={`text-xl font-semibold ${designClasses.textPrimary}`}
           >
-            Advertise Your Profile
+            {isEditMode
+              ? "Edit Advertisement"
+              : "Create Advertisement"}
           </h1>
 
           <p
             className={`mt-1 text-sm ${designClasses.textSecondary}`}
           >
-            Your advertisement is
-            prepared automatically from
-            your Profile and Partner
-            Expectations. Review and edit
-            the advertisement text before
-            continuing.
+            {isEditMode
+              ? "Review and update your advertisement message. Changes to a published advertisement require Moderator approval before replacing the currently published version."
+              : "We have prepared a concise advertisement using your approved Profile and Partner Expectations. Review and personalize the message before continuing to contribution and payment details."}
           </p>
+
+          
         </section>
 
         <section
@@ -1126,11 +1417,47 @@ const AdvertiseProfilePage = () => {
             heading={advertisementHeading}
             text={advertisementText}
             editable
-            onChange={setAdvertisementText}
+            onChange={
+              handleAdvertisementChange
+            }
             rows={7}
           />
+                    <div className="mt-2 flex items-center justify-between gap-3">
+            <p
+              className={`text-xs ${designClasses.textSecondary}`}
+            >
+              Keep the message concise and
+              engaging. Detailed profile
+              information remains available
+              through View Profile.
+            </p>
 
-          <div className="mt-4 flex flex-wrap gap-3">
+            <span
+              className={`shrink-0 text-xs font-semibold ${
+                advertisementText.length >=
+                ADVERTISEMENT_MAX_LENGTH
+                  ? designClasses.textAccent
+                  : designClasses.textSecondary
+              }`}
+            >
+              {advertisementText.length} /{" "}
+              {ADVERTISEMENT_MAX_LENGTH}
+            </span>
+          </div>
+          {advertisementText.length >
+            ADVERTISEMENT_MAX_LENGTH && (
+            <div
+              className={`mt-2 rounded-xl p-3 text-sm ${designClasses.statusWarning}`}
+            >
+              This existing advertisement has{" "}
+              {advertisementText.length} characters.
+              Please shorten it to{" "}
+              {ADVERTISEMENT_MAX_LENGTH} characters
+              or fewer before submitting your changes.
+            </div>
+          )}
+
+          <div className="mt-5 flex flex-wrap gap-3">
             <button
               type="button"
               onClick={
@@ -1138,8 +1465,29 @@ const AdvertiseProfilePage = () => {
               }
               className={`rounded-lg px-4 py-2 text-sm font-semibold transition ${designClasses.secondaryButton}`}
             >
-              Reset from Profile
+              {isEditMode
+                ? "Undo Changes"
+                : "Reset from Profile"}
             </button>
+
+            {isEditMode && (
+              <button
+                type="button"
+                onClick={() => {
+                  setAdvertisementText(
+                    generatedText
+                  );
+
+                  showNotification(
+                    "Advertisement regenerated from your current Profile and Partner Expectations. Please review it before submitting.",
+                    "success"
+                  );
+                }}
+                className={`rounded-lg px-4 py-2 text-sm font-semibold transition ${designClasses.secondaryButton}`}
+              >
+                Regenerate from Profile
+              </button>
+            )}
 
             <button
               type="button"
@@ -1147,21 +1495,31 @@ const AdvertiseProfilePage = () => {
                 handleContinue
               }
               disabled={
-                !advertisementText.trim()
+                saving ||
+                !advertisementText.trim() ||
+                advertisementText.length >
+                  ADVERTISEMENT_MAX_LENGTH
               }
               className={`rounded-lg px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${designClasses.primaryButton}`}
             >
-              Continue to Payment
+              {saving
+                ? "Saving..."
+                : isEditMode
+                  ? "Submit Changes for Review"
+                  : "Continue to Contribution"}
             </button>
           </div>
 
           <p
             className={`mt-3 text-xs ${designClasses.textSecondary}`}
           >
-            The advertisement text can
-            also be reviewed and edited
-            by the Moderator before
-            approval and publication.
+            Profile facts such as age,
+            Gotra, education and profession
+            remain sourced from your
+            approved profile. The Moderator
+            may improve the advertisement
+            wording during review before it
+            is published.
           </p>
         </section>
       </div>

@@ -1,6 +1,46 @@
 import apiClient from "./apiClient";
 
 const advertisementService = {
+  getMyAdvertisements: async () => {
+    const response =
+      await apiClient.get(
+        "/preferred-profiles/my-advertisements"
+      );
+
+    return Array.isArray(
+      response?.data?.data
+    )
+      ? response.data.data
+      : [];
+  },
+
+  updateMyAdvertisement:
+    async ({
+      advertisementId,
+      advertisementText,
+    }) => {
+      const response =
+        await apiClient.put(
+          `/preferred-profiles/my-advertisements/${advertisementId}`,
+          {
+            advertisementText,
+          }
+        );
+
+      return response?.data || null;
+    },
+
+  cancelMyAdvertisement:
+    async (
+      advertisementId
+    ) => {
+      const response =
+        await apiClient.put(
+          `/preferred-profiles/my-advertisements/${advertisementId}/cancel`
+        );
+
+      return response?.data || null;
+    },
   getAdvertisementsForDisplay: async ({
     limit = 12,
     format = "cards",
