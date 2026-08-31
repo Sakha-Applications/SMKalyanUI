@@ -789,6 +789,11 @@ const AdvertiseProfilePage = () => {
     setAdvertisementText,
   ] = useState("");
 
+  const [
+    advertiserConvenientTime,
+    setAdvertiserConvenientTime,
+  ] = useState("");
+
   const advertisementHeading =
     useMemo(() => {
       const lookingFor =
@@ -879,7 +884,13 @@ const AdvertiseProfilePage = () => {
             setAdvertisementBeingEdited(
               currentAdvertisement
             );
-
+            setAdvertiserConvenientTime(
+              String(
+                currentAdvertisement
+                  ?.advertiser_convenient_time ||
+                ""
+              )
+            );
             setAdvertisementText(
               String(
                 currentAdvertisement
@@ -935,6 +946,14 @@ const AdvertiseProfilePage = () => {
           String(
             advertisementBeingEdited
               .member_narrative ||
+            ""
+          )
+        );
+
+        setAdvertiserConvenientTime(
+          String(
+            advertisementBeingEdited
+              .advertiser_convenient_time ||
             ""
           )
         );
@@ -1013,7 +1032,13 @@ const AdvertiseProfilePage = () => {
                   .updateMyAdvertisement({
                     advertisementId,
                     advertisementText:
-                      normalizedText
+                      normalizedText,
+
+                    advertiserConvenientTime:
+                      String(
+                        advertiserConvenientTime ||
+                        ""
+                      ).trim()
                   });
 
               showNotification(
@@ -1066,6 +1091,12 @@ const AdvertiseProfilePage = () => {
                     advertisementHeading,
           advertisementText:
             normalizedText,
+
+          advertiserConvenientTime:
+            String(
+              advertiserConvenientTime ||
+              ""
+            ).trim(),
 
           lookingFor:
             determineLookingFor(
@@ -1444,6 +1475,51 @@ const AdvertiseProfilePage = () => {
               {ADVERTISEMENT_MAX_LENGTH}
             </span>
           </div>
+            <div
+            className={`mt-5 rounded-xl border p-4 ${designClasses.border} ${designClasses.surfaceMuted}`}
+          >
+            <label
+              htmlFor="advertiserConvenientTime"
+              className={`block text-sm font-semibold ${designClasses.textDark}`}
+            >
+              Convenient Time to Connect
+            </label>
+
+            <p
+              className={`mt-1 text-xs ${designClasses.textSecondary}`}
+            >
+              Let interested members know when it is
+              generally convenient to contact you.
+              This is for information only.
+            </p>
+
+            <input
+              id="advertiserConvenientTime"
+              type="text"
+              maxLength={255}
+              value={
+                advertiserConvenientTime
+              }
+              onChange={(event) =>
+                setAdvertiserConvenientTime(
+                  event.target.value
+                )
+              }
+              placeholder="Example: Weekdays after 7 PM, Saturday morning"
+              className={`mt-3 w-full rounded-lg border px-3 py-2 text-sm outline-none transition focus:ring-2 focus:ring-[#D79A1E]/30 ${designClasses.border} ${designClasses.surface} ${designClasses.textDark}`}
+            />
+
+            <div
+              className={`mt-1 text-right text-xs ${designClasses.textSecondary}`}
+            >
+              {
+                advertiserConvenientTime
+                  .length
+              }{" "}
+              / 255
+            </div>
+          </div>
+
           {advertisementText.length >
             ADVERTISEMENT_MAX_LENGTH && (
             <div

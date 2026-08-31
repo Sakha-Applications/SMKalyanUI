@@ -18,6 +18,12 @@ const PromptModal = ({
   maxLength = 1000,
   confirmLabel = "Submit",
   cancelLabel = "Cancel",
+
+  creditSummary = null,
+  actionCost = null,
+  showCreditSummary = false,
+  onRecharge,
+
   onConfirm,
   onCancel,
 }) => {
@@ -41,10 +47,47 @@ const PromptModal = ({
 
   const normalizedValue =
     value.trim();
+  const numericActionCost =
+    Number(
+      actionCost || 0
+    );
+
+  const availableBalance =
+    Number(
+      creditSummary?.balance ||
+      0
+    );
+
+  const balanceAfterAction =
+    Math.max(
+      0,
+      availableBalance -
+        numericActionCost
+    );
+
+  const lowCreditThreshold =
+    Number(
+      creditSummary
+        ?.lowCreditThreshold ||
+      0
+    );
+
+  const insufficientCredits =
+    showCreditSummary &&
+    numericActionCost >
+      availableBalance;
+
+  const willBeLowCredit =
+    showCreditSummary &&
+    balanceAfterAction <=
+      lowCreditThreshold;
 
   const confirmDisabled =
-    required &&
-    !normalizedValue;
+    (
+      required &&
+      !normalizedValue
+    ) ||
+    insufficientCredits;
 
   const handleSubmit = (
     event
@@ -85,6 +128,115 @@ const PromptModal = ({
               >
                 {description}
               </p>
+            )}
+            {showCreditSummary &&
+              creditSummary && (
+              <div
+                className={`mt-4 rounded-xl border p-4 ${designClasses.border} ${designClasses.surfaceMuted}`}
+              >
+                {numericActionCost > 0 ? (
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center justify-between gap-4">
+                      <span
+                        className={
+                          designClasses.textSecondary
+                        }
+                      >
+                        Action Cost
+                      </span>
+
+                      <span
+                        className={`font-semibold ${designClasses.textPrimary}`}
+                      >
+                        {numericActionCost} credits
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between gap-4">
+                      <span
+                        className={
+                          designClasses.textSecondary
+                        }
+                      >
+                        Available Credits
+                      </span>
+
+                      <span
+                        className={`font-semibold ${designClasses.textPrimary}`}
+                      >
+                        {availableBalance}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between gap-4">
+                      <span
+                        className={
+                          designClasses.textSecondary
+                        }
+                      >
+                        Balance After Action
+                      </span>
+
+                      <span
+                        className={`font-semibold ${designClasses.textPrimary}`}
+                      >
+                        {balanceAfterAction}
+                      </span>
+                    </div>
+
+                    {insufficientCredits && (
+                      <div
+                        className={`mt-3 rounded-lg p-3 ${designClasses.statusWarning}`}
+                      >
+                        <div className="font-semibold">
+                          Insufficient Credits
+                        </div>
+
+                        <div className="mt-1">
+                          You need{" "}
+                          {numericActionCost} credits
+                          for this action, but only{" "}
+                          {availableBalance} credits
+                          are available.
+                        </div>
+
+                        {onRecharge && (
+                          <button
+                            type="button"
+                            onClick={
+                              onRecharge
+                            }
+                            className="mt-2 font-semibold underline underline-offset-2"
+                          >
+                            Recharge Credits
+                          </button>
+                        )}
+                      </div>
+                    )}
+
+                    {!insufficientCredits &&
+                      willBeLowCredit && (
+                        <div
+                          className={`mt-3 rounded-lg p-3 ${designClasses.statusWarning}`}
+                        >
+                          Your balance will be{" "}
+                          {balanceAfterAction}{" "}
+                          credits after this action.
+                          The current low-credit
+                          reminder level is{" "}
+                          {lowCreditThreshold}.
+                        </div>
+                      )}
+                  </div>
+                ) : (
+                  <div
+                    className={`text-sm font-semibold ${designClasses.textPrimary}`}
+                  >
+                    No credits will be charged
+                    for this action.
+                  </div>
+                )}
+              </div>
             )}
           </div>
 

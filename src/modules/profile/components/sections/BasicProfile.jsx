@@ -172,9 +172,19 @@ const BasicProfile = ({
                 </div>
 
                 <div>
-                  <label className={`mb-1 block text-sm font-medium ${designClasses.textPrimary}`}>
-                    Share Details on Platform
+                  <label
+                    className={`mb-1 block text-sm font-medium ${designClasses.textPrimary}`}
+                  >
+                    Show My Profile
                   </label>
+
+                  <p
+                    className={`mb-2 text-xs ${designClasses.textSecondary}`}
+                  >
+                    Choose whether your profile can appear to other members
+                    in Search, Matches and profile discovery.
+                  </p>
+
                   <div className="flex items-center space-x-4">
                     <label className="inline-flex items-center">
                       <input
@@ -188,7 +198,7 @@ const BasicProfile = ({
                       <span
   className={`ml-2 ${designClasses.textDark}`}
 >
-  Yes
+  Yes — Show my profile
 </span>
                     </label>
                     <label className="inline-flex items-center">
@@ -203,10 +213,17 @@ const BasicProfile = ({
                       <span
   className={`ml-2 ${designClasses.textDark}`}
 >
-  No
+  No — Hide my profile
 </span>
                     </label>
                   </div>
+                    <p
+                    className={`mt-2 text-xs ${designClasses.textSecondary}`}
+                  >
+                    Hiding your profile prevents it from appearing in new
+                    Search, Matches and discovery results. You can still use
+                    the portal and continue existing conversations.
+                  </p>
                 </div>
               </div>
 
@@ -262,7 +279,7 @@ const BasicProfile = ({
                   }
                 />
                 <DataRow
-                  label="Share Details on Platform"
+                  label="Show My Profile"
                   value={
                     profileData?.share_details_on_platform ||
                     profileData?.shareDetailsOnPlatform

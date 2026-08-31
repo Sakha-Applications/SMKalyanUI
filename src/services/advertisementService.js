@@ -18,12 +18,14 @@ const advertisementService = {
     async ({
       advertisementId,
       advertisementText,
+      advertiserConvenientTime = "",
     }) => {
       const response =
         await apiClient.put(
           `/preferred-profiles/my-advertisements/${advertisementId}`,
           {
             advertisementText,
+            advertiserConvenientTime,
           }
         );
 

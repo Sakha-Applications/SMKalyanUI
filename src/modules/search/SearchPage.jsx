@@ -100,6 +100,8 @@ const SearchPage = () => {
   maritalStatus: "",
   motherTongue: "",
   gotra: "",
+  rashi: "",
+  nakshatra: "",
   subCaste: "",
   guruMatha: "",
 
@@ -110,6 +112,8 @@ const SearchPage = () => {
   heightRange: preferredHeightRangeConfig.defaultValue,
 
   income: "",
+  education: "",
+  profession: "",
   traditionalValues: "",
 });
 
@@ -117,8 +121,12 @@ const SearchPage = () => {
   isLoading: apiDataLoading,
   error: apiDataError,
   gotraOptions,
+  rashiOptions,
+  nakshatraOptions,
   searchMotherTongues,
   searchGuruMatha,
+  searchEducation,
+  searchProfessions,
   searchPlaces,
   getPlaceById,
 } = useApiData();
@@ -132,6 +140,35 @@ const [showMotherTongueOptions, setShowMotherTongueOptions] = useState(false);
 const [guruMathaInput, setGuruMathaInput] = useState(
   searchQuery.guruMatha || ""
 );
+const [
+  educationInput,
+  setEducationInput,
+] = useState("");
+
+const [
+  educationOptions,
+  setEducationOptions,
+] = useState([]);
+
+const [
+  showEducationOptions,
+  setShowEducationOptions,
+] = useState(false);
+
+const [
+  professionInput,
+  setProfessionInput,
+] = useState("");
+
+const [
+  professionOptions,
+  setProfessionOptions,
+] = useState([]);
+
+const [
+  showProfessionOptions,
+  setShowProfessionOptions,
+] = useState(false);
 const [guruMathaOptions, setGuruMathaOptions] = useState([]);
 const [showGuruMathaOptions, setShowGuruMathaOptions] = useState(false);
 
@@ -482,6 +519,32 @@ setSearchResults(data);
         selectOptions={subCasteOptions}
       />
 
+      <StyledFormField
+        label="Rashi"
+        name="rashi"
+        value={searchQuery.rashi}
+        onChange={handleChange}
+        selectOptions={rashiOptions.map(
+          (item) => ({
+            label: item.label,
+            value: item.label,
+          })
+        )}
+      />
+
+      <StyledFormField
+        label="Nakshatra"
+        name="nakshatra"
+        value={searchQuery.nakshatra}
+        onChange={handleChange}
+        selectOptions={nakshatraOptions.map(
+          (item) => ({
+            label: item.label,
+            value: item.label,
+          })
+        )}
+      />
+
       <AutocompleteInput
         label="Guru Matha"
         name="guruMatha"
@@ -513,8 +576,37 @@ setSearchResults(data);
     }
   />
 </Box>
+
+      <AutocompleteInput
+        label="Education"
+        name="education"
+        inputValue={educationInput}
+        inputSetter={setEducationInput}
+        options={educationOptions}
+        setOptions={setEducationOptions}
+        show={showEducationOptions}
+        setShow={setShowEducationOptions}
+        loading={false}
+        searchFn={searchEducation}
+        onSelect={handleAutocompleteSelect}
+      />
+
+      <AutocompleteInput
+        label="Profession"
+        name="profession"
+        inputValue={professionInput}
+        inputSetter={setProfessionInput}
+        options={professionOptions}
+        setOptions={setProfessionOptions}
+        show={showProfessionOptions}
+        setShow={setShowProfessionOptions}
+        loading={false}
+        searchFn={searchProfessions}
+        onSelect={handleAutocompleteSelect}
+      />
+
       <StyledFormField
-  label="Annual Income"
+        label="Annual Income"
   name="income"
   value={searchQuery.income}
   onChange={handleChange}

@@ -21,6 +21,7 @@ const SETTINGS_KEYS = {
 const VIEWS = {
   SETTINGS: "SETTINGS",
   CONTACT_REQUESTS: "CONTACT_REQUESTS",
+  MUTUAL_FOLLOWUP: "MUTUAL_FOLLOWUP",
   PENDING_RECHARGE: "PENDING_RECHARGE",
   PENDING_REG_FEE: "PENDING_REG_FEE",
   PENDING_ADVERTISEMENT: "PENDING_ADVERTISEMENT",
@@ -64,6 +65,37 @@ const [
   contactActionLoadingId,
   setContactActionLoadingId
 ] = useState(null);
+
+// Mutual Pair consultation / follow-up
+const [
+  consultationFollowups,
+  setConsultationFollowups
+] = useState([]);
+
+const [
+  selectedConsultation,
+  setSelectedConsultation
+] = useState(null);
+
+const [
+  consultationForm,
+  setConsultationForm
+] = useState({
+  consultationStatus: "PENDING",
+  convenientTime: "",
+  consultationRemarks: "",
+  nextFollowUpAt: ""
+});
+
+const [
+  consultationLoading,
+  setConsultationLoading
+] = useState(false);
+
+const [
+  consultationSaving,
+  setConsultationSaving
+] = useState(false);
 
   // Offline payments queue
   const [pendingPayments, setPendingPayments] = useState([]);
@@ -418,6 +450,190 @@ const fetchContactRequests = async () => {
   }
 };
 
+const fetchConsultationFollowups = async () => {
+  try {
+    setConsultationLoading(true);
+
+    const res = await fetch(
+      `${getBaseUrl()}/api/moderator/consultation-followups`,
+      {
+        headers: {
+          Authorization:
+            `Bearer ${token}`
+        }
+      }
+    );
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      console.error(
+        "Consultation follow-up fetch failed:",
+        data
+      );
+
+      showNotification(
+        data?.message ||
+          "Unable to load Mutual Pair follow-up.",
+        "error"
+      );
+
+      return;
+    }
+
+    setConsultationFollowups(
+      Array.isArray(data?.data)
+        ? data.data
+        : []
+    );
+
+  } catch (error) {
+    console.error(
+      "❌ fetchConsultationFollowups error:",
+      error
+    );
+
+    showNotification(
+      "Unable to load Mutual Pair follow-up.",
+      "error"
+    );
+
+  } finally {
+    setConsultationLoading(false);
+  }
+};
+const openConsultationFollowup = (
+  row
+) => {
+  setSelectedConsultation(row);
+
+  setConsultationForm({
+    consultationStatus:
+      row?.consultation_status ||
+      "PENDING",
+
+    convenientTime:
+      row?.convenient_time ||
+      "",
+
+    consultationRemarks:
+      row?.consultation_remarks ||
+      "",
+
+    nextFollowUpAt:
+      row?.next_follow_up_at
+        ? String(
+            row.next_follow_up_at
+          )
+            .replace("Z", "")
+            .slice(0, 16)
+        : ""
+  });
+};
+
+
+const closeConsultationFollowup = () => {
+  setSelectedConsultation(null);
+
+  setConsultationForm({
+    consultationStatus:
+      "PENDING",
+    convenientTime: "",
+    consultationRemarks: "",
+    nextFollowUpAt: ""
+  });
+};
+
+const saveConsultationFollowup =
+  async () => {
+    if (
+      !selectedConsultation
+        ?.advertisement_response_id
+    ) {
+      return;
+    }
+
+    try {
+      setConsultationSaving(true);
+
+      const responseId =
+        selectedConsultation
+          .advertisement_response_id;
+
+      const res = await fetch(
+        `${getBaseUrl()}/api/moderator/consultation-followups/${responseId}`,
+        {
+          method: "PUT",
+
+          headers: {
+            "Content-Type":
+              "application/json",
+
+            Authorization:
+              `Bearer ${token}`
+          },
+
+          body: JSON.stringify({
+            consultationStatus:
+              consultationForm
+                .consultationStatus,
+
+            convenientTime:
+              consultationForm
+                .convenientTime
+                .trim(),
+
+            consultationRemarks:
+              consultationForm
+                .consultationRemarks
+                .trim(),
+
+            nextFollowUpAt:
+              consultationForm
+                .nextFollowUpAt ||
+              null
+          })
+        }
+      );
+
+      const data =
+        await res.json();
+
+      if (!res.ok) {
+        showNotification(
+          data?.message ||
+            "Unable to save consultation follow-up.",
+          "error"
+        );
+
+        return;
+      }
+
+      showNotification(
+        data?.message ||
+          "Consultation follow-up saved successfully.",
+        "success"
+      );
+
+      closeConsultationFollowup();
+
+      await fetchConsultationFollowups();
+
+    } catch (error) {
+      console.error(
+        "❌ saveConsultationFollowup error:",
+        error
+      );
+
+      showNotification(
+        "Unable to save consultation follow-up.",
+        "error"
+      );
+
+    } finally {
+      setConsultationSaving(false);
+    }
+  };
   const fetchAdvertisementReviewQueue = async () => {
     try {
       const res = await fetch(
@@ -909,13 +1125,16 @@ const reviewContactRequest = (
   });
 };
   useEffect(() => {
-    fetchData();
-    fetchContactRequests();
-    fetchAdvertisementReviewQueue();
+  fetchData();
+  fetchContactRequests();
+  fetchConsultationFollowups();
+  fetchAdvertisementReviewQueue();
 
-    if (isAdminRole) {
-      fetchSettings();
-    }
+  if (isAdminRole) {
+    fetchSettings();
+  }
+
+
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -1054,7 +1273,8 @@ const reviewContactRequest = (
             }
 
             fetchContactRequests();
-            fetchAdvertisementReviewQueue();
+fetchConsultationFollowups();
+fetchAdvertisementReviewQueue();
           }}
           className={`rounded-lg px-4 py-2 text-sm font-semibold transition ${designClasses.secondaryButton}`}
         >
@@ -1143,6 +1363,12 @@ const reviewContactRequest = (
       label="Contact Requests"
       view={VIEWS.CONTACT_REQUESTS}
       badge={contactRequests.length}
+    />
+
+    <SidebarItem
+      label="Mutual Pair Follow-up"
+      view={VIEWS.MUTUAL_FOLLOWUP}
+      badge={consultationFollowups.length}
     />
   </div>
 </div>
@@ -1901,254 +2127,775 @@ const reviewContactRequest = (
   );
 
   const renderContactRequests = () => (
-  <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-    <div className="flex items-center justify-between gap-3 mb-4">
-      <div>
-        <h2 className="text-lg font-semibold text-gray-900">
-          Contact Requests
-          <span className="ml-2 text-sm text-gray-500">
-            ({contactRequests.length})
-          </span>
-        </h2>
+    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+      <div className="flex items-center justify-between gap-3 mb-4">
+        <div>
+          <h2 className="text-lg font-semibold text-gray-900">
+            Contact Requests
+            <span className="ml-2 text-sm text-gray-500">
+              ({contactRequests.length})
+            </span>
+          </h2>
 
-        <p className="text-sm text-gray-600">
-          Review mutual-interest evidence and member requests
-          before sensitive contact information is released.
-        </p>
+          <p className="text-sm text-gray-600">
+            Review member contact requests that require
+            Moderator or Foundation approval.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={fetchContactRequests}
+          className="px-3 py-2 rounded-lg bg-gray-700 text-white text-sm"
+        >
+          Refresh
+        </button>
       </div>
 
-      <button
-        type="button"
-        onClick={
-          fetchContactRequests
-        }
-        className="px-3 py-2 rounded-lg bg-gray-700 text-white text-sm"
-      >
-        Refresh
-      </button>
-    </div>
+      <div className="overflow-auto rounded-lg border border-gray-100">
+        <table className="min-w-full text-sm">
+          <thead className="bg-gray-50">
+            <tr className="text-left border-b border-gray-100">
+              <th className="p-3 font-semibold text-gray-700">
+                Request
+              </th>
 
-    <div className="overflow-auto rounded-lg border border-gray-100">
-      <table className="min-w-full text-sm">
-        <thead className="bg-gray-50">
-          <tr className="text-left border-b border-gray-100">
-            <th className="p-3 font-semibold text-gray-700">
-              Request
-            </th>
+              <th className="p-3 font-semibold text-gray-700">
+                Requester
+              </th>
 
-            <th className="p-3 font-semibold text-gray-700">
-              Requester
-            </th>
+              <th className="p-3 font-semibold text-gray-700">
+                Requested Profile
+              </th>
 
-            <th className="p-3 font-semibold text-gray-700">
-              Requested Profile
-            </th>
+              <th className="p-3 font-semibold text-gray-700">
+                Relationship
+              </th>
 
-            <th className="p-3 font-semibold text-gray-700">
-              Relationship
-            </th>
+              <th className="p-3 font-semibold text-gray-700">
+                Request Message
+              </th>
 
-            <th className="p-3 font-semibold text-gray-700">
-              Request Message
-            </th>
+              <th className="p-3 font-semibold text-gray-700">
+                Requested On
+              </th>
 
-            <th className="p-3 font-semibold text-gray-700">
-              Requested On
-            </th>
+              <th className="p-3 font-semibold text-gray-700">
+                Actions
+              </th>
+            </tr>
+          </thead>
 
-            <th className="p-3 font-semibold text-gray-700">
-              Actions
-            </th>
-          </tr>
-        </thead>
+          <tbody>
+            {contactRequests.map(
+              (request) => {
+                const actionLoading =
+                  contactActionLoadingId ===
+                  request.id;
 
-        <tbody>
-          {contactRequests.map(
-            (request) => {
-              const actionLoading =
-                contactActionLoadingId ===
-                request.id;
+                return (
+                  <tr
+                    key={request.id}
+                    className="border-b border-gray-100 align-top"
+                  >
+                    <td className="p-3">
+                      <div className="font-semibold text-gray-900">
+                        #{request.id}
+                      </div>
 
-              return (
-                <tr
-                  key={request.id}
-                  className="border-b border-gray-100 align-top"
+                      <span className="mt-1 inline-flex rounded-full bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-800">
+                        {request.status ||
+                          "PENDING"}
+                      </span>
+                    </td>
+
+                    <td className="p-3">
+                      <div className="font-medium text-gray-900">
+                        {request.requester_name ||
+                          "-"}
+                      </div>
+
+                      <div className="text-xs text-gray-500">
+                        {
+                          request.requester_profile_id
+                        }
+                      </div>
+
+                      <div className="mt-1 text-xs text-gray-500">
+                        Profile Status:{" "}
+                        {request.requester_profile_status ||
+                          "-"}
+                      </div>
+                    </td>
+
+                    <td className="p-3">
+                      <div className="font-medium text-gray-900">
+                        {request.target_name ||
+                          "-"}
+                      </div>
+
+                      <div className="text-xs text-gray-500">
+                        {
+                          request.target_profile_id
+                        }
+                      </div>
+
+                      <div className="mt-1 text-xs text-gray-500">
+                        Profile Status:{" "}
+                        {request.target_profile_status ||
+                          "-"}
+                      </div>
+                    </td>
+
+                    <td className="p-3">
+                      {request.mutual_interest ? (
+                        <div>
+                          <span className="inline-flex rounded-full bg-green-100 px-2 py-1 text-xs font-semibold text-green-800">
+                            Mutual Interest
+                          </span>
+
+                          <div className="mt-2 text-xs text-gray-500">
+                            Advertisement relationship verified.
+                          </div>
+                        </div>
+                      ) : (
+                        <div>
+                          <span className="inline-flex rounded-full bg-gray-100 px-2 py-1 text-xs font-semibold text-gray-700">
+                            Standard Request
+                          </span>
+
+                          <div className="mt-2 text-xs text-gray-500">
+                            No mutual advertisement relationship found.
+                          </div>
+                        </div>
+                      )}
+                    </td>
+
+                    <td className="p-3">
+                      <div className="max-w-xs whitespace-pre-wrap text-sm text-gray-700">
+                        {request.requester_message ||
+                          "No message provided."}
+                      </div>
+                    </td>
+
+                    <td className="p-3 text-gray-700">
+                      {request.created_at
+                        ? new Date(
+                            request.created_at
+                          ).toLocaleString()
+                        : "-"}
+                    </td>
+
+                    <td className="p-3">
+                      <div className="flex flex-col gap-2">
+                        <button
+                          type="button"
+                          disabled={actionLoading}
+                          onClick={() =>
+                            reviewContactRequest(
+                              request.id,
+                              "APPROVED"
+                            )
+                          }
+                          className={`px-3 py-2 rounded-lg text-white text-xs font-semibold ${
+                            actionLoading
+                              ? "bg-green-400 cursor-not-allowed"
+                              : "bg-green-600 hover:bg-green-700"
+                          }`}
+                        >
+                          {actionLoading
+                            ? "Processing..."
+                            : "Approve"}
+                        </button>
+
+                        <button
+                          type="button"
+                          disabled={actionLoading}
+                          onClick={() =>
+                            reviewContactRequest(
+                              request.id,
+                              "CLARIFICATION_REQUIRED"
+                            )
+                          }
+                          className={`px-3 py-2 rounded-lg text-white text-xs font-semibold ${
+                            actionLoading
+                              ? "bg-amber-400 cursor-not-allowed"
+                              : "bg-amber-600 hover:bg-amber-700"
+                          }`}
+                        >
+                          Clarification
+                        </button>
+
+                        <button
+                          type="button"
+                          disabled={actionLoading}
+                          onClick={() =>
+                            reviewContactRequest(
+                              request.id,
+                              "REJECTED"
+                            )
+                          }
+                          className={`px-3 py-2 rounded-lg text-white text-xs font-semibold ${
+                            actionLoading
+                              ? "bg-red-400 cursor-not-allowed"
+                              : "bg-red-600 hover:bg-red-700"
+                          }`}
+                        >
+                          Reject
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              }
+            )}
+
+            {contactRequests.length ===
+              0 && (
+              <tr>
+                <td
+                  colSpan={7}
+                  className="p-5 text-gray-500"
                 >
-                  <td className="p-3">
+                  No pending contact requests.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+
+  const renderConsultationFollowups =
+  () => (
+    <div
+      className={`${designClasses.surface} ${designClasses.border} rounded-2xl border p-5 shadow-sm`}
+    >
+      <div
+        className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
+      >
+        <div>
+          <h2
+            className={`text-lg font-semibold ${designClasses.textPrimary}`}
+          >
+            Mutual Pair Follow-up
+
+            <span
+              className={`ml-2 text-sm font-normal ${designClasses.textSecondary}`}
+            >
+              ({consultationFollowups.length})
+            </span>
+          </h2>
+
+          <p
+            className={`mt-1 text-sm ${designClasses.textSecondary}`}
+          >
+            Follow up with members whose
+            advertisement response has reached
+            Mutual Interest.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={
+            fetchConsultationFollowups
+          }
+          disabled={
+            consultationLoading
+          }
+          className={`rounded-lg px-4 py-2 text-sm font-semibold transition ${
+            consultationLoading
+              ? "cursor-not-allowed opacity-50"
+              : ""
+          } ${designClasses.secondaryButton}`}
+        >
+          {consultationLoading
+            ? "Loading..."
+            : "Refresh"}
+        </button>
+      </div>
+
+      <div
+        className="overflow-auto rounded-xl border border-gray-100"
+      >
+        <table
+          className="min-w-full text-sm"
+        >
+          <thead
+            className="bg-gray-50"
+          >
+            <tr
+              className="border-b border-gray-100 text-left"
+            >
+              <th className="p-3 font-semibold text-gray-700">
+                Mutual Pair
+              </th>
+
+              <th className="p-3 font-semibold text-gray-700">
+                Contact Numbers
+              </th>
+
+              <th className="p-3 font-semibold text-gray-700">
+                Status
+              </th>
+
+              <th className="p-3 font-semibold text-gray-700">
+                Convenient Time
+              </th>
+
+              <th className="p-3 font-semibold text-gray-700">
+                Next Follow-up
+              </th>
+
+              <th className="p-3 font-semibold text-gray-700">
+                Remarks
+              </th>
+
+              <th className="p-3 font-semibold text-gray-700">
+                Action
+              </th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {consultationFollowups.map(
+              (
+                item,
+                index
+              ) => (
+                <tr
+                  key={
+                    item
+                      .advertisement_response_id
+                  }
+                  className={`border-b border-gray-100 ${
+                    index % 2 === 0
+                      ? "bg-white"
+                      : "bg-gray-50"
+                  }`}
+                >
+                  <td className="p-3 align-top">
                     <div className="font-semibold text-gray-900">
-                      #{request.id}
+                      {item.owner_name ||
+                        item.owner_profile_id}
                     </div>
 
-                    <span className="mt-1 inline-flex rounded-full bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-800">
-                      {request.status ||
-                        "PENDING"}
+                    <div className="text-xs text-gray-500">
+                      {
+                        item.owner_profile_id
+                      }
+                    </div>
+
+                    <div className="my-1 text-xs font-semibold text-green-700">
+                      Mutual Interest
+                    </div>
+
+                    <div className="font-semibold text-gray-900">
+                      {item.responder_name ||
+                        item.responder_profile_id}
+                    </div>
+
+                    <div className="text-xs text-gray-500">
+                      {
+                        item.responder_profile_id
+                      }
+                    </div>
+                  </td>
+
+                  <td className="p-3 align-top text-gray-700">
+                    <div>
+                      Owner:
+                      {" "}
+                      {item.owner_phone ||
+                        "-"}
+                    </div>
+
+                    <div className="mt-1">
+                      Responder:
+                      {" "}
+                      {item.responder_phone ||
+                        "-"}
+                    </div>
+                  </td>
+
+                  <td className="p-3 align-top">
+                    <span
+                      className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
+                        item
+                          .consultation_status ===
+                        "COMPLETED"
+                          ? "bg-green-100 text-green-800"
+                          : item
+                              .consultation_status ===
+                            "DISCUSSION_SCHEDULED"
+                          ? "bg-blue-100 text-blue-800"
+                          : item
+                              .consultation_status ===
+                            "NO_RESPONSE"
+                          ? "bg-red-100 text-red-800"
+                          : "bg-amber-100 text-amber-800"
+                      }`}
+                    >
+                      {
+                        item.consultation_status ||
+                        "PENDING"
+                      }
                     </span>
                   </td>
 
-                  <td className="p-3">
-                    <div className="font-medium text-gray-900">
-                      {request.requester_name ||
-                        "-"}
-                    </div>
-
-                    <div className="text-xs text-gray-500">
-                      {
-                        request.requester_profile_id
-                      }
-                    </div>
-
-                    <div className="mt-1 text-xs text-gray-500">
-                      Profile Status:{" "}
-                      {request.requester_profile_status ||
-                        "-"}
-                    </div>
+                  <td className="p-3 align-top text-gray-700">
+                    {item.convenient_time ||
+                      "-"}
                   </td>
 
-                  <td className="p-3">
-                    <div className="font-medium text-gray-900">
-                      {request.target_name ||
-                        "-"}
-                    </div>
-
-                    <div className="text-xs text-gray-500">
-                      {
-                        request.target_profile_id
-                      }
-                    </div>
-
-                    <div className="mt-1 text-xs text-gray-500">
-                      Profile Status:{" "}
-                      {request.target_profile_status ||
-                        "-"}
-                    </div>
-                  </td>
-
-                  <td className="p-3">
-                    {request.mutual_interest ? (
-                      <div>
-                        <span className="inline-flex rounded-full bg-green-100 px-2 py-1 text-xs font-semibold text-green-800">
-                          Mutual Interest
-                        </span>
-
-                        <div className="mt-2 text-xs text-gray-500">
-                          Advertisement relationship verified.
-                        </div>
-                      </div>
-                    ) : (
-                      <div>
-                        <span className="inline-flex rounded-full bg-gray-100 px-2 py-1 text-xs font-semibold text-gray-700">
-                          Standard Request
-                        </span>
-
-                        <div className="mt-2 text-xs text-gray-500">
-                          No mutual advertisement relationship found.
-                        </div>
-                      </div>
-                    )}
-                  </td>
-
-                  <td className="p-3">
-                    <div className="max-w-xs whitespace-pre-wrap text-sm text-gray-700">
-                      {request.requester_message ||
-                        "No message provided."}
-                    </div>
-                  </td>
-
-                  <td className="p-3 text-gray-700">
-                    {request.created_at
+                  <td className="p-3 align-top text-gray-700">
+                    {item.next_follow_up_at
                       ? new Date(
-                          request.created_at
+                          item.next_follow_up_at
                         ).toLocaleString()
                       : "-"}
                   </td>
 
-                  <td className="p-3">
-                    <div className="flex flex-col gap-2">
-                      <button
-                        type="button"
-                        disabled={
-                          actionLoading
-                        }
-                        onClick={() =>
-                          reviewContactRequest(
-                            request.id,
-                            "APPROVED"
-                          )
-                        }
-                        className={`px-3 py-2 rounded-lg text-white text-xs font-semibold ${
-                          actionLoading
-                            ? "bg-green-400 cursor-not-allowed"
-                            : "bg-green-600 hover:bg-green-700"
-                        }`}
-                      >
-                        {actionLoading
-                          ? "Processing..."
-                          : "Approve"}
-                      </button>
+                  <td
+                    className="max-w-xs p-3 align-top text-gray-700"
+                  >
+                    {item
+                      .consultation_remarks ||
+                      "-"}
+                  </td>
 
-                      <button
-                        type="button"
-                        disabled={
-                          actionLoading
-                        }
-                        onClick={() =>
-                          reviewContactRequest(
-                            request.id,
-                            "CLARIFICATION_REQUIRED"
-                          )
-                        }
-                        className={`px-3 py-2 rounded-lg text-white text-xs font-semibold ${
-                          actionLoading
-                            ? "bg-amber-400 cursor-not-allowed"
-                            : "bg-amber-600 hover:bg-amber-700"
-                        }`}
-                      >
-                        Clarification
-                      </button>
-
-                      <button
-                        type="button"
-                        disabled={
-                          actionLoading
-                        }
-                        onClick={() =>
-                          reviewContactRequest(
-                            request.id,
-                            "REJECTED"
-                          )
-                        }
-                        className={`px-3 py-2 rounded-lg text-white text-xs font-semibold ${
-                          actionLoading
-                            ? "bg-red-400 cursor-not-allowed"
-                            : "bg-red-600 hover:bg-red-700"
-                        }`}
-                      >
-                        Reject
-                      </button>
-                    </div>
+                  <td className="p-3 align-top">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        openConsultationFollowup(
+                          item
+                        )
+                      }
+                      className={`rounded-lg px-3 py-2 text-xs font-semibold ${designClasses.primaryButton}`}
+                    >
+                      {item
+                        .consultation_followup_id
+                        ? "Update"
+                        : "Start Follow-up"}
+                    </button>
                   </td>
                 </tr>
-              );
-            }
-          )}
+              )
+            )}
 
-          {contactRequests.length ===
-            0 && (
-            <tr>
-              <td
-                colSpan={7}
-                className="p-5 text-gray-500"
-              >
-                No pending contact requests.
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
+            {!consultationLoading &&
+              consultationFollowups.length ===
+                0 && (
+                <tr>
+                  <td
+                    colSpan={7}
+                    className="p-6 text-center text-gray-500"
+                  >
+                    No Mutual Interest pairs
+                    are currently awaiting
+                    follow-up.
+                  </td>
+                </tr>
+              )}
+          </tbody>
+        </table>
+      </div>
     </div>
-  </div>
-);
+  );
+const renderConsultationEditor =
+  () => {
+    if (!selectedConsultation) {
+      return null;
+    }
 
+    return (
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+      >
+        <div
+          className={`${designClasses.surface} ${designClasses.border} max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border p-6 shadow-xl`}
+        >
+          <div
+            className="mb-5 flex items-start justify-between gap-4"
+          >
+            <div>
+              <h3
+                className={`text-lg font-semibold ${designClasses.textPrimary}`}
+              >
+                Mutual Pair Follow-up
+              </h3>
+
+              <p
+                className={`mt-1 text-sm ${designClasses.textSecondary}`}
+              >
+                {
+                  selectedConsultation
+                    .owner_name
+                }
+                {" ↔ "}
+                {
+                  selectedConsultation
+                    .responder_name
+                }
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={
+                closeConsultationFollowup
+              }
+              className="text-xl text-gray-500 hover:text-gray-800"
+            >
+              ×
+            </button>
+          </div>
+
+          <div
+            className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-2"
+          >
+            <div
+              className={`${designClasses.surfaceMuted} rounded-xl p-3`}
+            >
+              <div
+                className={`text-xs ${designClasses.textSecondary}`}
+              >
+                Advertisement Owner
+              </div>
+
+              <div
+                className={`mt-1 font-semibold ${designClasses.textDark}`}
+              >
+                {
+                  selectedConsultation
+                    .owner_name
+                }
+              </div>
+
+              <div
+                className={`text-sm ${designClasses.textSecondary}`}
+              >
+                {
+                  selectedConsultation
+                    .owner_profile_id
+                }
+                {" · "}
+                {
+                  selectedConsultation
+                    .owner_phone ||
+                  "No phone"
+                }
+              </div>
+            </div>
+
+            <div
+              className={`${designClasses.surfaceMuted} rounded-xl p-3`}
+            >
+              <div
+                className={`text-xs ${designClasses.textSecondary}`}
+              >
+                Interested Member
+              </div>
+
+              <div
+                className={`mt-1 font-semibold ${designClasses.textDark}`}
+              >
+                {
+                  selectedConsultation
+                    .responder_name
+                }
+              </div>
+
+              <div
+                className={`text-sm ${designClasses.textSecondary}`}
+              >
+                {
+                  selectedConsultation
+                    .responder_profile_id
+                }
+                {" · "}
+                {
+                  selectedConsultation
+                    .responder_phone ||
+                  "No phone"
+                }
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <label
+                className={`mb-1 block text-sm font-semibold ${designClasses.textDark}`}
+              >
+                Consultation Status
+              </label>
+
+              <select
+                value={
+                  consultationForm
+                    .consultationStatus
+                }
+                onChange={(event) =>
+                  setConsultationForm(
+                    (current) => ({
+                      ...current,
+                      consultationStatus:
+                        event.target.value
+                    })
+                  )
+                }
+                className={`w-full rounded-lg border px-3 py-2 ${designClasses.border} ${designClasses.surface}`}
+              >
+                <option value="PENDING">
+                  Pending
+                </option>
+
+                <option value="CONTACTED">
+                  Contacted
+                </option>
+
+                <option value="DISCUSSION_SCHEDULED">
+                  Discussion Scheduled
+                </option>
+
+                <option value="COMPLETED">
+                  Completed
+                </option>
+
+                <option value="NO_RESPONSE">
+                  No Response
+                </option>
+
+                <option value="CLOSED">
+                  Closed
+                </option>
+              </select>
+            </div>
+
+            <div>
+              <label
+                className={`mb-1 block text-sm font-semibold ${designClasses.textDark}`}
+              >
+                Convenient Time for Discussion
+              </label>
+
+              <input
+                type="text"
+                value={
+                  consultationForm
+                    .convenientTime
+                }
+                onChange={(event) =>
+                  setConsultationForm(
+                    (current) => ({
+                      ...current,
+                      convenientTime:
+                        event.target.value
+                    })
+                  )
+                }
+                placeholder="Example: Weekdays after 7 PM"
+                className={`w-full rounded-lg border px-3 py-2 ${designClasses.border} ${designClasses.surface}`}
+              />
+            </div>
+
+            <div>
+              <label
+                className={`mb-1 block text-sm font-semibold ${designClasses.textDark}`}
+              >
+                Next Follow-up
+              </label>
+
+              <input
+                type="datetime-local"
+                value={
+                  consultationForm
+                    .nextFollowUpAt
+                }
+                onChange={(event) =>
+                  setConsultationForm(
+                    (current) => ({
+                      ...current,
+                      nextFollowUpAt:
+                        event.target.value
+                    })
+                  )
+                }
+                className={`w-full rounded-lg border px-3 py-2 ${designClasses.border} ${designClasses.surface}`}
+              />
+            </div>
+
+            <div>
+              <label
+                className={`mb-1 block text-sm font-semibold ${designClasses.textDark}`}
+              >
+                Consultation Remarks
+              </label>
+
+              <textarea
+                rows={4}
+                value={
+                  consultationForm
+                    .consultationRemarks
+                }
+                onChange={(event) =>
+                  setConsultationForm(
+                    (current) => ({
+                      ...current,
+                      consultationRemarks:
+                        event.target.value
+                    })
+                  )
+                }
+                placeholder="Record discussion, member feedback and next actions..."
+                className={`w-full rounded-lg border px-3 py-2 ${designClasses.border} ${designClasses.surface}`}
+              />
+            </div>
+          </div>
+
+          <div
+            className="mt-6 flex justify-end gap-3"
+          >
+            <button
+              type="button"
+              onClick={
+                closeConsultationFollowup
+              }
+              disabled={
+                consultationSaving
+              }
+              className={`rounded-lg px-4 py-2 text-sm font-semibold ${designClasses.secondaryButton}`}
+            >
+              Cancel
+            </button>
+
+            <button
+              type="button"
+              onClick={
+                saveConsultationFollowup
+              }
+              disabled={
+                consultationSaving
+              }
+              className={`rounded-lg px-4 py-2 text-sm font-semibold ${
+                consultationSaving
+                  ? "cursor-not-allowed opacity-50"
+                  : ""
+              } ${designClasses.primaryButton}`}
+            >
+              {consultationSaving
+                ? "Saving..."
+                : "Save Follow-up"}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
   const renderMainContent = () => {
     if (loading) {
       return (
@@ -2162,6 +2909,12 @@ const reviewContactRequest = (
   activeView === VIEWS.CONTACT_REQUESTS
 ) {
   return renderContactRequests();
+}
+
+if (
+  activeView === VIEWS.MUTUAL_FOLLOWUP
+) {
+  return renderConsultationFollowups();
 }
 
 if (
@@ -2238,7 +2991,7 @@ if (
       </main>
 
       <BrandFooter />
-
+{renderConsultationEditor()}
       <PromptModal
         open={
           promptModal.open

@@ -2,10 +2,14 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import profileService from "../../services/profileService";
+import advertisementService from "../../services/advertisementService";
+import advertisementResponseService from "../../services/advertisementResponseService";
+import creditService from "../../services/creditService";
 
 import Typography from "@mui/material/Typography";
 import MemberLayout from "../../shared/layouts/MemberLayout";
 import CollapsibleSection from "../../shared/components/CollapsibleSection";
+import PromptModal from "../../shared/components/PromptModal";
 import { designClasses } from "../../shared/styles/designTokens";
 
 // Material-UI components for custom message and feedback
@@ -15,7 +19,7 @@ import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
 
 import BasicProfile from "./components/sections/BasicProfile";
-import AddressDetails from "./components/sections/AddressDetails";
+
 import EducationJobDetails from "./components/sections/EducationJobDetails";
 import FamilyDetails from "./components/sections/FamilyDetails";
 import HoroscopeDetails from "./components/sections/HoroscopeDetails";
@@ -38,9 +42,86 @@ const ViewOtherProfilePage = () => {
   const [snackbarOpen, setSnackbarOpen] = useState(false); // State for Snackbar feedback
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState('success');
+    const [
+    creditSummary,
+    setCreditSummary,
+  ] = useState(null);
 
-  // Contact access is moderator-controlled.
-  // Contact-view allowance is consumed only after approval.
+  const [
+    actionLoading,
+    setActionLoading,
+  ] = useState(false);
+  const [
+    advertisementResponseSubmitted,
+    setAdvertisementResponseSubmitted,
+  ] = useState(false);
+  const [
+    promptModal,
+    setPromptModal,
+  ] = useState({
+    open: false,
+    title: "",
+    description: "",
+    label: "Remarks",
+    initialValue: "",
+    placeholder: "",
+    required: false,
+    confirmLabel: "Submit",
+    showCreditSummary: false,
+    actionCost: 0,
+    onConfirm: null,
+  });
+
+  const closePromptModal =
+    () => {
+      setPromptModal(
+        (current) => ({
+          ...current,
+          open: false,
+          onConfirm: null,
+        })
+      );
+    };
+
+  const openPromptModal =
+    (options) => {
+      setPromptModal({
+        open: true,
+        title:
+          options?.title || "",
+        description:
+          options?.description || "",
+        label:
+          options?.label || "Remarks",
+        initialValue:
+          options?.initialValue || "",
+        placeholder:
+          options?.placeholder || "",
+        required:
+          Boolean(
+            options?.required
+          ),
+        confirmLabel:
+          options?.confirmLabel ||
+          "Submit",
+        showCreditSummary:
+          Boolean(
+            options?.showCreditSummary
+          ),
+        actionCost:
+          Number(
+            options?.actionCost || 0
+          ),
+        onConfirm:
+          options?.onConfirm || null,
+      });
+    };
+
+  // Protected contact access.
+  // Advertisement Mutual Interest may reveal
+  // the permitted phone number directly.
+  // Legacy non-advertisement contact handling
+  // remains supported by the backend.
   const [contactData, setContactData] = useState(null);
   const [contactLoading, setContactLoading] = useState(false);
 
@@ -60,9 +141,6 @@ const ViewOtherProfilePage = () => {
   const [photosLoading, setPhotosLoading] = useState(false);
   const [photosError, setPhotosError] = useState('');
   const [, setBrokenUrls] = useState(() => new Set());
-
-  const fallbackImageUrl =
-  FALLBACK_DEFAULT_IMAGE_PATH;
 
   const mergedProfileData = useMemo(() => {
   if (!profileData) return null;
@@ -201,7 +279,135 @@ const ViewOtherProfilePage = () => {
 
   // added on 31-Dec-25 for handling
   const location = useLocation();
+  const profileContext =
+    useMemo(() => {
+      const params =
+        new URLSearchParams(
+          location.search
+        );
 
+      return {
+        source:
+          String(
+            params.get(
+              "source"
+            ) || "standard"
+          )
+            .trim()
+            .toLowerCase(),
+
+        advertisementId:
+          params.get(
+            "advertisementId"
+          ) || "",
+
+        responseId:
+          params.get(
+            "responseId"
+          ) || "",
+
+        responseType:
+          String(
+            params.get(
+              "responseType"
+            ) || ""
+          )
+            .trim()
+            .toUpperCase(),
+
+        responseStatus:
+          String(
+            params.get(
+              "responseStatus"
+            ) || ""
+          )
+            .trim()
+            .toUpperCase(),
+
+        direction:
+          String(
+            params.get(
+              "direction"
+            ) || ""
+          )
+            .trim()
+            .toLowerCase(),
+
+        returnTo:
+          params.get(
+            "returnTo"
+          ) || ""
+      };
+    }, [
+      location.search
+    ]);
+  const isAdvertisementContext =
+    profileContext.source ===
+      "advertisement" &&
+    Boolean(
+      profileContext
+        .advertisementId
+    );
+
+  const isAdvertisementResponseContext =
+    profileContext.source ===
+      "message-box" &&
+    Boolean(
+      profileContext
+        .responseId
+    );
+
+  const isMutualContext =
+    profileContext
+      .responseStatus ===
+    "MUTUAL";
+
+  const isReceivedResponse =
+    profileContext.direction ===
+    "received";
+
+  const isSentResponse =
+    profileContext.direction ===
+    "sent";
+  const canShortlistResponse =
+    isAdvertisementResponseContext &&
+    isReceivedResponse &&
+    profileContext
+      .responseType ===
+      "INTEREST" &&
+    (
+      profileContext
+        .responseStatus ===
+        "NEW" ||
+      profileContext
+        .responseStatus ===
+        "HOLD"
+    );
+
+  const canApplyAfterShortlist =
+    isAdvertisementResponseContext &&
+    isSentResponse &&
+    profileContext
+      .responseType ===
+      "INTEREST" &&
+    profileContext
+      .responseStatus ===
+      "SHORTLISTED";
+
+  const canConfirmMutual =
+    isAdvertisementResponseContext &&
+    isReceivedResponse &&
+    profileContext
+      .responseStatus !==
+      "MUTUAL" &&
+    (
+      profileContext
+        .responseType ===
+        "APPLY" ||
+      profileContext
+        .responseStatus ===
+        "APPLIED"
+    );
   useEffect(() => {
     const params =
       new URLSearchParams(
@@ -255,6 +461,82 @@ const ViewOtherProfilePage = () => {
     navigate("/dashboard");
   };
   
+    useEffect(() => {
+    let active = true;
+
+    const loadCreditSummary =
+      async () => {
+        try {
+          const summary =
+            await creditService
+              .getMyCreditSummary();
+
+          if (active) {
+            setCreditSummary(
+              summary
+            );
+          }
+        } catch (creditError) {
+          console.error(
+            "Unable to load credit summary:",
+            creditError
+          );
+
+          if (active) {
+            setCreditSummary(
+              null
+            );
+          }
+        }
+      };
+
+    loadCreditSummary();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const refreshCreditSummary =
+    async () => {
+      try {
+        const summary =
+          await creditService
+            .getMyCreditSummary();
+
+        setCreditSummary(
+          summary
+        );
+      } catch (creditError) {
+        console.error(
+          "Unable to refresh credit balance:",
+          creditError
+        );
+      }
+    };
+
+  const updateProfileContextStatus =
+    (responseStatus) => {
+      const params =
+        new URLSearchParams(
+          location.search
+        );
+
+      params.set(
+        "responseStatus",
+        String(
+          responseStatus || ""
+        ).toUpperCase()
+      );
+
+      navigate(
+        `${location.pathname}?${params.toString()}`,
+        {
+          replace: true
+        }
+      );
+    };
+    
   useEffect(() => {
     const fetchProfile = async () => {
       if (!profileId) {
@@ -570,8 +852,18 @@ useEffect(() => {
 
     try {
       const payload = {
-        sharedProfileId: profileData.profile_id || profileId,
-        sharedProfileName: profileData.name || ''
+        sharedProfileId:
+          profileData.profile_id ||
+          profileId,
+
+        sharedProfileName:
+          profileData.name ||
+          "",
+
+        requestSource:
+          isMutualContext
+            ? "ADVERTISEMENT_MUTUAL"
+            : "PROFILE"
       };
 
 const data =
@@ -584,9 +876,13 @@ const requestStatus = (
 ).toUpperCase();
 
 if (
-  requestStatus === "PENDING" ||
-  requestStatus ===
-    "CLARIFICATION_REQUIRED"
+  !isMutualContext &&
+  (
+    requestStatus ===
+      "PENDING" ||
+    requestStatus ===
+      "CLARIFICATION_REQUIRED"
+  )
 ) {
   setContactData(null);
   setContactAccessChecked(true);
@@ -606,7 +902,9 @@ if (
 
 // If access was previously approved,
 // backend returns the contact data directly.
-setContactData(data || {});
+setContactData(
+  data?.contact || null
+);
 setContactAccessChecked(true);
 setContactAccessStatus(
   "APPROVED"
@@ -614,16 +912,64 @@ setContactAccessStatus(
 setActiveSection("contact");
 
 setSnackbarMessage(
-  "Contact details are available."
+  "Phone number is available."
 );
 
 setSnackbarSeverity("success");
 setSnackbarOpen(true);
 
     } catch (err) {
-      console.error("Ã¢ÂÅ' [ViewOtherProfilePage] Error unlocking contact details:", err);
+      console.error(
+        "[ViewOtherProfilePage] Error unlocking contact details:",
+        err
+      );
 
-      if (err.response?.status === 403) {
+      if (
+        err.response?.status ===
+          402 ||
+        err.response?.data
+          ?.code ===
+          "INSUFFICIENT_CREDITS"
+      ) {
+        const responseData =
+          err.response?.data || {};
+
+        const available =
+          responseData
+            ?.availableBalance ??
+          responseData?.data
+            ?.availableBalance;
+
+        const required =
+          responseData
+            ?.requiredCredits ??
+          responseData?.data
+            ?.requiredCredits;
+
+        setSnackbarMessage(
+          `Insufficient credits.${
+            available !== undefined
+              ? ` Available: ${available}.`
+              : ""
+          }${
+            required !== undefined
+              ? ` Required: ${required}.`
+              : ""
+          } Please recharge to continue.`
+        );
+
+        setSnackbarSeverity(
+          "error"
+        );
+
+        setSnackbarOpen(true);
+        return;
+      }
+
+      if (
+        err.response?.status ===
+          403
+      ) {
         const data = err.response.data || {};
         const limit = data.limit;
         const used = data.used;
@@ -651,7 +997,368 @@ setSnackbarOpen(true);
       setContactLoading(false);
     }
   };
+  const handleAdvertisementResponse =
+    (responseType) => {
+      const advertisementId =
+        profileContext
+          .advertisementId;
 
+      if (!advertisementId) {
+        setSnackbarMessage(
+          "Advertisement reference is unavailable."
+        );
+        setSnackbarSeverity(
+          "error"
+        );
+        setSnackbarOpen(true);
+        return;
+      }
+
+      const normalizedResponseType =
+        String(
+          responseType || ""
+        )
+          .trim()
+          .toUpperCase();
+
+      const actionCost =
+        normalizedResponseType ===
+          "APPLY"
+          ? Number(
+              creditSummary
+                ?.actionCosts
+                ?.directApply ||
+              0
+            )
+          : Number(
+              creditSummary
+                ?.actionCosts
+                ?.showInterest ||
+              0
+            );
+
+      openPromptModal({
+        title:
+          normalizedResponseType ===
+            "APPLY"
+            ? "Apply for this Profile"
+            : "Show Interest",
+
+        description:
+          normalizedResponseType ===
+            "APPLY"
+            ? "Please provide a genuine reason for applying to this matrimonial profile."
+            : "Show Interest means this profile appears potentially suitable, but you need clarification or additional information before applying. Please explain what you would like to understand.",
+
+        label:
+          normalizedResponseType ===
+            "APPLY"
+            ? "Reason for Applying"
+            : "Reason / Clarification Required",
+
+        placeholder:
+          normalizedResponseType ===
+            "APPLY"
+            ? "Explain why you believe the profiles may be suitable..."
+            : "Example: The profile appears suitable, but we would like to understand willingness to relocate before applying...",
+
+        required:
+          true,
+
+        confirmLabel:
+          normalizedResponseType ===
+            "APPLY"
+            ? "Submit Application"
+            : "Send Interest",
+
+        showCreditSummary:
+          true,
+
+        actionCost,
+
+        onConfirm:
+          async (remarks) => {
+            closePromptModal();
+
+            try {
+              setActionLoading(
+                true
+              );
+
+              const result =
+                await advertisementService
+                  .respondToAdvertisement({
+                    advertisementId,
+                    responseType:
+                      normalizedResponseType,
+                    remarks,
+                  });
+
+              await refreshCreditSummary();
+
+              setAdvertisementResponseSubmitted(
+                true
+              );
+
+              setSnackbarMessage(
+                result?.message ||
+                  "Response submitted successfully."
+              );
+
+              setSnackbarSeverity(
+                "success"
+              );
+
+              setSnackbarOpen(true);
+            } catch (requestError) {
+              console.error(
+                "Unable to submit advertisement response:",
+                requestError
+              );
+
+              setSnackbarMessage(
+                requestError?.response
+                  ?.data?.message ||
+                  "Unable to submit the response."
+              );
+
+              setSnackbarSeverity(
+                "error"
+              );
+
+              setSnackbarOpen(true);
+            } finally {
+              setActionLoading(
+                false
+              );
+            }
+          },
+      });
+    };
+  const handleApplyAfterShortlist =
+    () => {
+      if (
+        !profileContext.responseId
+      ) {
+        return;
+      }
+
+      openPromptModal({
+        title:
+          "Apply for this Advertisement",
+
+        description:
+          "Provide the requested clarification and confirm that you would like to proceed.",
+
+        label:
+          "Your Clarification / Application Message",
+
+        placeholder:
+          "Provide the requested clarification and any additional information you would like the profile owner to consider.",
+
+        required:
+          true,
+
+        confirmLabel:
+          "Submit Application",
+
+        showCreditSummary:
+          true,
+
+        actionCost:
+          Number(
+            creditSummary
+              ?.actionCosts
+              ?.directApply ||
+            0
+          ),
+
+        onConfirm:
+          async (remarks) => {
+            closePromptModal();
+
+            try {
+              setActionLoading(
+                true
+              );
+
+              await advertisementResponseService
+                .applyAfterShortlist({
+                  responseId:
+                    profileContext
+                      .responseId,
+                  remarks,
+                });
+
+              await refreshCreditSummary();
+
+              updateProfileContextStatus(
+                "APPLIED"
+              );
+
+              setSnackbarMessage(
+                "Application submitted successfully."
+              );
+
+              setSnackbarSeverity(
+                "success"
+              );
+
+              setSnackbarOpen(true);
+            } catch (requestError) {
+              console.error(
+                "Unable to submit application:",
+                requestError
+              );
+
+              setSnackbarMessage(
+                requestError?.response
+                  ?.data?.message ||
+                  "Unable to submit the application."
+              );
+
+              setSnackbarSeverity(
+                "error"
+              );
+
+              setSnackbarOpen(true);
+            } finally {
+              setActionLoading(
+                false
+              );
+            }
+          },
+      });
+    };
+  const handleResponseStatus =
+    (
+      responseStatus
+    ) => {
+      if (
+        !profileContext.responseId
+      ) {
+        return;
+      }
+
+      const actionCost =
+        responseStatus ===
+          "SHORTLISTED"
+          ? Number(
+              creditSummary
+                ?.actionCosts
+                ?.shortlist ||
+              0
+            )
+          : responseStatus ===
+              "MUTUAL"
+            ? Number(
+                creditSummary
+                  ?.actionCosts
+                  ?.mutualInterest ||
+                0
+              )
+            : 0;
+
+      openPromptModal({
+        title:
+          responseStatus ===
+            "MUTUAL"
+            ? "Confirm Mutual Interest"
+            : "Shortlist Profile",
+
+        description:
+          responseStatus ===
+            "MUTUAL"
+            ? "Confirm that you would like to proceed with this member."
+            : "Please specify the clarification or additional information you require before this member applies.",
+
+        label:
+          responseStatus ===
+            "SHORTLISTED"
+            ? "Clarification / Additional Information Required"
+            : "Remarks",
+
+        initialValue:
+          responseStatus ===
+            "MUTUAL"
+            ? "I would like to proceed with this profile."
+            : "",
+
+        required:
+          true,
+
+        confirmLabel:
+          responseStatus ===
+            "MUTUAL"
+            ? "Confirm Mutual Interest"
+            : "Send Clarification Request",
+
+        showCreditSummary:
+          true,
+
+        actionCost,
+
+        onConfirm:
+          async (remarks) => {
+            closePromptModal();
+
+            try {
+              setActionLoading(
+                true
+              );
+
+              await advertisementResponseService
+                .updateResponseStatus({
+                  responseId:
+                    profileContext
+                      .responseId,
+                  responseStatus,
+                  remarks,
+                });
+
+              await refreshCreditSummary();
+
+              updateProfileContextStatus(
+                responseStatus
+              );
+
+              setSnackbarMessage(
+                responseStatus ===
+                  "MUTUAL"
+                  ? "Mutual Interest confirmed."
+                  : "Clarification request sent."
+              );
+
+              setSnackbarSeverity(
+                "success"
+              );
+
+              setSnackbarOpen(true);
+            } catch (requestError) {
+              console.error(
+                "Unable to update response:",
+                requestError
+              );
+
+              setSnackbarMessage(
+                requestError?.response
+                  ?.data?.message ||
+                  "Unable to update the response."
+              );
+
+              setSnackbarSeverity(
+                "error"
+              );
+
+              setSnackbarOpen(true);
+            } finally {
+              setActionLoading(
+                false
+              );
+            }
+          },
+      });
+    };
   const handleSendInvitation = async () => {
     setIsSendingInvitation(true);
     try {
@@ -834,8 +1541,8 @@ setSnackbarOpen(true);
           >
           <CollapsibleSection
             number={2}
-            title="Contact & Address"
-            description="Contact and address information."
+            title="Contact"
+description="Protected phone contact information."
             open={activeSection === "contact"}
             onToggle={() => toggleSection("contact")}
           >
@@ -861,16 +1568,27 @@ setSnackbarOpen(true);
                   <span
                     className={`ml-1 ${designClasses.textSecondary}`}
                   >
-                    The approved contact details
-                    are available below.
+                    The permitted phone number
+                    is available below.
                   </span>
                 </div>
 
-                <AddressDetails
-                  profileData={
-                    mergedProfileData
-                  }
-                />
+                <div
+                  className={`rounded-xl border p-4 ${designClasses.border} ${designClasses.surfaceMuted}`}
+                >
+                  <p
+                    className={`text-xs font-semibold uppercase tracking-wide ${designClasses.textSecondary}`}
+                  >
+                    Phone Number
+                  </p>
+
+                  <p
+                    className={`mt-1 text-lg font-semibold ${designClasses.textPrimary}`}
+                  >
+                    {contactData?.phone ||
+                      "Phone number unavailable"}
+                  </p>
+                </div>
               </div>
             ) : contactAccessStatus ===
               "ERROR" ? (
@@ -886,11 +1604,12 @@ setSnackbarOpen(true);
                 <p
                   className={`text-sm ${designClasses.textSecondary}`}
                 >
-                  Contact details are protected.
-                  Submit a request for moderator
-                  review. Your contact-view
-                  allowance is consumed only when
-                  access is approved.
+                  Phone numbers are protected.
+                  Contact access becomes available
+                  after Mutual Interest. The
+                  configured contact-view credit
+                  cost will be used when the phone
+                  number is unlocked.
                 </p>
 
                 <Button
@@ -902,7 +1621,7 @@ setSnackbarOpen(true);
                 >
                   {contactLoading
                     ? "Submitting..."
-                    : "Request Contact Details"}
+                    : "View Phone Number"}
                 </Button>
               </div>
             )}
@@ -957,24 +1676,45 @@ setSnackbarOpen(true);
           <h2
             className={`text-lg font-semibold ${designClasses.textPrimary}`}
           >
-            Connect with this Profile
+            {isMutualContext
+              ? "Mutual Interest"
+              : isAdvertisementContext
+              ? "Advertisement Actions"
+              : isAdvertisementResponseContext
+              ? "Response Actions"
+              : "Connect with this Profile"}
           </h2>
 
           <p
             className={`mb-4 mt-1 text-sm ${designClasses.textSecondary}`}
           >
-            Send a message along with your invitation.
+            {isMutualContext
+              ? "Mutual Interest has been confirmed. You may view the member's phone number."
+              : isAdvertisementContext
+              ? "Respond to this matrimonial advertisement."
+              : isAdvertisementResponseContext
+              ? "Review this profile in the context of the advertisement response."
+              : "Send a message along with your interest."}
           </p>
 
-          <TextField
-            fullWidth
-            multiline
-            rows={3}
-            value={inviterMessage}
-            onChange={(e) => setInviterMessage(e.target.value)}
-            placeholder="Type your message..."
-            variant="outlined"
-          />
+          {!isAdvertisementContext &&
+            !isAdvertisementResponseContext && (
+            <TextField
+              fullWidth
+              multiline
+              rows={3}
+              value={
+                inviterMessage
+              }
+              onChange={(e) =>
+                setInviterMessage(
+                  e.target.value
+                )
+              }
+              placeholder="Type your message..."
+              variant="outlined"
+            />
+          )}
 
           <div className="mt-4 flex flex-col justify-end gap-3 sm:flex-row">
             <button
@@ -984,22 +1724,200 @@ setSnackbarOpen(true);
             >
               Back
             </button>
+            {isAdvertisementContext &&
+              !advertisementResponseSubmitted && (
+              <>
+                <button
+                  type="button"
+                  disabled={
+                    actionLoading
+                  }
+                  onClick={() =>
+                    handleAdvertisementResponse(
+                      "INTEREST"
+                    )
+                  }
+                  className={`rounded-lg px-6 py-2.5 font-semibold transition ${designClasses.secondaryButton} disabled:cursor-not-allowed disabled:opacity-50`}
+                >
+                  Show Interest
+                </button>
 
+                <button
+                  type="button"
+                  disabled={
+                    actionLoading
+                  }
+                  onClick={() =>
+                    handleAdvertisementResponse(
+                      "APPLY"
+                    )
+                  }
+                  className={`rounded-lg px-6 py-2.5 font-semibold transition ${designClasses.primaryButton} disabled:cursor-not-allowed disabled:opacity-50`}
+                >
+                  Apply
+                </button>
+              </>
+            )}
+            {isAdvertisementContext &&
+              advertisementResponseSubmitted && (
+                <div
+                  className={`rounded-lg px-4 py-2 text-sm ${designClasses.statusSuccess}`}
+                >
+                  Your response has been
+                  submitted. You can follow
+                  further activity from the
+                  Message Box.
+                </div>
+              )}
+            {canShortlistResponse && (
+              <button
+                type="button"
+                disabled={
+                  actionLoading
+                }
+                onClick={() =>
+                  handleResponseStatus(
+                    "SHORTLISTED"
+                  )
+                }
+                className={`rounded-lg px-6 py-2.5 font-semibold transition ${designClasses.primaryButton} disabled:cursor-not-allowed disabled:opacity-50`}
+              >
+                Shortlist
+              </button>
+            )}
 
-            <button
-              type="button"
-              className={`rounded-lg px-6 py-2.5 font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${designClasses.primaryButton}`}
-              onClick={handleSendInvitation}
-              disabled={isSendingInvitation}
-            >
-              {isSendingInvitation
-                ? "Sending..."
-                : "Send Invitation"}
-            </button>
+            {canApplyAfterShortlist && (
+              <button
+                type="button"
+                disabled={
+                  actionLoading
+                }
+                onClick={
+                  handleApplyAfterShortlist
+                }
+                className={`rounded-lg px-6 py-2.5 font-semibold transition ${designClasses.primaryButton} disabled:cursor-not-allowed disabled:opacity-50`}
+              >
+                Apply / Respond to Clarification
+              </button>
+            )}
+
+            {canConfirmMutual && (
+              <button
+                type="button"
+                disabled={
+                  actionLoading
+                }
+                onClick={() =>
+                  handleResponseStatus(
+                    "MUTUAL"
+                  )
+                }
+                className={`rounded-lg px-6 py-2.5 font-semibold transition ${designClasses.primaryButton} disabled:cursor-not-allowed disabled:opacity-50`}
+              >
+                Mutual Interest
+              </button>
+            )}
+            {isMutualContext && (
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveSection(
+                    "contact"
+                  );
+
+                  window.setTimeout(
+                    () => {
+                      document
+                        .getElementById(
+                          "profile-contact-section"
+                        )
+                        ?.scrollIntoView({
+                          behavior:
+                            "smooth",
+                          block:
+                            "start"
+                        });
+                    },
+                    100
+                  );
+                }}
+                className={`rounded-lg px-6 py-2.5 font-semibold transition ${designClasses.primaryButton}`}
+              >
+                View Phone Number
+              </button>
+            )}
+
+            {!isAdvertisementContext &&
+              !isAdvertisementResponseContext && (
+              <button
+                type="button"
+                className={`rounded-lg px-6 py-2.5 font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${designClasses.primaryButton}`}
+                onClick={
+                  handleSendInvitation
+                }
+                disabled={
+                  isSendingInvitation
+                }
+              >
+                {isSendingInvitation
+                  ? "Sending..."
+                  : "Show Interest"}
+              </button>
+            )}
           </div>
         </div>
 
-
+        <PromptModal
+          open={
+            promptModal.open
+          }
+          title={
+            promptModal.title
+          }
+          description={
+            promptModal.description
+          }
+          label={
+            promptModal.label
+          }
+          initialValue={
+            promptModal.initialValue
+          }
+          placeholder={
+            promptModal.placeholder
+          }
+          required={
+            promptModal.required
+          }
+          confirmLabel={
+            promptModal.confirmLabel
+          }
+          showCreditSummary={
+            promptModal
+              .showCreditSummary
+          }
+          actionCost={
+            promptModal.actionCost
+          }
+          creditSummary={
+            creditSummary
+          }
+          onRecharge={() => {
+            closePromptModal();
+            navigate(
+              "/renew-profile"
+            );
+          }}
+          onCancel={
+            closePromptModal
+          }
+          onConfirm={(value) =>
+            promptModal
+              .onConfirm?.(
+                value
+              )
+          }
+        />  
         <Snackbar
           open={snackbarOpen}
           autoHideDuration={6000}

@@ -5,6 +5,8 @@ import {
 const NotificationBanner = ({
   message,
   type = "success",
+  actionLabel = "",
+  onAction,
   onClose,
 }) => {
   if (!message) {
@@ -27,9 +29,22 @@ const NotificationBanner = ({
           : "status"
       }
     >
-      <span>
-        {message}
-      </span>
+      <div className="min-w-0 flex-1">
+        <span>
+          {message}
+        </span>
+
+        {actionLabel &&
+          onAction && (
+          <button
+            type="button"
+            onClick={onAction}
+            className="ml-3 inline-flex font-semibold underline underline-offset-2"
+          >
+            {actionLabel}
+          </button>
+        )}
+      </div>
 
       {onClose && (
         <button

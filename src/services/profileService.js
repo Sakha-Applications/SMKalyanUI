@@ -112,7 +112,10 @@ getContactDetails: async (profileId) => {
     `/contact-details/${profileId}`
   );
 
-  return response.data;
+  return (
+    response?.data?.contact ||
+    null
+  );
 },
 
 forwardProfileByEmail: async ({

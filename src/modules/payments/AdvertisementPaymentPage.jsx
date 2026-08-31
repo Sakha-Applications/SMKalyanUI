@@ -378,6 +378,14 @@ const AdvertisementPaymentPage = () => {
           member_narrative:
             advertisementDraft.advertisementText,
 
+          advertiser_convenient_time:
+            String(
+              advertisementDraft
+                ?.advertiserConvenientTime ||
+              ""
+            ).trim() ||
+            null,
+
           looking_for:
             advertisementDraft?.lookingFor ||
             null

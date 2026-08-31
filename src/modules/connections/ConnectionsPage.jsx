@@ -11,10 +11,12 @@ import invitationService from "../../services/invitationService";
 import advertisementResponseService from "../../services/advertisementResponseService";
 import registrationService from "../../services/registrationService";
 import profileService from "../../services/profileService";
+import creditService from "../../services/creditService";
 
 import MemberLayout from "../../shared/layouts/MemberLayout";
 import RestrictedFeatureState from "../../shared/components/RestrictedFeatureState";
 import PromptModal from "../../shared/components/PromptModal";
+import LowCreditNotice from "../../shared/components/LowCreditNotice";
 
 import {
   calculateProfileCompletion,
@@ -55,8 +57,10 @@ const InvitationStatus = ({ status }) => {
         : normalizedStatus === "ACCEPTED"
           ? "Accepted"
           : normalizedStatus === "SHORTLISTED"
-            ? "Shortlisted"
-            : normalizedStatus === "HOLD"
+            ? "Shortlisted — Clarification Requested"
+            : normalizedStatus === "APPLIED"
+              ? "Applied"
+              : normalizedStatus === "HOLD"
               ? "On Hold"
               : normalizedStatus === "MUTUAL"
                 ? "Mutual Interest"
@@ -189,7 +193,9 @@ const AdvertisementResponseCard = ({
   onViewProfile,
   onViewContactDetails,
   onUpdateStatus,
+  onApplyAfterShortlist,
   onRequestContact,
+  onUpdateConvenientTime,
   actionLoading,
   contactActionLoading,
   contactRequestStatusByProfile
@@ -224,9 +230,53 @@ const AdvertisementResponseCard = ({
   const status =
     response.response_status ||
     "NEW";
+
   const normalizedResponseStatus =
     normalizeStatus(status);
 
+  const canShortlist =
+    received &&
+    responseType ===
+      "INTEREST" &&
+    (
+      normalizedResponseStatus ===
+        "NEW" ||
+      normalizedResponseStatus ===
+        "HOLD"
+    );
+
+  const canConfirmMutual =
+    received &&
+    normalizedResponseStatus !==
+      "MUTUAL" &&
+    normalizedResponseStatus !==
+      "NOT_INTERESTED" &&
+    (
+      responseType === "APPLY" ||
+      normalizedResponseStatus ===
+        "APPLIED"
+    );
+
+  const waitingForApplication =
+    received &&
+    normalizedResponseStatus ===
+      "SHORTLISTED";
+
+  const canApplyAfterShortlist =
+    !received &&
+    responseType ===
+      "INTEREST" &&
+    normalizedResponseStatus ===
+      "SHORTLISTED";
+  const myConvenientTime =
+    received
+      ? response.owner_convenient_time
+      : response.responder_convenient_time;
+
+  const otherConvenientTime =
+    received
+      ? response.responder_convenient_time
+      : response.owner_convenient_time;
   const contactTargetProfileId =
     received
       ? response.responder_profile_id
@@ -347,11 +397,61 @@ const AdvertisementResponseCard = ({
               <p
                 className={`mt-2 text-xs ${designClasses.textSecondary}`}
               >
-                Owner remarks:{" "}
+                <span className="font-semibold">
+                  {normalizedResponseStatus ===
+                  "SHORTLISTED"
+                    ? "Clarification requested:"
+                    : "Owner remarks:"}
+                </span>{" "}
                 {response.owner_remarks}
               </p>
             )}
+            <div
+              className={`mt-3 rounded-lg p-3 ${designClasses.surfaceMuted}`}
+            >
+              <div
+                className={`text-xs font-semibold ${designClasses.textDark}`}
+              >
+                Convenient Time to Connect
+              </div>
 
+              <div
+                className={`mt-2 text-xs ${designClasses.textSecondary}`}
+              >
+                <span className="font-semibold">
+                  Your convenient time:
+                </span>{" "}
+                {myConvenientTime ||
+                  "Not provided yet"}
+              </div>
+
+              <div
+                className={`mt-1 text-xs ${designClasses.textSecondary}`}
+              >
+                <span className="font-semibold">
+                  {received
+                    ? "Responder's convenient time:"
+                    : "Advertiser's convenient time:"}
+                </span>{" "}
+                {otherConvenientTime ||
+                  "Not provided yet"}
+              </div>
+
+              <button
+                type="button"
+                onClick={() =>
+                  onUpdateConvenientTime(
+                    response,
+                    direction
+                  )
+                }
+                className={`mt-3 rounded-lg px-3 py-1.5 text-xs font-semibold ${designClasses.secondaryButton}`}
+              >
+                {myConvenientTime
+                  ? "Update My Convenient Time"
+                  : "Add My Convenient Time"}
+              </button>
+            </div>
             {response.created_at && (
               <p
                 className={`mt-3 text-xs ${designClasses.textSecondary}`}
@@ -372,7 +472,9 @@ const AdvertisementResponseCard = ({
               type="button"
               onClick={() =>
                 onViewProfile(
-                  profileId
+                  profileId,
+                  response,
+                  direction
                 )
               }
               className={`shrink-0 rounded-lg px-4 py-2 text-sm font-semibold transition ${designClasses.secondaryButton}`}
@@ -384,75 +486,168 @@ const AdvertisementResponseCard = ({
 
         {received &&
           normalizedResponseStatus !==
-            "MUTUAL" && (
+            "MUTUAL" &&
+          normalizedResponseStatus !==
+            "NOT_INTERESTED" && (
           <div
-            className={`flex flex-wrap gap-2 border-t pt-3 ${designClasses.border}`}
+            className={`border-t pt-3 ${designClasses.border}`}
           >
-            <button
-              type="button"
-              disabled={
-                actionLoading ===
-                  response.id ||
-                normalizedResponseStatus ===
-                  "SHORTLISTED"
-              }
-              onClick={() =>
-                onUpdateStatus(
-                  response,
-                  "SHORTLISTED"
-                )
-              }
-              className={`rounded-lg px-3 py-2 text-xs font-semibold ${designClasses.primaryButton} disabled:cursor-not-allowed disabled:opacity-50`}
+            {waitingForApplication && (
+              <div
+                className={`mb-3 rounded-lg p-3 text-xs ${designClasses.statusWarning}`}
+              >
+                <span className="font-semibold">
+                  Waiting for member to apply.
+                </span>{" "}
+                Your clarification request has
+                been sent. Mutual Interest will
+                become available after the member
+                submits the application.
+              </div>
+            )}
+
+            <div className="flex flex-wrap gap-2">
+              {canConfirmMutual && (
+                <button
+                  type="button"
+                  disabled={
+                    actionLoading ===
+                      response.id
+                  }
+                  onClick={() =>
+                    onUpdateStatus(
+                      response,
+                      "MUTUAL"
+                    )
+                  }
+                  className={`rounded-lg px-3 py-2 text-xs font-semibold ${designClasses.primaryButton} disabled:cursor-not-allowed disabled:opacity-50`}
+                >
+                  Mutual Interest
+                </button>
+              )}
+
+              {canShortlist && (
+                <button
+                  type="button"
+                  disabled={
+                    actionLoading ===
+                      response.id
+                  }
+                  onClick={() =>
+                    onUpdateStatus(
+                      response,
+                      "SHORTLISTED"
+                    )
+                  }
+                  className={`rounded-lg px-3 py-2 text-xs font-semibold ${designClasses.primaryButton} disabled:cursor-not-allowed disabled:opacity-50`}
+                >
+                  Shortlist
+                </button>
+              )}
+
+              <button
+                type="button"
+                disabled={
+                  actionLoading ===
+                    response.id ||
+                  normalizedResponseStatus ===
+                    "HOLD"
+                }
+                onClick={() =>
+                  onUpdateStatus(
+                    response,
+                    "HOLD"
+                  )
+                }
+                className={`rounded-lg px-3 py-2 text-xs font-semibold ${designClasses.secondaryButton} disabled:cursor-not-allowed disabled:opacity-50`}
+              >
+                {normalizedResponseStatus ===
+                "HOLD"
+                  ? "On Hold"
+                  : "Hold"}
+              </button>
+
+              <button
+                type="button"
+                disabled={
+                  actionLoading ===
+                    response.id
+                }
+                onClick={() =>
+                  onUpdateStatus(
+                    response,
+                    "NOT_INTERESTED"
+                  )
+                }
+                className={`rounded-lg px-3 py-2 text-xs font-semibold ${designClasses.secondaryButton} disabled:cursor-not-allowed disabled:opacity-50`}
+              >
+                Mark Not Interested
+              </button>
+            </div>
+          </div>
+        )}
+
+        {canApplyAfterShortlist && (
+          <div
+            className={`border-t pt-3 ${designClasses.border}`}
+          >
+            <div
+              className={`mb-3 rounded-lg p-3 text-xs ${designClasses.statusWarning}`}
             >
-              {normalizedResponseStatus ===
-              "SHORTLISTED"
-                ? "Shortlisted"
-                : "Shortlist"}
-            </button>
+              <p className="font-semibold">
+                You have been shortlisted.
+              </p>
+
+              <p className="mt-1">
+                The advertisement owner needs
+                additional clarification before
+                proceeding.
+              </p>
+
+              {response.owner_remarks && (
+                <p className="mt-2">
+                  <span className="font-semibold">
+                    Clarification requested:
+                  </span>{" "}
+                  {response.owner_remarks}
+                </p>
+              )}
+            </div>
 
             <button
               type="button"
               disabled={
                 actionLoading ===
-                  response.id ||
-                normalizedResponseStatus ===
-                  "HOLD"
+                  response.id
               }
               onClick={() =>
-                onUpdateStatus(
-                  response,
-                  "HOLD"
+                onApplyAfterShortlist(
+                  response
                 )
               }
-              className={`rounded-lg px-3 py-2 text-xs font-semibold ${designClasses.secondaryButton} disabled:cursor-not-allowed disabled:opacity-50`}
+              className={`rounded-lg px-4 py-2 text-sm font-semibold ${designClasses.primaryButton} disabled:cursor-not-allowed disabled:opacity-50`}
             >
-              {normalizedResponseStatus ===
-              "HOLD"
-                ? "On Hold"
-                : "Hold"}
+              Apply / Respond to Clarification
             </button>
+          </div>
+        )}
 
-            <button
-              type="button"
-              disabled={
-                actionLoading ===
-                  response.id ||
-                normalizedResponseStatus ===
-                  "NOT_INTERESTED"
-              }
-              onClick={() =>
-                onUpdateStatus(
-                  response,
-                  "NOT_INTERESTED"
-                )
-              }
-              className={`rounded-lg px-3 py-2 text-xs font-semibold ${designClasses.secondaryButton} disabled:cursor-not-allowed disabled:opacity-50`}
+        {!received &&
+          normalizedResponseStatus ===
+            "APPLIED" && (
+          <div
+            className={`border-t pt-3 ${designClasses.border}`}
+          >
+            <div
+              className={`rounded-lg p-3 text-xs ${designClasses.statusSuccess}`}
             >
-              {normalizedResponseStatus ===
-              "NOT_INTERESTED"
-                ? "Not Interested"
-                : "Mark Not Interested"}
-            </button>
+              <span className="font-semibold">
+                Application submitted.
+              </span>{" "}
+              Waiting for the advertisement
+              owner to decide whether to proceed
+              with Mutual Interest.
+            </div>
           </div>
         )}
 
@@ -471,67 +666,25 @@ const AdvertisementResponseCard = ({
               <p
                 className={`mt-1 text-xs ${designClasses.textSecondary}`}
               >
-                {contactAccessApproved
-                  ? "Contact access has been approved. Open the profile to view the contact details."
-                  : contactRequestPending
-                  ? "Your contact request is awaiting Moderator review."
-                  : clarificationRequired
-                  ? "The Moderator has requested additional clarification before reviewing your contact request."
-                  : "Both members have expressed positive interest. You may request contact details for Moderator review."}
+                Mutual Interest has been
+                confirmed. Open the profile
+                to view the member's phone
+                number.
               </p>
 
-              {clarificationRequired &&
-                contactModeratorRemarks && (
-                  <div
-                    className={`mt-2 rounded-lg p-3 text-xs ${designClasses.statusWarning}`}
-                  >
-                    <span className="font-semibold">
-                      Moderator clarification:
-                    </span>{" "}
-                    {contactModeratorRemarks}
-                  </div>
-                )}
+          
             </div>
 
-            <button
+                        <button
               type="button"
-              disabled={
-                contactActionLoading ===
-                  response.id ||
-                contactRequestPending
+              onClick={() =>
+                onViewContactDetails(
+                  contactTargetProfileId
+                )
               }
-              onClick={() => {
-                if (
-                  contactAccessApproved
-                ) {
-                  onViewContactDetails(
-                    contactTargetProfileId
-                  );
-                  return;
-                }
-
-                onRequestContact(
-                  response,
-                  direction,
-                  {
-                    clarificationRequired,
-                    moderatorRemarks:
-                      contactModeratorRemarks
-                  }
-                );
-              }}
-              className={`rounded-lg px-4 py-2 text-sm font-semibold ${designClasses.primaryButton} disabled:cursor-not-allowed disabled:opacity-50`}
+              className={`rounded-lg px-4 py-2 text-sm font-semibold ${designClasses.primaryButton}`}
             >
-              {contactActionLoading ===
-              response.id
-                ? "Submitting..."
-                : contactAccessApproved
-                ? "View Contact Details"
-                : contactRequestPending
-                ? "Contact Request Pending"
-                : clarificationRequired
-                ? "Resubmit Contact Request"
-                : "Request Contact Details"}
+              View Phone Number
             </button>
           </div>
         )}
@@ -614,7 +767,7 @@ const ConnectionsPage = () => {
     setSentAdvertisementResponses,
   ] = useState([]);
 
-      const visibleReceivedAdvertisementResponses =
+  const visibleReceivedAdvertisementResponses =
     receivedAdvertisementResponses.filter(
       (response) => {
         const advertisementMatches =
@@ -673,7 +826,10 @@ const ConnectionsPage = () => {
     contactRequestStatusByProfile,
     setContactRequestStatusByProfile,
   ] = useState({});
-
+  const [
+    creditSummary,
+    setCreditSummary,
+  ] = useState(null);
   const [loading, setLoading] =
     useState(true);
 
@@ -698,6 +854,13 @@ const ConnectionsPage = () => {
     required: false,
     confirmLabel:
       "Submit",
+
+    showCreditSummary:
+      false,
+
+    actionCost:
+      0,
+
     onConfirm: null,
   });
 
@@ -739,11 +902,57 @@ const ConnectionsPage = () => {
         confirmLabel:
           options.confirmLabel ||
           "Submit",
+
+        showCreditSummary:
+          Boolean(
+            options.showCreditSummary
+          ),
+
+        actionCost:
+          Number(
+            options.actionCost ||
+            0
+          ),
+
         onConfirm:
           options.onConfirm,
       });
     };
+  useEffect(() => {
+    let active = true;
 
+    const loadCreditSummary =
+      async () => {
+        try {
+          const summary =
+            await creditService
+              .getMyCreditSummary();
+
+          if (active) {
+            setCreditSummary(
+              summary
+            );
+          }
+        } catch (creditError) {
+          console.error(
+            "Unable to load credit summary:",
+            creditError
+          );
+
+          if (active) {
+            setCreditSummary(
+              null
+            );
+          }
+        }
+      };
+
+    loadCreditSummary();
+
+    return () => {
+      active = false;
+    };
+  }, []);
   useEffect(() => {
     let active = true;
 
@@ -1080,7 +1289,116 @@ const ConnectionsPage = () => {
   const approved =
     normalizedProfileStatus ===
     "APPROVED";
+  const handleUpdateConvenientTime =
+    (
+      response,
+      direction
+    ) => {
+      const received =
+        direction ===
+        "received";
 
+      const existingValue =
+        received
+          ? response
+              ?.owner_convenient_time
+          : response
+              ?.responder_convenient_time;
+
+      openPromptModal({
+        title:
+          "Convenient Time to Connect",
+
+        description:
+          "Share when it is generally convenient for the other member to contact you. This is for information only and does not change the relationship status.",
+
+        label:
+          "My Convenient Time",
+
+        initialValue:
+          existingValue || "",
+
+        placeholder:
+          "Example: Weekdays after 7 PM, Saturday morning, Sunday 10 AM–1 PM",
+
+        required:
+          true,
+
+        confirmLabel:
+          existingValue
+            ? "Update Time"
+            : "Save Time",
+
+        showCreditSummary:
+          false,
+
+        actionCost:
+          0,
+
+        onConfirm:
+          async (
+            convenientTime
+          ) => {
+            closePromptModal();
+
+            try {
+              setResponseActionLoadingId(
+                response.id
+              );
+
+              setError("");
+
+              await advertisementResponseService
+                .updateConvenientTime({
+                  responseId:
+                    response.id,
+
+                  convenientTime:
+                    String(
+                      convenientTime ||
+                      ""
+                    ).trim()
+                });
+
+              const refreshed =
+                await advertisementResponseService
+                  .getAllResponses();
+
+              setReceivedAdvertisementResponses(
+                refreshed.received ||
+                []
+              );
+
+              setSentAdvertisementResponses(
+                refreshed.sent ||
+                []
+              );
+
+            } catch (
+              requestError
+            ) {
+              console.error(
+                "Unable to update convenient time:",
+                requestError
+              );
+
+              setError(
+                requestError?.response
+                  ?.data?.message ||
+                "Unable to update your convenient time."
+              );
+
+            } finally {
+              setResponseActionLoadingId(
+                null
+              );
+            }
+          }
+      });
+    };
+
+
+  
   const handleAdvertisementResponseStatus =
     async (
       response,
@@ -1088,17 +1406,48 @@ const ConnectionsPage = () => {
     ) => {
       const defaultRemarks =
         responseStatus ===
-          "NOT_INTERESTED"
+          "MUTUAL"
+          ? "I would like to proceed with this profile."
+          : responseStatus ===
+            "NOT_INTERESTED"
           ? "Not interested"
           : responseStatus ===
             "HOLD"
           ? "Kept on hold for further review"
-          : "Profile shortlisted";
+          : "";
+      const actionCost =
+        responseStatus ===
+          "SHORTLISTED"
+          ? Number(
+              creditSummary
+                ?.actionCosts
+                ?.shortlist ||
+              0
+            )
+          : responseStatus ===
+              "MUTUAL"
+            ? Number(
+                creditSummary
+                  ?.actionCosts
+                  ?.mutualInterest ||
+                0
+              )
+            : 0;
 
+      const chargeableAction =
+        [
+          "SHORTLISTED",
+          "MUTUAL"
+        ].includes(
+          responseStatus
+        );
       openPromptModal({
         title:
           responseStatus ===
-          "NOT_INTERESTED"
+            "MUTUAL"
+            ? "Confirm Mutual Interest"
+            : responseStatus ===
+              "NOT_INTERESTED"
             ? "Mark Not Interested"
             : responseStatus ===
               "HOLD"
@@ -1106,19 +1455,42 @@ const ConnectionsPage = () => {
             : "Shortlist Profile",
 
         description:
-          "Add remarks for this response.",
+          responseStatus ===
+            "MUTUAL"
+            ? "Confirm that you would like to proceed with this member."
+            : responseStatus ===
+              "SHORTLISTED"
+            ? "Shortlist means this profile appears potentially suitable, but you need clarification before proceeding to Apply. Please ask a specific question or request the additional information you need. Shortlisting uses the configured credit points."
+            : "Add remarks for this response.",
 
         label:
-          "Remarks",
+          responseStatus ===
+            "SHORTLISTED"
+            ? "Clarification / Additional Information Required"
+            : "Remarks",
 
         initialValue:
           defaultRemarks,
+
+        placeholder:
+          responseStatus ===
+            "SHORTLISTED"
+            ? "Example: Please clarify willingness to relocate, career plans, family expectations, horoscope details, or any other information required to proceed."
+            : "",
 
         required:
           true,
 
         confirmLabel:
-          "Save",
+          responseStatus ===
+            "SHORTLISTED"
+            ? "Send Clarification Request"
+            : "Save",
+
+        showCreditSummary:
+          chargeableAction,
+
+        actionCost,
 
         onConfirm:
           async (
@@ -1146,6 +1518,31 @@ const ConnectionsPage = () => {
           result?.data
             ?.response_status ||
           responseStatus;
+        if (
+          [
+            "SHORTLISTED",
+            "MUTUAL"
+          ].includes(
+            storedStatus
+          )
+        ) {
+          try {
+            const refreshedSummary =
+              await creditService
+                .getMyCreditSummary();
+
+            setCreditSummary(
+              refreshedSummary
+            );
+          } catch (
+            creditRefreshError
+          ) {
+            console.error(
+              "Unable to refresh credit balance:",
+              creditRefreshError
+            );
+          }
+        }
 
         setReceivedAdvertisementResponses(
           (current) =>
@@ -1165,11 +1562,11 @@ const ConnectionsPage = () => {
         );
 
         /*
-         * SHORTLIST may be converted by the
-         * backend to MUTUAL. In that case
-         * refresh both sides because all
-         * INTEREST/APPLY rows for the same
-         * relationship are updated together.
+         * When Mutual Interest is confirmed,
+         * refresh both received and sent
+         * response views so the relationship
+         * status is immediately consistent
+         * across the Message Box.
          */
         if (
           storedStatus === "MUTUAL"
@@ -1206,6 +1603,123 @@ const ConnectionsPage = () => {
           }
       });
     };
+
+  const handleApplyAfterShortlist =
+    (response) => {
+      openPromptModal({
+        title:
+          "Apply for this Advertisement",
+
+        description:
+          response?.owner_remarks
+            ? `The advertisement owner requested: ${response.owner_remarks}`
+            : "Provide the requested clarification and confirm that you would like to proceed.",
+
+        label:
+          "Your Clarification / Application Message",
+
+        initialValue:
+          "",
+
+        placeholder:
+          "Provide the requested clarification and any additional information you would like the profile owner to consider.",
+
+        required:
+          true,
+
+        confirmLabel:
+          "Submit Application",
+
+        showCreditSummary:
+          true,
+
+        actionCost:
+          Number(
+            creditSummary
+              ?.actionCosts
+              ?.directApply ||
+            0
+          ),
+
+        onConfirm:
+          async (
+            remarks
+          ) => {
+            closePromptModal();
+
+            try {
+              setResponseActionLoadingId(
+                response.id
+              );
+
+              setError("");
+
+              const result =
+                await advertisementResponseService
+                  .applyAfterShortlist({
+                    responseId:
+                      response.id,
+                    remarks
+                  });
+
+              const storedStatus =
+                result?.data
+                  ?.response_status ||
+                "APPLIED";
+              try {
+                const refreshedSummary =
+                  await creditService
+                    .getMyCreditSummary();
+
+                setCreditSummary(
+                  refreshedSummary
+                );
+              } catch (
+                creditRefreshError
+              ) {
+                console.error(
+                  "Unable to refresh credit balance:",
+                  creditRefreshError
+                );
+              }
+              setSentAdvertisementResponses(
+                (current) =>
+                  current.map(
+                    (item) =>
+                      item.id ===
+                        response.id
+                        ? {
+                            ...item,
+                            response_status:
+                              storedStatus,
+                            responder_remarks:
+                              result?.data
+                                ?.responder_remarks ||
+                              item.responder_remarks
+                          }
+                        : item
+                  )
+              );
+
+            } catch (requestError) {
+              console.error(
+                "Unable to submit application:",
+                requestError
+              );
+
+              setError(
+                requestError?.response
+                  ?.data?.message ||
+                "Unable to submit the application."
+              );
+            } finally {
+              setResponseActionLoadingId(
+                null
+              );
+            }
+          }
+      });
+    };    
 
   const handleRequestContact =
     async (
@@ -1439,10 +1953,80 @@ const ConnectionsPage = () => {
 
 
   const handleViewProfile = (
-    memberProfileId
+    memberProfileId,
+    response = null,
+    direction = ""
   ) => {
+    if (!memberProfileId) {
+      return;
+    }
+
+    const query =
+      new URLSearchParams();
+
+    query.set(
+      "source",
+      response
+        ? "message-box"
+        : "standard"
+    );
+
+    query.set(
+      "returnTo",
+      "/inbox"
+    );
+
+    if (
+      response?.advertisement_id
+    ) {
+      query.set(
+        "advertisementId",
+        String(
+          response.advertisement_id
+        )
+      );
+    }
+
+    if (response?.id) {
+      query.set(
+        "responseId",
+        String(
+          response.id
+        )
+      );
+    }
+
+    if (
+      response?.response_type
+    ) {
+      query.set(
+        "responseType",
+        String(
+          response.response_type
+        )
+      );
+    }
+
+    if (
+      response?.response_status
+    ) {
+      query.set(
+        "responseStatus",
+        String(
+          response.response_status
+        )
+      );
+    }
+
+    if (direction) {
+      query.set(
+        "direction",
+        direction
+      );
+    }
+
     navigate(
-      `/view-profile/${memberProfileId}`
+      `/view-profile/${memberProfileId}?${query.toString()}`
     );
   };
 
@@ -1568,7 +2152,16 @@ const ConnectionsPage = () => {
             </div>
           </div>
         </div>
-
+        <LowCreditNotice
+          creditSummary={
+            creditSummary
+          }
+          onRecharge={() =>
+            navigate(
+              "/renew-profile"
+            )
+          }
+        />
         {error && (
           <div
             className={`rounded-xl p-4 text-sm ${designClasses.statusError}`}
@@ -1660,8 +2253,14 @@ const ConnectionsPage = () => {
                           onUpdateStatus={
                             handleAdvertisementResponseStatus
                           }
+                          onApplyAfterShortlist={
+                            handleApplyAfterShortlist
+                          }
                           onRequestContact={
                             handleRequestContact
+                          }
+                          onUpdateConvenientTime={
+                            handleUpdateConvenientTime
                           }
                           actionLoading={
                             responseActionLoadingId
@@ -1750,6 +2349,9 @@ const ConnectionsPage = () => {
                             handleViewContactDetails
                           }
                           onUpdateStatus={() => {}}
+                          onApplyAfterShortlist={
+                            handleApplyAfterShortlist
+                          }
                           onRequestContact={
                             handleRequestContact
                           }
@@ -1815,6 +2417,26 @@ const ConnectionsPage = () => {
         confirmLabel={
           promptModal.confirmLabel
         }
+
+        showCreditSummary={
+          promptModal.showCreditSummary
+        }
+
+        actionCost={
+          promptModal.actionCost
+        }
+
+        creditSummary={
+          creditSummary
+        }
+
+        onRecharge={() => {
+          closePromptModal();
+          navigate(
+            "/renew-profile"
+          );
+        }}
+
         onCancel={
           closePromptModal
         }

@@ -49,6 +49,39 @@ const advertisementResponseService = {
       };
     },
 
+  applyAfterShortlist:
+    async ({
+      responseId,
+      remarks = ""
+    }) => {
+      const response =
+        await apiClient.put(
+          `/advertisement-responses/${responseId}/apply`,
+          {
+            remarks
+          }
+        );
+
+      return response?.data || null;
+    },    
+  updateConvenientTime:
+    async ({
+      responseId,
+      convenientTime
+    }) => {
+      const response =
+        await apiClient.put(
+          `/advertisement-responses/${responseId}/convenient-time`,
+          {
+            convenientTime
+          }
+        );
+
+      return response?.data || null;
+    },
+
+
+  
   updateResponseStatus:
     async ({
       responseId,

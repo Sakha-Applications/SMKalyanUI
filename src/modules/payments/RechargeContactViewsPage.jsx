@@ -16,8 +16,9 @@ import {
 
 import profileService from "../../services/profileService";
 import offlinePaymentService from "../../services/offlinePaymentService";
+import creditService from "../../services/creditService";
 
-const RECHARGE_AMOUNT = "1000";
+import LowCreditNotice from "../../shared/components/LowCreditNotice";
 
 const formatDate = (value) => {
   if (!value) {
@@ -70,6 +71,21 @@ const RechargeContactViewsPage = () => {
   ] = useState([]);
 
   const [
+    creditSummary,
+    setCreditSummary,
+  ] = useState(null);
+
+  const [
+    creditLoading,
+    setCreditLoading,
+  ] = useState(true);
+
+  const [
+    creditError,
+    setCreditError,
+  ] = useState("");
+
+  const [
     formData,
     setFormData,
   ] = useState({
@@ -77,12 +93,39 @@ const RechargeContactViewsPage = () => {
     memberName: "",
     email: "",
     phoneNumber: "",
-    amount: RECHARGE_AMOUNT,
+    amount: "",
     paymentMethod: "UPI",
     paymentReference: "",
     transactionDetails: "",
   });
+  const loadCreditSummary =
+    async () => {
+      setCreditLoading(true);
+      setCreditError("");
 
+      try {
+        const summary =
+          await creditService
+            .getMyCreditSummary();
+
+        setCreditSummary(
+          summary
+        );
+      } catch (error) {
+        console.error(
+          "Unable to load credit summary:",
+          error
+        );
+
+        setCreditError(
+          error?.response
+            ?.data?.message ||
+          "We could not load your credit balance."
+        );
+      } finally {
+        setCreditLoading(false);
+      }
+    };
   const loadRechargeHistory =
     async () => {
       setHistoryLoading(true);
@@ -184,12 +227,29 @@ const RechargeContactViewsPage = () => {
 
     loadMember();
     loadRechargeHistory();
+    loadCreditSummary();
 
     return () => {
       active = false;
     };
   }, []);
+  const expectedCredits =
+    creditService
+      .calculateCreditsForAmount(
+        formData.amount,
+        creditSummary
+      );
 
+  const currentCreditBalance =
+    Number(
+      creditSummary
+        ?.balance ||
+      0
+    );
+
+  const projectedCreditBalance =
+    currentCreditBalance +
+    expectedCredits;
   const handleChange = (event) => {
     const {
       name,
@@ -223,6 +283,34 @@ const RechargeContactViewsPage = () => {
     ) {
       setSubmitError(
         "Please complete all required fields."
+      );
+
+      return;
+    }
+
+    const rechargeAmount =
+      Number(
+        formData.amount
+      );
+
+    if (
+      !Number.isFinite(
+        rechargeAmount
+      ) ||
+      rechargeAmount <= 0
+    ) {
+      setSubmitError(
+        "Please enter a valid recharge amount."
+      );
+
+      return;
+    }
+
+    if (
+      expectedCredits <= 0
+    ) {
+      setSubmitError(
+        "The entered amount does not generate any credit points under the current recharge configuration."
       );
 
       return;
@@ -276,12 +364,16 @@ const RechargeContactViewsPage = () => {
       setFormData(
         (previous) => ({
           ...previous,
+          amount: "",
           paymentReference: "",
           transactionDetails: "",
         })
       );
 
-      await loadRechargeHistory();
+      await Promise.all([
+        loadRechargeHistory(),
+        loadCreditSummary(),
+      ]);
     } catch (error) {
       console.error(
         "Unable to submit recharge:",
@@ -322,22 +414,36 @@ const RechargeContactViewsPage = () => {
           <h1
             className={`text-xl font-semibold ${designClasses.textPrimary}`}
           >
-            Recharge Contact Views
+            Recharge Credits
           </h1>
 
           <p
             className={`mt-1 text-sm ${designClasses.textSecondary}`}
           >
-            Submit your recharge
-            payment details for
-            verification. Your
-            contact-view allowance
-            will be refreshed only
-            after the payment is
-            verified.
+            Recharge your credit
+            balance for matrimonial
+            interactions. Credits are
+            added only after your
+            payment is verified.
           </p>
         </section>
+        {!creditLoading &&
+          creditSummary && (
+          <LowCreditNotice
+            creditSummary={
+              creditSummary
+            }
+          />
+        )}
 
+        {creditError && (
+          <section
+            className={`rounded-xl p-4 text-sm ${designClasses.statusError}`}
+            role="alert"
+          >
+            {creditError}
+          </section>
+        )}
         {memberError && (
           <section
             className={`rounded-xl p-4 text-sm ${designClasses.statusError}`}
@@ -363,12 +469,84 @@ const RechargeContactViewsPage = () => {
               Your payment details
               have been recorded and
               are pending verification.
-              Contact views will be
-              refreshed only after
-              approval.
+              Credit points will be
+              added to your balance
+              after the payment is
+              approved.
             </p>
           </section>
         )}
+
+        <section
+          className={`${designClasses.card} p-5 sm:p-6`}
+        >
+          <div className="flex flex-wrap items-center gap-x-8 gap-y-4">
+            <div>
+              <p
+                className={`text-xs font-semibold uppercase tracking-wide ${designClasses.textSecondary}`}
+              >
+                Available Credits
+              </p>
+
+              <p
+                className={`mt-1 text-2xl font-bold ${designClasses.textPrimary}`}
+              >
+                {creditLoading
+                  ? "..."
+                  : currentCreditBalance}
+              </p>
+            </div>
+
+            <div
+              className={`hidden h-10 border-l sm:block ${designClasses.border}`}
+            />
+
+            <div>
+              <p
+                className={`text-xs font-semibold uppercase tracking-wide ${designClasses.textSecondary}`}
+              >
+                Recharge Conversion
+              </p>
+
+              <p
+                className={`mt-1 text-sm font-semibold ${designClasses.textPrimary}`}
+              >
+                ₹
+                {creditSummary
+                  ?.recharge
+                  ?.baseAmount ||
+                  0}{" "}
+                ={" "}
+                {creditSummary
+                  ?.recharge
+                  ?.baseCredits ||
+                  0}{" "}
+                credits
+              </p>
+            </div>
+
+            <div
+              className={`hidden h-10 border-l sm:block ${designClasses.border}`}
+            />
+
+            <div>
+              <p
+                className={`text-xs font-semibold uppercase tracking-wide ${designClasses.textSecondary}`}
+              >
+                Low Credit Reminder
+              </p>
+
+              <p
+                className={`mt-1 text-sm font-semibold ${designClasses.textPrimary}`}
+              >
+                {creditSummary
+                  ?.lowCreditThreshold ||
+                  0}{" "}
+                credits
+              </p>
+            </div>
+          </div>
+        </section>
 
         <section
           className={`${designClasses.card} p-5 sm:p-6`}
@@ -447,8 +625,24 @@ const RechargeContactViewsPage = () => {
                 fullWidth
                 size="small"
                 label="Recharge Amount"
-                value={`₹${formData.amount}`}
-                disabled
+                name="amount"
+                type="number"
+                value={
+                  formData.amount
+                }
+                onChange={
+                  handleChange
+                }
+                inputProps={{
+                  min: 1,
+                  step: 1,
+                }}
+                helperText={
+                  formData.amount
+                    ? `₹${formData.amount} will add approximately ${expectedCredits} credit points after payment verification.`
+                    : `Enter the amount paid. Current conversion: ₹${creditSummary?.recharge?.baseAmount || 0} = ${creditSummary?.recharge?.baseCredits || 0} credits.`
+                }
+                required
               />
 
               <TextField
@@ -505,15 +699,49 @@ const RechargeContactViewsPage = () => {
             <div
               className={`rounded-xl border p-4 ${designClasses.border} ${designClasses.surfaceMuted}`}
             >
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p
+                    className={`text-sm font-semibold ${designClasses.textPrimary}`}
+                  >
+                    Expected Credit Addition
+                  </p>
+
+                  <p
+                    className={`mt-1 text-sm ${designClasses.textSecondary}`}
+                  >
+                    {formData.amount
+                      ? `₹${formData.amount} will add approximately ${expectedCredits} credits after payment verification.`
+                      : "Enter the payment amount to see the expected credit addition."}
+                  </p>
+                </div>
+
+                {formData.amount &&
+                  expectedCredits >
+                    0 && (
+                  <div className="text-right">
+                    <p
+                      className={`text-xs ${designClasses.textSecondary}`}
+                    >
+                      Current balance
+                    </p>
+
+                    <p
+                      className={`font-semibold ${designClasses.textPrimary}`}
+                    >
+                      {currentCreditBalance}
+                      {" → "}
+                      {projectedCreditBalance}
+                    </p>
+                  </div>
+                )}
+              </div>
+
               <p
-                className={`text-sm ${designClasses.textSecondary}`}
+                className={`mt-3 text-xs ${designClasses.textSecondary}`}
               >
-                Recharge requests
-                require verification.
-                Submitting this form
-                does not immediately
-                reset your contact-view
-                allowance.
+                Credits are added only after
+                the payment is verified.
               </p>
             </div>
 
@@ -530,7 +758,10 @@ const RechargeContactViewsPage = () => {
               type="submit"
               disabled={
                 submitting ||
-                Boolean(memberError)
+                Boolean(memberError) ||
+                creditLoading ||
+                Boolean(creditError) ||
+                !creditSummary
               }
               className={`rounded-lg px-5 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${designClasses.primaryButton}`}
             >

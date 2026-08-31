@@ -82,7 +82,15 @@ const handleCardClick = (profileId) => {
     return;
   }
 
-  navigate(`/view-profile/${profileId}`);
+  const params =
+    new URLSearchParams({
+      source: "search",
+      returnTo: "/profile-search",
+    });
+
+  navigate(
+    `/view-profile/${profileId}?${params.toString()}`
+  );
 };
 
   return (
@@ -167,7 +175,10 @@ const imageUrl = getProfilePhotoUrl(currentProfileId);
                       <strong>Height:</strong> {result.height || 'N/A'}
                     </Typography>
                     <Typography variant="body2" color="text.secondary" className={designClasses.textSecondary}>
-                      <strong>Location:</strong> {result.current_location || 'N/A'}
+                      <strong>Location:</strong>{" "}
+{result.current_city_of_residence ||
+  result.current_location ||
+  "N/A"}
                     </Typography>
                     {result.gotra && (
                       <Typography variant="body2" color="text.secondary" className={designClasses.textSecondary}>

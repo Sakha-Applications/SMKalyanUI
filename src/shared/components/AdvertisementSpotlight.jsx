@@ -18,6 +18,7 @@ import {
 
 import advertisementService from "../../services/advertisementService";
 import profileService from "../../services/profileService";
+import creditService from "../../services/creditService";
 
 import ForwardProfileModal from "./ForwardProfileModal";
 import PromptModal from "./PromptModal";
@@ -128,25 +129,15 @@ const getAdvertisementText = (
   advertisement
 ) => {
   const approvedText =
-    advertisement?.approved_advertisement_text ||
-    advertisement?.approvedAdvertisementText ||
-    advertisement?.advertisement_text ||
-    advertisement?.advertisementText;
+    advertisement
+      ?.approved_advertisement_text ||
+    advertisement
+      ?.approvedAdvertisementText;
 
   if (approvedText) {
     return cleanAdvertisementText(
       approvedText
     );
-  }
-
-  const transactionText =
-    cleanAdvertisementText(
-      advertisement?.transaction_details ||
-        ""
-    );
-
-  if (transactionText) {
-    return transactionText;
   }
 
   const displaySummary =
@@ -163,6 +154,7 @@ const getAdvertisementText = (
     advertisement
   );
 };
+
 
 const getCompactAge = (
   value
@@ -310,8 +302,11 @@ const getLookingFor = (
    */
   const advertisementText =
     String(
-      advertisement?.transaction_details ||
-        advertisement?.display_summary ||
+      advertisement?.display_summary ||
+        advertisement?.approved_advertisement_text ||
+        advertisement?.approvedAdvertisementText ||
+        advertisement?.advertisement_text ||
+        advertisement?.advertisementText ||
         ""
     )
       .trim()
@@ -466,10 +461,6 @@ const AdvertisementSpotlight = ({
     setManuallyPaused,
   ] = useState(false);
 
-  const [
-    showFullMessage,
-    setShowFullMessage,
-  ] = useState(false);
 
   const [
     showAllAdvertisements,
@@ -485,6 +476,10 @@ const AdvertisementSpotlight = ({
     responseMessage,
     setResponseMessage,
   ] = useState("");
+  const [
+    creditSummary,
+    setCreditSummary,
+  ] = useState(null);
 
   const [
     forwardModalOpen,
@@ -517,6 +512,10 @@ const AdvertisementSpotlight = ({
     placeholder: "",
     required: false,
     confirmLabel: "Submit",
+
+    showCreditSummary: false,
+    actionCost: 0,
+
     onConfirm: null,
   });
 
@@ -552,11 +551,59 @@ const AdvertisementSpotlight = ({
         confirmLabel:
           options?.confirmLabel ||
           "Submit",
+
+        showCreditSummary:
+          Boolean(
+            options?.showCreditSummary
+          ),
+
+        actionCost:
+          Number(
+            options?.actionCost ||
+            0
+          ),
+
         onConfirm:
           options?.onConfirm ||
           null,
       });
     };
+
+  useEffect(() => {
+    let active = true;
+
+    const loadCreditSummary =
+      async () => {
+        try {
+          const summary =
+            await creditService
+              .getMyCreditSummary();
+
+          if (active) {
+            setCreditSummary(
+              summary
+            );
+          }
+        } catch (error) {
+          console.error(
+            "Unable to load credit summary:",
+            error
+          );
+
+          if (active) {
+            setCreditSummary(
+              null
+            );
+          }
+        }
+      };
+
+    loadCreditSummary();
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -947,8 +994,34 @@ const AdvertisementSpotlight = ({
         return;
       }
 
+      const advertisementId =
+        advertisement?.id ||
+        "";
+
+      const query =
+        new URLSearchParams();
+
+      query.set(
+        "source",
+        "advertisement"
+      );
+
+      if (advertisementId) {
+        query.set(
+          "advertisementId",
+          String(
+            advertisementId
+          )
+        );
+      }
+
+      query.set(
+        "returnTo",
+        "/dashboard"
+      );
+
       navigate(
-        `/view-profile/${profileId}`
+        `/view-profile/${profileId}?${query.toString()}`
       );
     };
 
@@ -964,7 +1037,6 @@ const AdvertisementSpotlight = ({
         return;
       }
 
-      setShowFullMessage(false);
       setShowAllAdvertisements(false);
       setPaused(false);
 
@@ -1121,10 +1193,22 @@ const AdvertisementSpotlight = ({
           .toUpperCase();
 
       const defaultRemarks =
+        "";
+      const actionCost =
         normalizedResponseType ===
         "APPLY"
-          ? "I would like to apply for this matrimonial advertisement."
-          : "I am interested in this matrimonial profile.";
+          ? Number(
+              creditSummary
+                ?.actionCosts
+                ?.directApply ||
+              0
+            )
+          : Number(
+              creditSummary
+                ?.actionCosts
+                ?.showInterest ||
+              0
+            );
 
       openPromptModal({
         title:
@@ -1136,14 +1220,14 @@ const AdvertisementSpotlight = ({
         description:
           normalizedResponseType ===
           "APPLY"
-            ? "Add a short message to accompany your application."
-            : "Add a short message to express your interest.",
+            ? "Please provide a genuine reason for applying to this matrimonial profile."
+            : "Show Interest means this profile appears potentially suitable, but you need clarification or additional information before applying. Please explain what you would like to understand.",
 
         label:
           normalizedResponseType ===
           "APPLY"
-            ? "Application Remarks"
-            : "Interest Remarks",
+            ? "Reason for Applying"
+            : "Reason / Clarification Required",
 
         initialValue:
           defaultRemarks,
@@ -1151,8 +1235,8 @@ const AdvertisementSpotlight = ({
         placeholder:
           normalizedResponseType ===
           "APPLY"
-            ? "Enter your application message..."
-            : "Enter your interest message...",
+            ? "Explain why you believe the profiles may be suitable..."
+            : "Example: The profile appears suitable, but we would like to understand willingness to relocate before applying...",
 
         required:
           true,
@@ -1162,7 +1246,10 @@ const AdvertisementSpotlight = ({
           "APPLY"
             ? "Submit Application"
             : "Send Interest",
+        showCreditSummary:
+          true,
 
+        actionCost,
         onConfirm:
           async (
             remarks
@@ -1191,6 +1278,22 @@ const AdvertisementSpotlight = ({
                 result?.message ||
                   "Response submitted."
               );
+              try {
+                const refreshedSummary =
+                  await creditService
+                    .getMyCreditSummary();
+
+                setCreditSummary(
+                  refreshedSummary
+                );
+              } catch (
+                creditRefreshError
+              ) {
+                console.error(
+                  "Unable to refresh credit balance:",
+                  creditRefreshError
+                );
+              }
 
             } catch (error) {
               console.error(
@@ -1227,338 +1330,297 @@ const AdvertisementSpotlight = ({
       aria-live="off"
       className={`${designClasses.surface} border-b border-[#EADFCB]`}
     >
-      <div className="mx-auto w-full max-w-7xl px-4 py-2 sm:px-6 lg:px-8">
-        <div
-          className={`flex min-h-[54px] items-center gap-3 rounded-xl border px-3 py-2 shadow-sm sm:px-4 ${designClasses.border} ${designClasses.bgAccentSoft}`}
-        >
-          <div
-            className={`hidden shrink-0 items-center gap-2.5 rounded-lg border px-3 py-1.5 sm:flex ${designClasses.border} ${designClasses.surface}`}
-          >
-            <div
-              className={`flex h-8 w-8 items-center justify-center rounded-full ${designClasses.bgAccentSoft}`}
-            >
-              <Sparkles
-                className={`h-4 w-4 ${designClasses.textAccent}`}
-              />
-            </div>
-
-            <div className="leading-tight">
-              <div
-                className={`text-[9px] font-semibold uppercase tracking-[0.18em] ${designClasses.textSecondary}`}
-              >
-                Matrimonial
-              </div>
-
-              <div
-                className={`text-sm font-bold ${designClasses.textAccent}`}
-              >
-                Spotlight
-              </div>
-            </div>
-          </div>
-
-        <div
-          className="relative min-w-0 flex-1"
+      <div className="mx-auto w-full max-w-7xl px-4 py-3 sm:px-6 lg:px-8">
+        <section
+          className={`overflow-hidden rounded-2xl border shadow-[0_6px_22px_rgba(15,23,42,0.08)] ${designClasses.border} ${designClasses.surface}`}
           onMouseEnter={() => {
             setPaused(true);
-            setShowFullMessage(true);
           }}
           onMouseLeave={() => {
-            setPaused(false);
-            setShowFullMessage(false);
-          }}
-        >
-          <div
-            tabIndex={0}
-            onFocus={() => {
-              setPaused(true);
-              setShowFullMessage(true);
-            }}
-            onBlur={() => {
+            if (!manuallyPaused) {
               setPaused(false);
-              setShowFullMessage(false);
-            }}
-            className="relative cursor-pointer rounded-md px-1 py-0.5"
+            }
+          }}
+          aria-label="Featured matrimonial advertisement"
+        >
+          {/* Spotlight heading */}
+          <div
+            className={`flex flex-wrap items-center justify-between gap-3 border-b px-4 py-2.5 sm:px-5 ${designClasses.border} ${designClasses.bgAccentSoft}`}
           >
-            <div className="flex min-w-0 items-center gap-3">
-              {spotlightPhotoUrl && (
-                <button
-                  type="button"
-                  onClick={
-                    handleViewProfile
-                  }
-                  className="shrink-0"
-                  aria-label="View matrimonial profile"
-                >
-                  <img
-                    src={
-                      spotlightPhotoUrl
-                    }
-                    alt=""
-                    className={`h-10 w-10 rounded-full border object-cover shadow-sm ${designClasses.border}`}
-                    onError={(
-                      event
-                    ) => {
-                      event.currentTarget
-                        .style.display =
-                        "none";
-                    }}
-                  />
-                </button>
-              )}
-
-              <span
-                className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-bold shadow-[0_2px_8px_rgba(15,23,42,0.06)] ${
-                  lookingFor.type ===
-                  "BRIDE"
-                    ? "border-pink-100 bg-pink-50 text-pink-700"
-                    : lookingFor.type ===
-                      "GROOM"
-                    ? "border-blue-100 bg-blue-50 text-blue-700"
-                    : `${designClasses.border} ${designClasses.surface} ${designClasses.textAccent}`
-                }`}
-              >
-                {lookingFor.label}
-              </span>
-
-              <span
-                className={`min-w-0 truncate text-sm font-semibold tracking-[0.01em] ${designClasses.textPrimary}`}
-              >
-                {advertisementTeaser
-                  .replace(
-                    `${lookingFor.label} · `,
-                    ""
-                  )
-                  .replace(
-                    lookingFor.label,
-                    ""
-                  )
-                  .trim()}
-              </span>
-            </div>
-          </div>
-
-          {showFullMessage &&
-            advertisementText && (
+            <div className="flex items-center gap-3">
               <div
-                className={`absolute left-0 top-[calc(100%-2px)] z-50 w-full min-w-[320px] max-w-3xl rounded-xl border p-4 shadow-lg ${designClasses.surface} ${designClasses.border}`}
-                role="dialog"
-                aria-label="Full matrimonial advertisement"
-                onMouseEnter={() => {
-                  setPaused(true);
-                  setShowFullMessage(true);
-                }}
+                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${designClasses.surface}`}
               >
-                <div className="mb-2 flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-2">
-                    <div
-                      className={`text-sm font-semibold ${designClasses.textPrimary}`}
-                    >
-                      Matrimonial Advertisement
-                    </div>
+                <Sparkles
+                  className={`h-5 w-5 ${designClasses.textAccent}`}
+                />
+              </div>
 
-                    <span
-                      className={`rounded-full px-2.5 py-1 text-xs font-bold ${
-                        lookingFor.type ===
-                        "BRIDE"
-                          ? "bg-pink-50 text-pink-700"
-                          : lookingFor.type ===
-                            "GROOM"
-                          ? "bg-blue-50 text-blue-700"
-                          : `${designClasses.bgAccentSoft} ${designClasses.textAccent}`
-                      }`}
-                    >
-                      {lookingFor.label}
-                    </span>
-                  </div>
-
+              <div className="leading-tight">
+                <div
+                  className={`text-[10px] font-semibold uppercase tracking-[0.18em] ${designClasses.textSecondary}`}
+                >
+                  Matrimonial
                 </div>
-
-                {compactDetails.length >
-                  0 && (
-                  <div
-                    className={`mb-2 text-xs font-semibold ${designClasses.textSecondary}`}
-                  >
-                    {compactDetails.join(
-                      " · "
-                    )}
-                  </div>
-                )}
 
                 <div
-                  className={`whitespace-normal text-sm leading-6 ${designClasses.textDark}`}
+                  className={`text-base font-bold ${designClasses.textAccent}`}
                 >
-                  {advertisementText}
-                </div>
-                                <div
-                  className={`mt-4 border-t pt-3 ${designClasses.border}`}
-                >
-                  <div className="flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      onClick={
-                        handleViewProfile
-                      }
-                      className={`rounded-lg px-3 py-2 text-xs font-semibold ${designClasses.secondaryButton}`}
-                    >
-                      View Profile
-                    </button>
-
-                    {!isOwnAdvertisement && (
-                      <>
-                        <button
-                          type="button"
-                          disabled={
-                            responseSubmitting
-                          }
-                          onClick={() =>
-                            handleAdvertisementResponse(
-                              advertisement,
-                              "INTEREST"
-                            )
-                          }
-                          className={`rounded-lg px-3 py-2 text-xs font-semibold ${designClasses.primaryButton}`}
-                        >
-                          Show Interest
-                        </button>
-
-                        <button
-                          type="button"
-                          disabled={
-                            responseSubmitting
-                          }
-                          onClick={() =>
-                            handleAdvertisementResponse(
-                              advertisement,
-                              "APPLY"
-                            )
-                          }
-                          className={`rounded-lg px-3 py-2 text-xs font-semibold ${designClasses.primaryButton}`}
-                        >
-                          Apply
-                        </button>
-                      </>
-                    )}
-
-                    {isOwnAdvertisement && (
-                      <button
-                        type="button"
-                        onClick={() =>
-                          handleViewResponses(
-                            advertisement
-                          )
-                        }
-                        className={`rounded-lg px-3 py-2 text-xs font-semibold ${designClasses.primaryButton}`}
-                      >
-                        View Responses
-                      </button>
-                    )}
-
-                                        <button
-                      type="button"
-                      disabled={
-                        isForwardingProfile
-                      }
-                      onClick={() =>
-                        handleOpenForwardModal(
-                          advertisement
-                        )
-                      }
-                      className={`rounded-lg px-3 py-2 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-60 ${designClasses.secondaryButton}`}
-                    >
-                      {isForwardingProfile
-                        ? "Forwarding..."
-                        : "Forward"}
-                    </button>
-                  </div>
-
-                  {responseMessage && (
-                    <p
-                      className={`mt-2 text-xs ${designClasses.textSecondary}`}
-                    >
-                      {responseMessage}
-                    </p>
-                  )}
+                  Spotlight
                 </div>
               </div>
-            )}
-        </div>
 
-        <div className="flex shrink-0 items-center gap-2">
-          {profileId && (
-            <button
-              type="button"
-              onClick={
-                handleViewProfile
-              }
-              className={`hidden rounded-lg px-3.5 py-2 text-xs font-semibold sm:inline-flex ${designClasses.primaryButton}`}
-            >
-              View Profile
-            </button>
-          )}
-
-          {advertisements.length >
-            1 && (
-            <>
               <span
-                className={`hidden min-w-[42px] text-center text-xs md:inline ${designClasses.textSecondary}`}
+                className={`hidden text-xs sm:inline ${designClasses.textSecondary}`}
               >
-                {currentIndex + 1} of{" "}
-                {advertisements.length}
+                Featured matrimonial profile
               </span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {advertisements.length > 1 && (
+                <span
+                  className={`hidden min-w-[48px] text-center text-xs font-semibold sm:inline ${designClasses.textSecondary}`}
+                >
+                  {currentIndex + 1} of{" "}
+                  {advertisements.length}
+                </span>
+              )}
+
+              {advertisements.length > 1 && (
+                <>
+                  <button
+                    type="button"
+                    onClick={goPrevious}
+                    aria-label="Previous advertisement"
+                    className={`rounded-lg border p-1.5 transition hover:shadow-sm ${designClasses.border} ${designClasses.surface} ${designClasses.textPrimary}`}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={toggleRotation}
+                    aria-label={
+                      manuallyPaused
+                        ? "Resume advertisements"
+                        : "Pause advertisements"
+                    }
+                    className={`rounded-lg border p-1.5 transition hover:shadow-sm ${designClasses.border} ${designClasses.surface} ${designClasses.textPrimary}`}
+                  >
+                    {manuallyPaused ? (
+                      <Play className="h-4 w-4" />
+                    ) : (
+                      <Pause className="h-4 w-4" />
+                    )}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={goNext}
+                    aria-label="Next advertisement"
+                    className={`rounded-lg border p-1.5 transition hover:shadow-sm ${designClasses.border} ${designClasses.surface} ${designClasses.textPrimary}`}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                </>
+              )}
 
               <button
-                type="button"
-                onClick={goPrevious}
-                aria-label="Previous advertisement"
-                className={`rounded-lg border p-1.5 ${designClasses.border} ${designClasses.textPrimary}`}
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </button>
-
-              <button
-                type="button"
-                onClick={
-                  toggleRotation
-                }
-                aria-label={
-                  manuallyPaused
-                    ? "Resume advertisements"
-                    : "Pause advertisements"
-                }
-                className={`rounded-lg border p-1.5 ${designClasses.border} ${designClasses.textPrimary}`}
-              >
-                {manuallyPaused ? (
-                  <Play className="h-4 w-4" />
-                ) : (
-                  <Pause className="h-4 w-4" />
-                )}
-              </button>
-
-              <button
-                type="button"
-                onClick={goNext}
-                aria-label="Next advertisement"
-                className={`rounded-lg border p-1.5 ${designClasses.border} ${designClasses.textPrimary}`}
-              >
-                <ChevronRight className="h-4 w-4" />
-              </button>
-
-                            <button
                 type="button"
                 onClick={() => {
                   setPaused(true);
                   setShowAllAdvertisements(true);
                 }}
-                className={`hidden rounded-lg px-3 py-1.5 text-xs font-semibold lg:inline-flex ${designClasses.secondaryButton}`}
+                className={`rounded-lg px-3 py-1.5 text-xs font-semibold ${designClasses.secondaryButton}`}
               >
                 View All Ads
               </button>
-            </>
-          )}
-        </div>
+            </div>
+          </div>
+
+          {/* Featured advertisement */}
+          <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-stretch sm:p-5">
+            {/* Photo */}
+            <button
+              type="button"
+              onClick={handleViewProfile}
+              disabled={!profileId}
+              className="group mx-auto shrink-0 self-start sm:mx-0"
+              aria-label="View matrimonial profile"
+            >
+              {spotlightPhotoUrl ? (
+                <img
+                  src={spotlightPhotoUrl}
+                  alt="Matrimonial profile"
+                  className={`h-28 w-24 rounded-xl border object-cover shadow-md transition duration-200 group-hover:scale-[1.02] group-hover:shadow-lg sm:h-[118px] sm:w-[100px] ${designClasses.border}`}
+                  onError={() => {
+                    if (!profileId) {
+                      return;
+                    }
+
+                    setPhotoByProfileId(
+                      (current) => ({
+                        ...current,
+                        [String(profileId)]: "",
+                      })
+                    );
+                  }}
+                />
+              ) : (
+                <div
+                  className={`flex h-28 w-24 items-center justify-center rounded-xl border text-xs font-semibold sm:h-[118px] sm:w-[100px] ${designClasses.border} ${designClasses.bgAccentSoft} ${designClasses.textSecondary}`}
+                >
+                  Profile
+                </div>
+              )}
+            </button>
+
+            {/* Profile information */}
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <span
+                  className={`rounded-full border px-3 py-1 text-xs font-bold ${
+                    lookingFor.type === "BRIDE"
+                      ? "border-pink-100 bg-pink-50 text-pink-700"
+                      : lookingFor.type === "GROOM"
+                      ? "border-blue-100 bg-blue-50 text-blue-700"
+                      : `${designClasses.border} ${designClasses.bgAccentSoft} ${designClasses.textAccent}`
+                  }`}
+                >
+                  {lookingFor.label}
+                </span>
+
+
+              </div>
+
+              {compactDetails.length > 0 && (
+                <div
+                  className={`mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm font-bold ${designClasses.textPrimary}`}
+                >
+                  {compactDetails.map(
+                    (detail, index) => (
+                      <span
+                        key={`${detail}-${index}`}
+                        className="flex items-center gap-2"
+                      >
+                        {index > 0 && (
+                          <span
+                            className={`text-[8px] ${designClasses.textAccent}`}
+                          >
+                            ●
+                          </span>
+                        )}
+
+                        <span>{detail}</span>
+                      </span>
+                    )
+                  )}
+                </div>
+              )}
+
+              {advertisementText && (
+                <p
+                  className={`mt-2 max-w-4xl overflow-hidden text-sm font-medium leading-5 ${designClasses.textDark}`}
+                  style={{
+                    display: "-webkit-box",
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient:
+                      "vertical",
+                  }}
+                >
+                  {advertisementText}
+                </p>
+              )}
+
+              {/* Actions */}
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                {profileId && (
+                  <button
+                    type="button"
+                    onClick={handleViewProfile}
+                    className={`rounded-lg px-3.5 py-2 text-xs font-semibold ${designClasses.secondaryButton}`}
+                  >
+                    View Profile
+                  </button>
+                )}
+
+                {!isOwnAdvertisement && (
+                  <>
+                    <button
+                      type="button"
+                      disabled={responseSubmitting}
+                      onClick={() =>
+                        handleAdvertisementResponse(
+                          advertisement,
+                          "INTEREST"
+                        )
+                      }
+                      className={`rounded-lg px-3.5 py-2 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-60 ${designClasses.primaryButton}`}
+                    >
+                      Show Interest
+                    </button>
+
+                    <button
+                      type="button"
+                      disabled={responseSubmitting}
+                      onClick={() =>
+                        handleAdvertisementResponse(
+                          advertisement,
+                          "APPLY"
+                        )
+                      }
+                      className={`rounded-lg px-3.5 py-2 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-60 ${designClasses.primaryButton}`}
+                    >
+                      Apply
+                    </button>
+                  </>
+                )}
+
+                {isOwnAdvertisement && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleViewResponses(
+                        advertisement
+                      )
+                    }
+                    className={`rounded-lg px-3.5 py-2 text-xs font-semibold ${designClasses.primaryButton}`}
+                  >
+                    View Responses
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  disabled={
+                    isForwardingProfile
+                  }
+                  onClick={() =>
+                    handleOpenForwardModal(
+                      advertisement
+                    )
+                  }
+                  className={`rounded-lg px-3.5 py-2 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-60 ${designClasses.secondaryButton}`}
+                >
+                  {isForwardingProfile
+                    ? "Forwarding..."
+                    : "Forward"}
+                </button>
+              </div>
+
+              {responseMessage && (
+                <p
+                  className={`mt-2 text-xs ${designClasses.textSecondary}`}
+                >
+                  {responseMessage}
+                </p>
+              )}
+            </div>
+          </div>
+        </section>
       </div>
-    </div>
+
 
       {showAllAdvertisements && (
         <div
@@ -1657,39 +1719,85 @@ const AdvertisementSpotlight = ({
                         className={`overflow-hidden rounded-xl border ${designClasses.border} ${designClasses.surface}`}
                       >
                         <div className="flex gap-4 p-4">
-                          {itemPhotoUrl && (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setShowAllAdvertisements(
-                                  false
-                                );
+                          <button
+                            type="button"
+                            disabled={
+                              !itemProfileId
+                            }
+                            onClick={() => {
+                              if (
+                                !itemProfileId
+                              ) {
+                                return;
+                              }
 
-                                navigate(
-                                  `/view-profile/${itemProfileId}`
+                              setShowAllAdvertisements(
+                                false
+                              );
+
+                              const query =
+                                new URLSearchParams();
+
+                              query.set(
+                                "source",
+                                "advertisement"
+                              );
+
+                              if (item?.id) {
+                                query.set(
+                                  "advertisementId",
+                                  String(
+                                    item.id
+                                  )
                                 );
-                              }}
-                              className="shrink-0 self-start"
-                              aria-label="View matrimonial profile"
-                            >
+                              }
+
+                              query.set(
+                                "returnTo",
+                                "/dashboard"
+                              );
+
+                              navigate(
+                                `/view-profile/${itemProfileId}?${query.toString()}`
+                              );
+                            }}
+                            className="shrink-0 self-start"
+                            aria-label="View matrimonial profile"
+                          >
+                            {itemPhotoUrl ? (
                               <img
                                 src={
                                   itemPhotoUrl
                                 }
-                                alt=""
+                                alt="Matrimonial profile"
                                 className={`h-24 w-20 rounded-xl border object-cover shadow-sm ${designClasses.border}`}
-                                onError={(
-                                  event
-                                ) => {
-                                  event
-                                    .currentTarget
-                                    .style
-                                    .display =
-                                    "none";
+                                onError={() => {
+                                  if (
+                                    !itemProfileId
+                                  ) {
+                                    return;
+                                  }
+
+                                  setPhotoByProfileId(
+                                    (
+                                      current
+                                    ) => ({
+                                      ...current,
+                                      [String(
+                                        itemProfileId
+                                      )]: "",
+                                    })
+                                  );
                                 }}
                               />
-                            </button>
-                          )}
+                            ) : (
+                              <div
+                                className={`flex h-24 w-20 items-center justify-center rounded-xl border text-[11px] font-semibold ${designClasses.border} ${designClasses.bgAccentSoft} ${designClasses.textSecondary}`}
+                              >
+                                Profile
+                              </div>
+                            )}
+                          </button>
 
                           <div className="min-w-0 flex-1">
                             <div className="flex flex-wrap items-start justify-between gap-2">
@@ -1744,9 +1852,31 @@ const AdvertisementSpotlight = ({
                                   false
                                 );
 
-                                navigate(
-                                  `/view-profile/${itemProfileId}`
-                                );
+const query =
+  new URLSearchParams();
+
+query.set(
+  "source",
+  "advertisement"
+);
+
+if (item?.id) {
+  query.set(
+    "advertisementId",
+    String(
+      item.id
+    )
+  );
+}
+
+query.set(
+  "returnTo",
+  "/dashboard"
+);
+
+navigate(
+  `/view-profile/${itemProfileId}?${query.toString()}`
+);
                               }}
                               className={`rounded-lg px-3 py-1.5 text-xs font-semibold ${designClasses.secondaryButton}`}
                             >
@@ -1890,6 +2020,26 @@ const AdvertisementSpotlight = ({
         confirmLabel={
           promptModal.confirmLabel
         }
+
+        showCreditSummary={
+          promptModal.showCreditSummary
+        }
+
+        actionCost={
+          promptModal.actionCost
+        }
+
+        creditSummary={
+          creditSummary
+        }
+
+        onRecharge={() => {
+          closePromptModal();
+          navigate(
+            "/renew-profile"
+          );
+        }}
+
         onCancel={
           closePromptModal
         }

@@ -9,8 +9,11 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import PreferencesReminderDialog from "../../components/common/PreferencesReminderDialog";
 import registrationService from "../../services/registrationService";
+import creditService from "../../services/creditService";
+
 import MemberLayout from "../../shared/layouts/MemberLayout";
 import ProfileStatusBanner from "../../shared/components/ProfileStatusBanner";
+import LowCreditNotice from "../../shared/components/LowCreditNotice";
 import {
   calculateProfileCompletion,
 } from "../../shared/utils/profileCompletion";
@@ -38,7 +41,13 @@ const Dashboard = () => {
     sessionStorage.getItem("profileStatus") || ""
   );
 
-    const [profileData, setProfileData] = useState(null);
+  const [profileData, setProfileData] =
+    useState(null);
+
+  const [
+    creditSummary,
+    setCreditSummary,
+  ] = useState(null);
 
   useEffect(() => {
   const loadProfileStatus = async () => {
@@ -79,6 +88,41 @@ const Dashboard = () => {
   loadProfileStatus();
 }, [userProfileId]);
 
+  useEffect(() => {
+    let active = true;
+
+    const loadCreditSummary =
+      async () => {
+        try {
+          const summary =
+            await creditService
+              .getMyCreditSummary();
+
+          if (active) {
+            setCreditSummary(
+              summary
+            );
+          }
+        } catch (error) {
+          console.error(
+            "Unable to load credit summary:",
+            error
+          );
+
+          if (active) {
+            setCreditSummary(
+              null
+            );
+          }
+        }
+      };
+
+    loadCreditSummary();
+
+    return () => {
+      active = false;
+    };
+  }, []);
   
 
   const profileCompletion =
@@ -94,7 +138,16 @@ const Dashboard = () => {
             completion={profileCompletion}
           />
         )}
-
+        <LowCreditNotice
+          creditSummary={
+            creditSummary
+          }
+          onRecharge={() =>
+            navigate(
+              "/renew-profile"
+            )
+          }
+        />
                 <div className="mb-2">
           <SecondaryNavBar
   profileStatus={profileStatus}
