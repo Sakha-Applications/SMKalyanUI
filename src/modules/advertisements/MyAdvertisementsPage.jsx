@@ -972,15 +972,30 @@ const MyAdvertisementsPage = () => {
                         </button>
                       </div>
 
-                      {(advertisement
-                        .moderator_remarks ||
+                      {(
+                        advertisement
+                          .moderator_remarks ||
                         normalizeStatus(
                           advertisement
                             .status
                         ) ===
-                          "rejected") && (
+                          "rejected" ||
+                        normalizeStatus(
+                          advertisement
+                            .status
+                        ) ===
+                          "payment_rejected"
+                      ) && (
                         <div
-                          className={`mt-4 rounded-xl p-4 ${designClasses.statusWarning}`}
+                          className={`mt-4 rounded-xl p-4 ${
+                            normalizeStatus(
+                              advertisement
+                                .status
+                            ) ===
+                            "payment_rejected"
+                              ? designClasses.statusError
+                              : designClasses.statusWarning
+                          }`}
                         >
                           <div
                             className={
@@ -988,7 +1003,19 @@ const MyAdvertisementsPage = () => {
                                 .statusTitle
                             }
                           >
-                            Moderator Remarks
+                            {normalizeStatus(
+                              advertisement
+                                .status
+                            ) ===
+                            "payment_rejected"
+                              ? "Payment Rejection Reason"
+                              : normalizeStatus(
+                                  advertisement
+                                    .status
+                                ) ===
+                                "rejected"
+                              ? "Advertisement Rejection Reason"
+                              : "Moderator Remarks"}
                           </div>
 
                           <p
@@ -996,7 +1023,15 @@ const MyAdvertisementsPage = () => {
                           >
                             {advertisement
                               .moderator_remarks ||
-                              "Please review the advertisement before resubmission."}
+                              (
+                                normalizeStatus(
+                                  advertisement
+                                    .status
+                                ) ===
+                                "payment_rejected"
+                                  ? "The advertisement payment was rejected. Please review the payment details and try again."
+                                  : "Please review the advertisement before resubmission."
+                              )}
                           </p>
                         </div>
                       )}

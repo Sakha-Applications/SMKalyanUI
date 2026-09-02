@@ -62,6 +62,16 @@ const AdvertisementPaymentPage = () => {
     useState(false);
 
   const [
+    submissionReceipt,
+    setSubmissionReceipt
+  ] = useState({
+    paymentId: "",
+    paymentReference: "",
+    amount: "",
+    paymentMethod: ""
+  });
+
+  const [
     advertisementDraft,
     setAdvertisementDraft
   ] = useState(null);
@@ -396,42 +406,55 @@ const AdvertisementPaymentPage = () => {
        * Create the offline payment only after
        * the advertisement record exists.
        */
-      await offlinePaymentService.submitPayment(
-        {
-          paymentType:
-            "PreferredProfile",
+      const paymentResponse =
+        await offlinePaymentService.submitPayment(
+          {
+            paymentType:
+              "PreferredProfile",
 
-          profile_id:
-            formData.profileId,
+            profile_id:
+              formData.profileId,
 
-          amount:
-            formData.amount,
+            amount:
+              formData.amount,
 
-          payment_method:
-            "Offline",
+            payment_method:
+              "Offline",
 
-          payment_mode:
-            formData.paymentMethod,
+            payment_mode:
+              formData.paymentMethod,
 
-          payment_reference:
-            formData.paymentReference,
+            payment_reference:
+              formData.paymentReference,
 
-          payment_date:
-            today,
+            payment_date:
+              today,
 
-          payment_time:
-            time,
+            payment_time:
+              time,
 
-          phone_number:
-            formData.phoneNumber,
+            phone_number:
+              formData.phoneNumber,
 
-          email:
-            formData.email,
+            email:
+              formData.email,
 
-          transactionDetails:
-            formData.transactionDetails,
-        }
-      );
+            transactionDetails:
+              formData.transactionDetails,
+          }
+        );
+
+      setSubmissionReceipt({
+        paymentId:
+          paymentResponse?.paymentId ||
+          "",
+        paymentReference:
+          formData.paymentReference,
+        amount:
+          formData.amount,
+        paymentMethod:
+          formData.paymentMethod
+      });
 
       setSubmitted(true);
 
@@ -521,6 +544,79 @@ const AdvertisementPaymentPage = () => {
               They are pending payment
               and advertisement approval.
             </p>
+          </section>
+
+          <section
+            className={`${designClasses.card} p-5`}
+          >
+            <h2
+              className={`text-base font-semibold ${designClasses.textDark}`}
+            >
+              Payment Submission Details
+            </h2>
+
+            <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div>
+                <div
+                  className={`text-xs ${designClasses.textSecondary}`}
+                >
+                  Payment Receipt No.
+                </div>
+
+                <div
+                  className={`mt-1 text-sm font-semibold ${designClasses.textDark}`}
+                >
+                  {submissionReceipt.paymentId ||
+                    "-"}
+                </div>
+              </div>
+
+              <div>
+                <div
+                  className={`text-xs ${designClasses.textSecondary}`}
+                >
+                  Payment Reference
+                </div>
+
+                <div
+                  className={`mt-1 text-sm font-semibold ${designClasses.textDark}`}
+                >
+                  {submissionReceipt.paymentReference ||
+                    "-"}
+                </div>
+              </div>
+
+              <div>
+                <div
+                  className={`text-xs ${designClasses.textSecondary}`}
+                >
+                  Contribution Amount
+                </div>
+
+                <div
+                  className={`mt-1 text-sm font-semibold ${designClasses.textDark}`}
+                >
+                  ₹
+                  {submissionReceipt.amount ||
+                    "-"}
+                </div>
+              </div>
+
+              <div>
+                <div
+                  className={`text-xs ${designClasses.textSecondary}`}
+                >
+                  Payment Mode
+                </div>
+
+                <div
+                  className={`mt-1 text-sm font-semibold ${designClasses.textDark}`}
+                >
+                  {submissionReceipt.paymentMethod ||
+                    "-"}
+                </div>
+              </div>
+            </div>
           </section>
 
           <section
