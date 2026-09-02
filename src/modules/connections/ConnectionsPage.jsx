@@ -2372,39 +2372,39 @@ const ConnectionsPage = () => {
           </div>
         )}
 
-        {systemAlerts.length > 0 && (
-          <section
-            className={`${designClasses.card} p-5`}
-          >
-            <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-              <div>
-                <h2
-                  className={`text-lg font-semibold ${designClasses.textDark}`}
-                >
-                  System & Admin Alerts
-                </h2>
-
-                <p
-                  className={`mt-1 text-sm ${designClasses.textSecondary}`}
-                >
-                  Important portal, payment and advertisement updates appear here before member messages.
-                </p>
-              </div>
-
-              <span
-                className={`inline-flex self-start rounded-full px-3 py-1 text-xs font-semibold ${designClasses.surfaceMuted} ${designClasses.textSecondary}`}
+        <section
+          className={`${designClasses.card} p-5`}
+        >
+          <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <h2
+                className={`text-lg font-semibold ${designClasses.textDark}`}
               >
-                {
-                  systemAlerts.filter(
-                    (notification) =>
-                      !notification
-                        ?.is_read
-                  ).length
-                }{" "}
-                unread
-              </span>
+                System & Admin Alerts
+              </h2>
+
+              <p
+                className={`mt-1 text-sm ${designClasses.textSecondary}`}
+              >
+                Important portal, payment and advertisement updates appear here before member messages.
+              </p>
             </div>
 
+            <span
+              className={`inline-flex self-start rounded-full px-3 py-1 text-xs font-semibold ${designClasses.surfaceMuted} ${designClasses.textSecondary}`}
+            >
+              {
+                systemAlerts.filter(
+                  (notification) =>
+                    !notification
+                      ?.is_read
+                ).length
+              }{" "}
+              unread
+            </span>
+          </div>
+
+          {systemAlerts.length > 0 ? (
             <div className="space-y-3">
               {systemAlerts.map(
                 (notification) => (
@@ -2423,8 +2423,10 @@ const ConnectionsPage = () => {
                 )
               )}
             </div>
-          </section>
-        )}
+          ) : (
+            <EmptyState message="No system or admin messages at this time." />
+          )}
+        </section>
 
         {!error && (
           <div
