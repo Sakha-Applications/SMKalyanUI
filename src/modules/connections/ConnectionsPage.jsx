@@ -12,6 +12,7 @@ import advertisementResponseService from "../../services/advertisementResponseSe
 import registrationService from "../../services/registrationService";
 import profileService from "../../services/profileService";
 import creditService from "../../services/creditService";
+import memberNotificationService from "../../services/memberNotificationService";
 
 import MemberLayout from "../../shared/layouts/MemberLayout";
 import RestrictedFeatureState from "../../shared/components/RestrictedFeatureState";
@@ -701,6 +702,97 @@ const EmptyState = ({ message }) => (
   </div>
 );
 
+const SystemAlertCard = ({
+  notification,
+  onMarkRead,
+  onViewReference,
+}) => {
+  const isUnread =
+    !notification?.is_read;
+
+  const date =
+    formatDate(
+      notification?.created_at
+    );
+
+  return (
+    <article
+      className={`rounded-xl border p-4 ${
+        isUnread
+          ? designClasses.statusWarning
+          : designClasses.surfaceMuted
+      }`}
+    >
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <h3
+              className={`text-sm font-semibold ${designClasses.textDark}`}
+            >
+              {notification?.title ||
+                "System Notification"}
+            </h3>
+
+            {isUnread && (
+              <span
+                className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${designClasses.surfaceMuted} ${designClasses.textSecondary}`}
+              >
+                New
+              </span>
+            )}
+          </div>
+
+          {notification?.message && (
+            <p
+              className={`mt-2 text-sm ${designClasses.textSecondary}`}
+            >
+              {notification.message}
+            </p>
+          )}
+
+          {date && (
+            <p
+              className={`mt-2 text-xs ${designClasses.textSecondary}`}
+            >
+              {date}
+            </p>
+          )}
+        </div>
+
+        <div className="flex shrink-0 flex-wrap gap-2">
+          {notification?.reference_type && (
+            <button
+              type="button"
+              onClick={() =>
+                onViewReference(
+                  notification
+                )
+              }
+              className={`rounded-lg px-3 py-2 text-xs font-semibold transition ${designClasses.secondaryButton}`}
+            >
+              View Details
+            </button>
+          )}
+
+          {isUnread && (
+            <button
+              type="button"
+              onClick={() =>
+                onMarkRead(
+                  notification.id
+                )
+              }
+              className={`rounded-lg px-3 py-2 text-xs font-semibold transition ${designClasses.primaryButton}`}
+            >
+              Mark as Read
+            </button>
+          )}
+        </div>
+      </div>
+    </article>
+  );
+};
+
 const ConnectionsPage = () => {
   const navigate = useNavigate();
 
@@ -765,6 +857,11 @@ const ConnectionsPage = () => {
   const [
     sentAdvertisementResponses,
     setSentAdvertisementResponses,
+  ] = useState([]);
+
+  const [
+    systemAlerts,
+    setSystemAlerts,
   ] = useState([]);
 
   const visibleReceivedAdvertisementResponses =
@@ -1037,6 +1134,25 @@ const ConnectionsPage = () => {
           setMessagesLoading(true);
         }
 
+        const notificationPromise =
+          memberNotificationService
+            .getMyNotifications()
+            .then(
+              (notifications) => {
+                if (!active) {
+                  return;
+                }
+
+                setSystemAlerts(
+                  Array.isArray(
+                    notifications
+                  )
+                    ? notifications
+                    : []
+                );
+              }
+            );
+
         const invitationPromise =
           invitationService
             .getAllInvitations()
@@ -1195,6 +1311,7 @@ const ConnectionsPage = () => {
 
         const results =
           await Promise.allSettled([
+            notificationPromise,
             invitationPromise,
             advertisementPromise,
             contactRequestPromise
@@ -2038,6 +2155,74 @@ const ConnectionsPage = () => {
     );
   };
 
+  const handleMarkNotificationRead =
+    async (notificationId) => {
+      if (!notificationId) {
+        return;
+      }
+
+      try {
+        await memberNotificationService
+          .markAsRead(
+            notificationId
+          );
+
+        setSystemAlerts(
+          (current) =>
+            current.map(
+              (notification) =>
+                String(
+                  notification.id
+                ) ===
+                String(
+                  notificationId
+                )
+                  ? {
+                      ...notification,
+                      is_read: 1,
+                      read_at:
+                        new Date()
+                          .toISOString(),
+                    }
+                  : notification
+            )
+        );
+      } catch (notificationError) {
+        console.error(
+          "Unable to mark notification as read:",
+          notificationError
+        );
+      }
+    };
+
+  const handleNotificationReference =
+    (notification) => {
+      const referenceType =
+        String(
+          notification
+            ?.reference_type ||
+          ""
+        )
+          .trim()
+          .toUpperCase();
+
+      if (
+        referenceType ===
+          "ADVERTISEMENT" ||
+        referenceType ===
+          "ADVERTISEMENT_PAYMENT"
+      ) {
+        navigate(
+          "/my-advertisements"
+        );
+        return;
+      }
+
+      navigate(
+        "/dashboard"
+      );
+    };
+
   if (loading) {
     return (
       <MemberLayout
@@ -2185,6 +2370,60 @@ const ConnectionsPage = () => {
           >
             {contactRequestMessage}
           </div>
+        )}
+
+        {systemAlerts.length > 0 && (
+          <section
+            className={`${designClasses.card} p-5`}
+          >
+            <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <h2
+                  className={`text-lg font-semibold ${designClasses.textDark}`}
+                >
+                  System & Admin Alerts
+                </h2>
+
+                <p
+                  className={`mt-1 text-sm ${designClasses.textSecondary}`}
+                >
+                  Important portal, payment and advertisement updates appear here before member messages.
+                </p>
+              </div>
+
+              <span
+                className={`inline-flex self-start rounded-full px-3 py-1 text-xs font-semibold ${designClasses.surfaceMuted} ${designClasses.textSecondary}`}
+              >
+                {
+                  systemAlerts.filter(
+                    (notification) =>
+                      !notification
+                        ?.is_read
+                  ).length
+                }{" "}
+                unread
+              </span>
+            </div>
+
+            <div className="space-y-3">
+              {systemAlerts.map(
+                (notification) => (
+                  <SystemAlertCard
+                    key={`system-alert-${notification.id}`}
+                    notification={
+                      notification
+                    }
+                    onMarkRead={
+                      handleMarkNotificationRead
+                    }
+                    onViewReference={
+                      handleNotificationReference
+                    }
+                  />
+                )
+              )}
+            </div>
+          </section>
         )}
 
         {!error && (

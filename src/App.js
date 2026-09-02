@@ -18,6 +18,7 @@ import RegistrationFeePaymentPage from "./modules/payments/RegistrationFeePaymen
 import About from './components/About';
 import AdvertiseProfilePage from "./modules/advertisements/AdvertiseProfilePage";
 import MyAdvertisementsPage from "./modules/advertisements/MyAdvertisementsPage";
+import AdvertisementBrowsePage from "./modules/advertisements/AdvertisementBrowsePage";
 import AdvertisementPaymentPage from "./modules/payments/AdvertisementPaymentPage";
 import PreferencesPage from "./modules/preferences/PreferencesPage";
 import ProfilePage from "./modules/profile/ProfilePage";
@@ -187,6 +188,14 @@ function App() {
     element={
         <ProtectedRoute>
             <MyAdvertisementsPage />
+        </ProtectedRoute>
+    }
+/>
+<Route
+    path="/advertisements"
+    element={
+        <ProtectedRoute>
+            <AdvertisementBrowsePage />
         </ProtectedRoute>
     }
 />                

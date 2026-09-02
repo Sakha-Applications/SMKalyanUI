@@ -62,6 +62,60 @@ const advertisementService = {
       : [];
   },
 
+  browseAdvertisements: async ({
+    page = 1,
+    limit = 6,
+    lookingFor = "",
+    minAge = "",
+    maxAge = "",
+    location = "",
+    qualification = "",
+    profession = "",
+    excludeGotra = "",
+  } = {}) => {
+    const response =
+      await apiClient.get(
+        "/preferred-profiles/browse",
+        {
+          params: {
+            page,
+            limit,
+            lookingFor:
+              lookingFor || undefined,
+            minAge:
+              minAge || undefined,
+            maxAge:
+              maxAge || undefined,
+            location:
+              location || undefined,
+            qualification:
+              qualification || undefined,
+            profession:
+              profession || undefined,
+            excludeGotra:
+              excludeGotra || undefined,
+          },
+        }
+      );
+
+    return {
+      advertisements:
+        Array.isArray(
+          response?.data?.data
+        )
+          ? response.data.data
+          : [],
+      meta:
+        response?.data?.meta || {
+          page,
+          limit,
+          count: 0,
+          total: 0,
+          totalPages: 0,
+        },
+    };
+  },
+
   getAdvertisementByProfileId: async (
     profileId
   ) => {

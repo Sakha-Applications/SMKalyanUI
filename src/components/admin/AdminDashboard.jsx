@@ -11,9 +11,24 @@ import { designClasses } from "../../shared/styles/designTokens";
 const normalizeStatus = (s) => (typeof s === "string" ? s.trim().toUpperCase() : "");
 
 const SETTINGS_KEYS = {
-  REGISTRATION_FEE_AMOUNT: "REGISTRATION_FEE_AMOUNT",
-  CONTACT_VIEWS_PER_CYCLE: "CONTACT_VIEWS_PER_CYCLE",
-  RECHARGE_FEE_AMOUNT: "RECHARGE_FEE_AMOUNT",
+  REGISTRATION_FEE_AMOUNT:
+    "REGISTRATION_FEE_AMOUNT",
+  RECHARGE_FEE_AMOUNT:
+    "RECHARGE_FEE_AMOUNT",
+  RECHARGE_CREDIT_POINTS:
+    "RECHARGE_CREDIT_POINTS",
+  LOW_CREDIT_REMINDER_THRESHOLD:
+    "LOW_CREDIT_REMINDER_THRESHOLD",
+  SHOW_INTEREST_CREDIT_COST:
+    "SHOW_INTEREST_CREDIT_COST",
+  SHORTLIST_CREDIT_COST:
+    "SHORTLIST_CREDIT_COST",
+  DIRECT_APPLY_CREDIT_COST:
+    "DIRECT_APPLY_CREDIT_COST",
+  MUTUAL_INTEREST_CREDIT_COST:
+    "MUTUAL_INTEREST_CREDIT_COST",
+  CONTACT_VIEW_CREDIT_COST:
+    "CONTACT_VIEW_CREDIT_COST",
   ADVERTISEMENT_MIN_CONTRIBUTION:
     "ADVERTISEMENT_MIN_CONTRIBUTION"
 };
@@ -117,12 +132,44 @@ const [
   const [regFeeAmount, setRegFeeAmount] =
     useState("");
 
-  const [contactViewsX, setContactViewsX] =
-    useState("");
-
   const [
     rechargeFeeAmount,
     setRechargeFeeAmount
+  ] = useState("");
+
+  const [
+    rechargeCreditPoints,
+    setRechargeCreditPoints
+  ] = useState("");
+
+  const [
+    lowCreditThreshold,
+    setLowCreditThreshold
+  ] = useState("");
+
+  const [
+    showInterestCost,
+    setShowInterestCost
+  ] = useState("");
+
+  const [
+    shortlistCost,
+    setShortlistCost
+  ] = useState("");
+
+  const [
+    directApplyCost,
+    setDirectApplyCost
+  ] = useState("");
+
+  const [
+    mutualInterestCost,
+    setMutualInterestCost
+  ] = useState("");
+
+  const [
+    contactViewCost,
+    setContactViewCost
   ] = useState("");
 
   const [
@@ -236,18 +283,71 @@ const [
         )
       );
 
-      setContactViewsX(
-        String(
-          s[
-            SETTINGS_KEYS.CONTACT_VIEWS_PER_CYCLE
-          ] ?? ""
-        )
-      );
-
       setRechargeFeeAmount(
         String(
           s[
             SETTINGS_KEYS.RECHARGE_FEE_AMOUNT
+          ] ?? ""
+        )
+      );
+
+      setRechargeCreditPoints(
+        String(
+          s[
+            SETTINGS_KEYS.RECHARGE_CREDIT_POINTS
+          ] ?? ""
+        )
+      );
+
+      setLowCreditThreshold(
+        String(
+          s[
+            SETTINGS_KEYS
+              .LOW_CREDIT_REMINDER_THRESHOLD
+          ] ?? ""
+        )
+      );
+
+      setShowInterestCost(
+        String(
+          s[
+            SETTINGS_KEYS
+              .SHOW_INTEREST_CREDIT_COST
+          ] ?? ""
+        )
+      );
+
+      setShortlistCost(
+        String(
+          s[
+            SETTINGS_KEYS.SHORTLIST_CREDIT_COST
+          ] ?? ""
+        )
+      );
+
+      setDirectApplyCost(
+        String(
+          s[
+            SETTINGS_KEYS
+              .DIRECT_APPLY_CREDIT_COST
+          ] ?? ""
+        )
+      );
+
+      setMutualInterestCost(
+        String(
+          s[
+            SETTINGS_KEYS
+              .MUTUAL_INTEREST_CREDIT_COST
+          ] ?? ""
+        )
+      );
+
+      setContactViewCost(
+        String(
+          s[
+            SETTINGS_KEYS
+              .CONTACT_VIEW_CREDIT_COST
           ] ?? ""
         )
       );
@@ -272,99 +372,168 @@ const [
     setSettingsSaving(true);
     setSettingsError("");
 
-    // Minimal client-side validation (server will validate too)
-    const reg =
-      Number(regFeeAmount);
+    const values = {
+      registrationFee:
+        Number(regFeeAmount),
+      rechargeFee:
+        Number(rechargeFeeAmount),
+      rechargeCredits:
+        Number(rechargeCreditPoints),
+      lowCreditThreshold:
+        Number(lowCreditThreshold),
+      showInterestCost:
+        Number(showInterestCost),
+      shortlistCost:
+        Number(shortlistCost),
+      directApplyCost:
+        Number(directApplyCost),
+      mutualInterestCost:
+        Number(mutualInterestCost),
+      contactViewCost:
+        Number(contactViewCost),
+      advertisementMinimum:
+        Number(
+          advertisementMinContribution
+        )
+    };
 
-    const rech =
-      Number(rechargeFeeAmount);
+    const requiredFields = [
+      [
+        regFeeAmount,
+        "Registration Fee"
+      ],
+      [
+        rechargeFeeAmount,
+        "Recharge Base Amount"
+      ],
+      [
+        rechargeCreditPoints,
+        "Credits for Base Recharge"
+      ],
+      [
+        lowCreditThreshold,
+        "Low Credit Reminder Threshold"
+      ],
+      [
+        showInterestCost,
+        "Show Interest Cost"
+      ],
+      [
+        shortlistCost,
+        "Shortlist Cost"
+      ],
+      [
+        directApplyCost,
+        "Apply Cost"
+      ],
+      [
+        mutualInterestCost,
+        "Mutual Confirmation Cost"
+      ],
+      [
+        contactViewCost,
+        "View Phone Number Cost"
+      ],
+      [
+        advertisementMinContribution,
+        "Minimum Advertisement Contribution"
+      ]
+    ];
 
-    const views =
-      Number(contactViewsX);
-
-    const advertisementMin =
-      Number(
-        advertisementMinContribution
+    const missingField =
+      requiredFields.find(
+        ([value]) =>
+          String(value).trim() === ""
       );
 
-    if (String(regFeeAmount).trim() === "") {
+    if (missingField) {
       setSettingsError(
-        "Registration Fee Amount is required."
+        `${missingField[1]} is required.`
+      );
+      setSettingsSaving(false);
+      return;
+    }
+
+    const moneyFields = [
+      [
+        values.registrationFee,
+        "Registration Fee"
+      ],
+      [
+        values.rechargeFee,
+        "Recharge Base Amount"
+      ],
+      [
+        values.advertisementMinimum,
+        "Minimum Advertisement Contribution"
+      ]
+    ];
+
+    const invalidMoney =
+      moneyFields.find(
+        ([value]) =>
+          !Number.isFinite(value) ||
+          value < 0
+      );
+
+    if (invalidMoney) {
+      setSettingsError(
+        `${invalidMoney[1]} must be a number greater than or equal to 0.`
       );
       setSettingsSaving(false);
       return;
     }
 
     if (
-      !Number.isFinite(reg) ||
-      reg < 0
+      !Number.isInteger(
+        values.rechargeCredits
+      ) ||
+      values.rechargeCredits <= 0
     ) {
       setSettingsError(
-        "Registration Fee Amount must be a number >= 0."
+        "Credits for Base Recharge must be a positive integer."
       );
       setSettingsSaving(false);
       return;
     }
 
-    if (String(contactViewsX).trim() === "") {
-      setSettingsError(
-        "Contact Views per Cycle is required."
-      );
-      setSettingsSaving(false);
-      return;
-    }
+    const creditFields = [
+      [
+        values.lowCreditThreshold,
+        "Low Credit Reminder Threshold"
+      ],
+      [
+        values.showInterestCost,
+        "Show Interest Cost"
+      ],
+      [
+        values.shortlistCost,
+        "Shortlist Cost"
+      ],
+      [
+        values.directApplyCost,
+        "Apply Cost"
+      ],
+      [
+        values.mutualInterestCost,
+        "Mutual Confirmation Cost"
+      ],
+      [
+        values.contactViewCost,
+        "View Phone Number Cost"
+      ]
+    ];
 
-    if (
-      !Number.isFinite(views) ||
-      !Number.isInteger(views) ||
-      views <= 0
-    ) {
-      setSettingsError(
-        "Contact Views per Cycle must be a positive integer."
+    const invalidCredit =
+      creditFields.find(
+        ([value]) =>
+          !Number.isInteger(value) ||
+          value < 0
       );
-      setSettingsSaving(false);
-      return;
-    }
 
-    if (
-      String(rechargeFeeAmount).trim() === ""
-    ) {
+    if (invalidCredit) {
       setSettingsError(
-        "Recharge Fee Amount is required."
-      );
-      setSettingsSaving(false);
-      return;
-    }
-
-    if (
-      !Number.isFinite(rech) ||
-      rech < 0
-    ) {
-      setSettingsError(
-        "Recharge Fee Amount must be a number >= 0."
-      );
-      setSettingsSaving(false);
-      return;
-    }
-
-    if (
-      String(
-        advertisementMinContribution
-      ).trim() === ""
-    ) {
-      setSettingsError(
-        "Minimum Advertisement Contribution is required."
-      );
-      setSettingsSaving(false);
-      return;
-    }
-
-    if (
-      !Number.isFinite(advertisementMin) ||
-      advertisementMin < 0
-    ) {
-      setSettingsError(
-        "Minimum Advertisement Contribution must be a number >= 0."
+        `${invalidCredit[1]} must be a non-negative integer.`
       );
       setSettingsSaving(false);
       return;
@@ -373,31 +542,79 @@ const [
     try {
       const payload = {
         [SETTINGS_KEYS.REGISTRATION_FEE_AMOUNT]:
-          String(reg),
-
-        [SETTINGS_KEYS.CONTACT_VIEWS_PER_CYCLE]:
-          String(views),
+          String(
+            values.registrationFee
+          ),
 
         [SETTINGS_KEYS.RECHARGE_FEE_AMOUNT]:
-          String(rech),
+          String(
+            values.rechargeFee
+          ),
+
+        [SETTINGS_KEYS.RECHARGE_CREDIT_POINTS]:
+          String(
+            values.rechargeCredits
+          ),
+
+        [SETTINGS_KEYS.LOW_CREDIT_REMINDER_THRESHOLD]:
+          String(
+            values.lowCreditThreshold
+          ),
+
+        [SETTINGS_KEYS.SHOW_INTEREST_CREDIT_COST]:
+          String(
+            values.showInterestCost
+          ),
+
+        [SETTINGS_KEYS.SHORTLIST_CREDIT_COST]:
+          String(
+            values.shortlistCost
+          ),
+
+        [SETTINGS_KEYS.DIRECT_APPLY_CREDIT_COST]:
+          String(
+            values.directApplyCost
+          ),
+
+        [SETTINGS_KEYS.MUTUAL_INTEREST_CREDIT_COST]:
+          String(
+            values.mutualInterestCost
+          ),
+
+        [SETTINGS_KEYS.CONTACT_VIEW_CREDIT_COST]:
+          String(
+            values.contactViewCost
+          ),
 
         [SETTINGS_KEYS.ADVERTISEMENT_MIN_CONTRIBUTION]:
-          String(advertisementMin)
+          String(
+            values.advertisementMinimum
+          )
       };
 
-      const res = await fetch(`${getBaseUrl()}/api/admin/settings`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify(payload)
-      });
+      const res = await fetch(
+        `${getBaseUrl()}/api/admin/settings`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type":
+              "application/json",
+            Authorization:
+              `Bearer ${token}`
+          },
+          body:
+            JSON.stringify(payload)
+        }
+      );
 
-      const data = await res.json();
+      const data =
+        await res.json();
 
       if (!res.ok) {
-        setSettingsError(data?.message || "Failed to save admin settings");
+        setSettingsError(
+          data?.message ||
+            "Failed to save admin settings"
+        );
         return;
       }
 
@@ -405,16 +622,22 @@ const [
       await fetchData();
 
       showNotification(
-        "Settings saved successfully.",
+        "Financial and credit settings saved successfully.",
         "success"
       );
     } catch (e) {
-      console.error("❌ saveSettings error:", e);
-      setSettingsError("Failed to save admin settings");
+      console.error(
+        "❌ saveSettings error:",
+        e
+      );
+      setSettingsError(
+        "Failed to save admin settings"
+      );
     } finally {
       setSettingsSaving(false);
     }
   };
+
 const fetchContactRequests = async () => {
   try {
     const res = await fetch(
@@ -1407,141 +1630,395 @@ fetchAdvertisementReviewQueue();
     </div>
   );
 
+  const renderSettingField = ({
+    label,
+    description,
+    value,
+    onChange,
+    placeholder,
+    prefix,
+    suffix,
+    min = "0",
+    step = "1",
+    emphasis = false
+  }) => (
+    <label
+      className={`block border p-4 ${
+        emphasis
+          ? "border-[#D79A1E]/40 bg-[#FFF9ED]"
+          : `${designClasses.border} ${designClasses.surface}`
+      }`}
+    >
+      <div
+        className={`text-sm font-semibold ${designClasses.textDark}`}
+      >
+        {label}
+      </div>
+
+      <div
+        className={`mt-1 min-h-[36px] text-xs leading-5 ${designClasses.textSecondary}`}
+      >
+        {description}
+      </div>
+
+      <div className="relative mt-3">
+        {prefix ? (
+          <span
+            className={`absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium ${designClasses.textSecondary}`}
+          >
+            {prefix}
+          </span>
+        ) : null}
+
+        <input
+          type="number"
+          min={min}
+          step={step}
+          value={value}
+          onChange={(event) =>
+            onChange(
+              event.target.value
+            )
+          }
+          className={`w-full border bg-white py-2.5 text-sm font-semibold outline-none transition focus:border-[#D79A1E] focus:ring-2 focus:ring-[#D79A1E]/20 ${
+            prefix
+              ? "pl-8"
+              : "pl-3"
+          } ${
+            suffix
+              ? "pr-20"
+              : "pr-3"
+          } ${designClasses.border} ${designClasses.textDark}`}
+          placeholder={placeholder}
+        />
+
+        {suffix ? (
+          <span
+            className={`absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium ${designClasses.textSecondary}`}
+          >
+            {suffix}
+          </span>
+        ) : null}
+      </div>
+    </label>
+  );
+
   const renderSettingsView = () => (
     <div
-      className={`${designClasses.surface} ${designClasses.border} rounded-2xl border p-5 shadow-sm`}
+      className={`${designClasses.surface} ${designClasses.border} border shadow-sm`}
     >
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
-        <div>
-          <h2
-            className={`text-lg font-semibold ${designClasses.textPrimary}`}
-          >
-            Fees & Application Settings
-          </h2>
+      <div
+        className={`border-b px-5 py-5 md:px-6 ${designClasses.border}`}
+      >
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div className="max-w-3xl">
+            <div
+              className={`text-xs font-semibold uppercase tracking-[0.16em] ${designClasses.textSecondary}`}
+            >
+              Governed Configuration
+            </div>
 
-          <p
-            className={`text-sm ${designClasses.textSecondary}`}
-          >
-            Manage configurable fees, contact-view limits,
-            and the minimum advertisement contribution.
-          </p>
+            <h2
+              className={`mt-1 text-xl font-semibold ${designClasses.textPrimary}`}
+            >
+              Financial & Credit Controls
+            </h2>
+
+            <p
+              className={`mt-2 text-sm leading-6 ${designClasses.textSecondary}`}
+            >
+              Manage member fees, recharge conversion,
+              reminder thresholds and matrimonial action
+              costs from one controlled settings area.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={fetchSettings}
+              disabled={settingsLoading}
+              className={`px-4 py-2.5 text-sm font-semibold transition ${
+                settingsLoading
+                  ? "cursor-not-allowed opacity-50"
+                  : ""
+              } ${designClasses.secondaryButton}`}
+            >
+              {settingsLoading
+                ? "Loading..."
+                : "Reload"}
+            </button>
+
+            <button
+              type="button"
+              onClick={saveSettings}
+              disabled={
+                settingsSaving ||
+                settingsLoading
+              }
+              className={`px-5 py-2.5 text-sm font-semibold transition ${
+                settingsSaving ||
+                settingsLoading
+                  ? "cursor-not-allowed opacity-50"
+                  : ""
+              } ${designClasses.primaryButton}`}
+            >
+              {settingsSaving
+                ? "Saving..."
+                : "Save Changes"}
+            </button>
+          </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={fetchSettings}
-            disabled={settingsLoading}
-            className={`rounded-lg px-4 py-2 text-sm font-semibold transition ${
-              settingsLoading
-                ? "cursor-not-allowed opacity-50"
-                : ""
-            } ${designClasses.secondaryButton}`}
+        <div
+          className="mt-4 border-l-4 border-[#D79A1E] bg-[#FFF9ED] px-4 py-3"
+        >
+          <div
+            className={`text-sm font-semibold ${designClasses.textDark}`}
           >
-            {settingsLoading
-              ? "Loading..."
-              : "Reload Settings"}
-          </button>
-
-          <button
-            type="button"
-            onClick={saveSettings}
-            disabled={
-              settingsSaving ||
-              settingsLoading
-            }
-            className={`rounded-lg px-4 py-2 text-sm font-semibold transition ${
-              settingsSaving ||
-              settingsLoading
-                ? "cursor-not-allowed opacity-50"
-                : ""
-            } ${designClasses.primaryButton}`}
+            Operational note
+          </div>
+          <p
+            className={`mt-1 text-xs leading-5 ${designClasses.textSecondary}`}
           >
-            {settingsSaving
-              ? "Saving..."
-              : "Save Settings"}
-          </button>
+            Changes apply to subsequent transactions.
+            Existing credit ledger entries are not
+            recalculated. The low-credit threshold is a
+            reminder only; an action is blocked only when
+            the available balance is below that action's
+            configured cost.
+          </p>
         </div>
       </div>
 
-      {settingsError ? (
-        <div className="mb-4 p-3 rounded-lg border border-red-100 bg-red-50 text-sm text-red-800">
-          {settingsError}
-        </div>
-      ) : null}
+      <div className="space-y-7 p-5 md:p-6">
+        {settingsError ? (
+          <div
+            className="border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+            role="alert"
+          >
+            {settingsError}
+          </div>
+        ) : null}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-        <div className={`${designClasses.surfaceMuted} ${designClasses.border} rounded-xl border p-4`}>
-          <div className={`mb-2 text-sm font-semibold ${designClasses.textDark}`}>Registration Fee Amount</div>
-          <input
-            type="number"
-            min="0"
-            value={regFeeAmount}
-            onChange={(e) => setRegFeeAmount(e.target.value)}
-            className={`w-full rounded-lg border px-3 py-2 outline-none transition focus:ring-2 focus:ring-[#D79A1E]/30 ${designClasses.border} ${designClasses.surface} ${designClasses.textDark}`}
-            placeholder="Enter registration fee"
-          />
-          <div className={`mt-2 text-xs ${designClasses.textSecondary}`}>Used for mandatory registration payment (offline).</div>
-        </div>
-
-        <div className={`${designClasses.surfaceMuted} ${designClasses.border} rounded-xl border p-4`}>
-          <div className={`mb-2 text-sm font-semibold ${designClasses.textDark}`}>Contact Views per Cycle (X)</div>
-          <input
-            type="number"
-            min="1"
-            step="1"
-            value={contactViewsX}
-            onChange={(e) => setContactViewsX(e.target.value)}
-            className={`w-full rounded-lg border px-3 py-2 outline-none transition focus:ring-2 focus:ring-[#D79A1E]/30 ${designClasses.border} ${designClasses.surface} ${designClasses.textDark}`}
-            placeholder="Enter contact-view limit"
-          />
-          <div className={`mt-2 text-xs ${designClasses.textSecondary}`}>After X contact views, user must recharge.</div>
-        </div>
-
-        <div className={`${designClasses.surfaceMuted} ${designClasses.border} rounded-xl border p-4`}>
-          <div className={`mb-2 text-sm font-semibold ${designClasses.textDark}`}>Recharge Fee Amount</div>
-          <input
-            type="number"
-            min="0"
-            value={rechargeFeeAmount}
-            onChange={(e) => setRechargeFeeAmount(e.target.value)}
-            className={`w-full rounded-lg border px-3 py-2 outline-none transition focus:ring-2 focus:ring-[#D79A1E]/30 ${designClasses.border} ${designClasses.surface} ${designClasses.textDark}`}
-            placeholder="Enter recharge fee"
-          />
-          <div className={`mt-2 text-xs ${designClasses.textSecondary}`}>Used for offline recharge payments (ProfileRenewal).</div>
-        </div>
-                <div className={`${designClasses.surfaceMuted} ${designClasses.border} rounded-xl border p-4`}>
-          <div className={`mb-2 text-sm font-semibold ${designClasses.textDark}`}>
-            Minimum Advertisement Contribution
+        <section>
+          <div className="mb-3">
+            <h3
+              className={`text-base font-semibold ${designClasses.textPrimary}`}
+            >
+              Payments & Contributions
+            </h3>
+            <p
+              className={`mt-1 text-xs ${designClasses.textSecondary}`}
+            >
+              Monetary values are shown in Indian Rupees
+              and are kept separate from credit points.
+            </p>
           </div>
 
-          <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
-              ₹
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {renderSettingField({
+              label:
+                "Registration Fee",
+              description:
+                "Mandatory registration payment collected through the configured offline payment flow.",
+              value:
+                regFeeAmount,
+              onChange:
+                setRegFeeAmount,
+              placeholder:
+                "Enter amount",
+              prefix: "₹"
+            })}
+
+            {renderSettingField({
+              label:
+                "Recharge Base Amount",
+              description:
+                "Base monetary amount used to calculate proportional credit recharge.",
+              value:
+                rechargeFeeAmount,
+              onChange:
+                setRechargeFeeAmount,
+              placeholder:
+                "Enter amount",
+              prefix: "₹",
+              emphasis: true
+            })}
+
+            {renderSettingField({
+              label:
+                "Minimum Advertisement Contribution",
+              description:
+                "Minimum contribution required to submit an advertisement; members may contribute more.",
+              value:
+                advertisementMinContribution,
+              onChange:
+                setAdvertisementMinContribution,
+              placeholder:
+                "Enter minimum",
+              prefix: "₹"
+            })}
+          </div>
+        </section>
+
+        <section
+          className={`border-t pt-6 ${designClasses.border}`}
+        >
+          <div className="mb-3">
+            <h3
+              className={`text-base font-semibold ${designClasses.textPrimary}`}
+            >
+              Credit Economy
+            </h3>
+            <p
+              className={`mt-1 text-xs ${designClasses.textSecondary}`}
+            >
+              Define recharge conversion and when members
+              receive a low-balance reminder.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+            {renderSettingField({
+              label:
+                "Credits for Base Recharge",
+              description:
+                "Credits granted for the base recharge amount. Higher contributions receive credits proportionally.",
+              value:
+                rechargeCreditPoints,
+              onChange:
+                setRechargeCreditPoints,
+              placeholder:
+                "Enter credits",
+              suffix: "credits",
+              min: "1",
+              emphasis: true
+            })}
+
+            {renderSettingField({
+              label:
+                "Low Credit Reminder Threshold",
+              description:
+                "Shows a reminder at or below this balance. It does not prevent an action when sufficient credits remain.",
+              value:
+                lowCreditThreshold,
+              onChange:
+                setLowCreditThreshold,
+              placeholder:
+                "Enter threshold",
+              suffix: "credits"
+            })}
+          </div>
+        </section>
+
+        <section
+          className={`border-t pt-6 ${designClasses.border}`}
+        >
+          <div className="mb-3 flex flex-col gap-1 md:flex-row md:items-end md:justify-between">
+            <div>
+              <h3
+                className={`text-base font-semibold ${designClasses.textPrimary}`}
+              >
+                Member Action Costs
+              </h3>
+              <p
+                className={`mt-1 text-xs ${designClasses.textSecondary}`}
+              >
+                All interaction charges are configured as
+                credit points. No action cost is hardcoded
+                in the member experience.
+              </p>
+            </div>
+
+            <span
+              className={`text-xs font-medium ${designClasses.textSecondary}`}
+            >
+              0 credits = no charge
             </span>
-
-            <input
-              type="number"
-              min="0"
-              step="1"
-              value={
-                advertisementMinContribution
-              }
-              onChange={(e) =>
-                setAdvertisementMinContribution(
-                  e.target.value
-                )
-              }
-              className={`w-full rounded-lg border py-2 pl-8 pr-3 outline-none transition focus:ring-2 focus:ring-[#D79A1E]/30 ${designClasses.border} ${designClasses.surface} ${designClasses.textDark}`}
-              placeholder="Enter minimum contribution"
-            />
           </div>
 
-          <div className={`mt-2 text-xs ${designClasses.textSecondary}`}>
-            Members may contribute this amount or
-            any higher amount when submitting an
-            advertisement.
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {renderSettingField({
+              label:
+                "Show Interest",
+              description:
+                "Credits charged when a member initially expresses interest in an advertisement.",
+              value:
+                showInterestCost,
+              onChange:
+                setShowInterestCost,
+              placeholder:
+                "Enter cost",
+              suffix: "credits"
+            })}
+
+            {renderSettingField({
+              label:
+                "Shortlist",
+              description:
+                "Credits charged when an advertisement owner shortlists an interested member.",
+              value:
+                shortlistCost,
+              onChange:
+                setShortlistCost,
+              placeholder:
+                "Enter cost",
+              suffix: "credits"
+            })}
+
+            {renderSettingField({
+              label:
+                "Apply",
+              description:
+                "Credits charged for direct Apply or the governed Apply action after shortlist.",
+              value:
+                directApplyCost,
+              onChange:
+                setDirectApplyCost,
+              placeholder:
+                "Enter cost",
+              suffix: "credits",
+              emphasis: true
+            })}
+
+            {renderSettingField({
+              label:
+                "View Phone Number",
+              description:
+                "Credits charged the first time eligible contact details are unlocked.",
+              value:
+                contactViewCost,
+              onChange:
+                setContactViewCost,
+              placeholder:
+                "Enter cost",
+              suffix: "credits"
+            })}
+
+            {renderSettingField({
+              label:
+                "Mutual Confirmation",
+              description:
+                "Credits charged when the owner confirms a mutual match. Use 0 when confirmation is free.",
+              value:
+                mutualInterestCost,
+              onChange:
+                setMutualInterestCost,
+              placeholder:
+                "Enter cost",
+              suffix: "credits"
+            })}
           </div>
+        </section>
+
+        <div
+          className={`border-t pt-5 text-xs leading-5 ${designClasses.border} ${designClasses.textSecondary}`}
+        >
+          Legacy contact-view-cycle configuration remains
+          available in the backend for compatibility but is
+          intentionally not shown here. The active member
+          journey uses credit-point deductions.
         </div>
       </div>
     </div>

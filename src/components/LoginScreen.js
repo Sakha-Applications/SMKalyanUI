@@ -1,8 +1,14 @@
 import React, { useState } from "react";
 import {
   Link,
+  useLocation,
   useNavigate,
 } from "react-router-dom";
+
+import {
+  clearPostLoginReturnTo,
+  consumePostLoginReturnTo,
+} from "../utils/authNavigation";
 
 import getBaseUrl from "../utils/GetUrl";
 import profileService from "../services/profileService";
@@ -20,6 +26,11 @@ function LoginScreen() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const loginMessage =
+    location?.state?.loginMessage ||
+    "";
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -121,8 +132,13 @@ function LoginScreen() {
             role.toUpperCase()
           )
         ) {
+          clearPostLoginReturnTo();
+
           navigate(
-            "/admin"
+            "/admin",
+            {
+              replace: true,
+            }
           );
           return;
         }
@@ -229,8 +245,17 @@ function LoginScreen() {
           );
         }
 
+        const postLoginReturnTo =
+          consumePostLoginReturnTo(
+            location?.state
+              ?.returnTo
+          );
+
         navigate(
-          "/dashboard"
+          postLoginReturnTo,
+          {
+            replace: true,
+          }
         );
       } else {
         setError(data.error || 'Invalid username or password.');
@@ -267,6 +292,15 @@ function LoginScreen() {
               Kalyana Sakha account.
             </p>
           </div>
+
+          {loginMessage && (
+            <div
+              className={`mb-4 rounded-xl p-3 text-sm ${designClasses.statusInfo}`}
+              role="status"
+            >
+              {loginMessage}
+            </div>
+          )}
 
           {error && (
             <div

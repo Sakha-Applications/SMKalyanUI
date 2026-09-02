@@ -16,6 +16,11 @@ import {
   useNavigate,
 } from "react-router-dom";
 
+import {
+  ensureAuthenticatedAction,
+  isAuthenticatedSession,
+} from "../../utils/authNavigation";
+
 import advertisementService from "../../services/advertisementService";
 import profileService from "../../services/profileService";
 import creditService from "../../services/creditService";
@@ -574,6 +579,17 @@ const AdvertisementSpotlight = ({
 
     const loadCreditSummary =
       async () => {
+        if (
+          !isAuthenticatedSession()
+        ) {
+          if (active) {
+            setCreditSummary(
+              null
+            );
+          }
+          return;
+        }
+
         try {
           const summary =
             await creditService
@@ -1020,8 +1036,22 @@ const AdvertisementSpotlight = ({
         "/dashboard"
       );
 
+      const targetPath =
+        `/view-profile/${profileId}?${query.toString()}`;
+
+      if (
+        !ensureAuthenticatedAction({
+          navigate,
+          returnTo: targetPath,
+          actionLabel:
+            "view the full matrimonial profile",
+        })
+      ) {
+        return;
+      }
+
       navigate(
-        `/view-profile/${profileId}?${query.toString()}`
+        targetPath
       );
     };
 
@@ -1037,13 +1067,27 @@ const AdvertisementSpotlight = ({
         return;
       }
 
+      const targetPath =
+        `/inbox?advertisementId=${encodeURIComponent(
+          advertisementId
+        )}`;
+
+      if (
+        !ensureAuthenticatedAction({
+          navigate,
+          returnTo: targetPath,
+          actionLabel:
+            "view advertisement responses",
+        })
+      ) {
+        return;
+      }
+
       setShowAllAdvertisements(false);
       setPaused(false);
 
       navigate(
-        `/inbox?advertisementId=${encodeURIComponent(
-          advertisementId
-        )}`
+        targetPath
       );
     };
 
@@ -1057,6 +1101,16 @@ const AdvertisementSpotlight = ({
         setResponseMessage(
           "Profile reference is unavailable."
         );
+        return;
+      }
+
+      if (
+        !ensureAuthenticatedAction({
+          navigate,
+          actionLabel:
+            "forward this matrimonial profile",
+        })
+      ) {
         return;
       }
 
@@ -1182,6 +1236,26 @@ const AdvertisementSpotlight = ({
         setResponseMessage(
           "Advertisement reference is unavailable."
         );
+        return;
+      }
+
+      const requestedAction =
+        String(
+          responseType || ""
+        )
+          .trim()
+          .toUpperCase() ===
+        "APPLY"
+          ? "apply for this matrimonial profile"
+          : "show interest in this matrimonial profile";
+
+      if (
+        !ensureAuthenticatedAction({
+          navigate,
+          actionLabel:
+            requestedAction,
+        })
+      ) {
         return;
       }
 
@@ -1429,8 +1503,9 @@ const AdvertisementSpotlight = ({
               <button
                 type="button"
                 onClick={() => {
-                  setPaused(true);
-                  setShowAllAdvertisements(true);
+                  navigate(
+                    "/advertisements"
+                  );
                 }}
                 className={`rounded-lg px-3 py-1.5 text-xs font-semibold ${designClasses.secondaryButton}`}
               >
